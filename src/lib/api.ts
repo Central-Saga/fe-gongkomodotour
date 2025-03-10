@@ -1,32 +1,36 @@
-// lib/api.ts
-import axios, { AxiosResponse } from 'axios';
-
-const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
-  withCredentials: true,
-});
+const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export const fetchCsrfToken = async (): Promise<void> => {
-  await api.get('/sanctum/csrf-cookie');
+  await fetch(`${baseURL}/sanctum/csrf-cookie`, {
+    method: 'GET',
+    credentials: 'include',
+  });
 };
 
 export const apiRequest = async <T>(
-  method: 'get' | 'post' | 'put' | 'delete',
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE',
   url: string,
   data?: any
 ): Promise<T> => {
   try {
     await fetchCsrfToken();
-    const response: AxiosResponse<T> = await api({
+    const options: RequestInit = {
       method,
-      url,
-      data,
-    });
-    return response.data;
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    };
+    if (data) {
+      options.body = JSON.stringify(data);
+    }
+    const response = await fetch(`${baseURL}${url}`, options);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
   } catch (error) {
     console.error('API Error:', error);
     throw error;
   }
 };
-
-export default api;

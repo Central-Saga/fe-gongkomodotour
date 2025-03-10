@@ -5,15 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default async function Dashboard() {
   const response: ApiResponse<Role> = await apiRequest<ApiResponse<Role>>(
-    'get',
-    '/api/roles/3'
+    'GET',
+    '/api/index-users'
   );
-  const role: Role = response.data;
+  const users: Role = response.data;
 
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Dashboard - Role Details</h1>
-      <Card>
+      {/* <Card>
         <CardHeader>
           <CardTitle>{role.name}</CardTitle>
         </CardHeader>
@@ -29,7 +29,7 @@ export default async function Dashboard() {
           <p><strong>Created At:</strong> {new Date(role.created_at).toLocaleString()}</p>
           <p><strong>Updated At:</strong> {new Date(role.updated_at).toLocaleString()}</p>
         </CardContent>
-      </Card>
+      </Card> */}
     </div>
   );
 }
