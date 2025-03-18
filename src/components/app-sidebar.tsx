@@ -6,17 +6,16 @@ import {
   BookOpen,
   Bot,
   Command,
-  Frame,
   GalleryVerticalEnd,
-  Map,
-  PieChart,
   Settings2,
   SquareTerminal,
+  Users,
+  Shield,
 } from "lucide-react"
 import Image from 'next/image'
 import logo from '../../public/img/logo.png';
 import { NavMain } from "@/components/nav-main"
-import { NavProjects } from "@/components/nav-projects"
+import { NavAdmin } from "@/components/nav-admin"
 import { NavUser } from "@/components/nav-user"
 import {
   Sidebar,
@@ -137,21 +136,16 @@ const data = {
       ],
     },
   ],
-  projects: [
+  adminAccess: [
     {
-      name: "Design Engineering",
-      url: "#",
-      icon: Frame,
+      name: "User Management",
+      url: "/admin/users",
+      icon: Users,
     },
     {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: PieChart,
-    },
-    {
-      name: "Travel",
-      url: "#",
-      icon: Map,
+      name: "Role Management",
+      url: "/admin/roles",
+      icon: Shield,
     },
   ],
 }
@@ -164,7 +158,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        <NavAdmin adminAccess={data.adminAccess} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />
