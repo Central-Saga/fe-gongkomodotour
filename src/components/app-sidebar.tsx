@@ -13,11 +13,11 @@ import {
   Settings2,
   SquareTerminal,
 } from "lucide-react"
-
+import Image from 'next/image'
+import logo from '../../public/img/logo.png';
 import { NavMain } from "@/components/nav-main"
 import { NavProjects } from "@/components/nav-projects"
 import { NavUser } from "@/components/nav-user"
-import { TeamSwitcher } from "@/components/team-switcher"
 import {
   Sidebar,
   SidebarContent,
@@ -159,8 +159,8 @@ const data = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
+      <SidebarHeader className="flex items-center justify-center">
+        <Image src={logo} alt="Gong Komodo Tour Logo" width={250} height={250} />
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
