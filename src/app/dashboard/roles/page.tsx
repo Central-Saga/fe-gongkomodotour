@@ -8,11 +8,10 @@ export default async function Dashboard() {
     'GET',
     '/api/index-users'
   );
-  const users: Role = response.data;
+  const roles: Role = response.data;
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Dashboard - Role Details</h1>
       {/* <Card>
         <CardHeader>
           <CardTitle>{role.name}</CardTitle>
