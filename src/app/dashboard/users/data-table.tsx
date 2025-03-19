@@ -33,7 +33,7 @@ import { ChevronDown, Plus, FileDown } from 'lucide-react';
 import { useState } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { Role } from "@/types/role";
+import { User } from "@/types/user";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -41,7 +41,7 @@ interface DataTableProps<TData, TValue> {
   onCreate: () => void;
 }
 
-const exportToPDF = (data: Role[]) => {
+const exportToPDF = (data: User[]) => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   
@@ -79,7 +79,7 @@ const exportToPDF = (data: Role[]) => {
   // Add report title (centered)
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  const reportTitle = "Roles Report";
+  const reportTitle = "Users Report";
   const reportTitleWidth = doc.getTextWidth(reportTitle);
   const reportTitleX = (pageWidth - reportTitleWidth) / 2;
   doc.text(reportTitle, reportTitleX, yPos + 20);
@@ -94,8 +94,9 @@ const exportToPDF = (data: Role[]) => {
   const tableColumn = [
     "No",
     "Name",
+    "Email",
     "Status",
-    "Permissions",
+    "Role",
     "Created At",
     "Updated At"
   ];
@@ -104,8 +105,9 @@ const exportToPDF = (data: Role[]) => {
   const tableRows = data.map((item, index) => [
     index + 1,
     item.name,
+    item.email,
     item.status,
-    (item.permissions as string[]).join(", "),
+    Array.isArray(item.role) ? item.role.join(", ") : item.role,
     new Date(item.created_at).toLocaleString(),
     new Date(item.updated_at).toLocaleString(),
   ]);
@@ -129,15 +131,16 @@ const exportToPDF = (data: Role[]) => {
     columnStyles: {
       0: { halign: 'center' }, // No
       1: { halign: 'left' },   // Name
-      2: { halign: 'center' }, // Status
-      3: { halign: 'left' },   // Permissions
-      4: { halign: 'center' }, // Created At
-      5: { halign: 'center' }, // Updated At
+      2: { halign: 'left' },   // Email
+      3: { halign: 'center' }, // Status
+      4: { halign: 'left' },   // Role
+      5: { halign: 'center' }, // Created At
+      6: { halign: 'center' }, // Updated At
     },
   });
 
   // Save the PDF
-  doc.save("roles-report.pdf");
+  doc.save("users-report.pdf");
 };
 
 export function DataTable<TData, TValue>({
@@ -213,7 +216,7 @@ export function DataTable<TData, TValue>({
                 onClick={() =>
                   console.log(
                     "Delete selected rows:",
-                    table.getSelectedRowModel().rows.map((row) => (row.original as Role).id)
+                    table.getSelectedRowModel().rows.map((row) => (row.original as User).id)
                   )
                 }
               >
@@ -221,7 +224,7 @@ export function DataTable<TData, TValue>({
               </Button>
               <Button 
                 variant="outline"
-                onClick={() => exportToPDF(table.getSelectedRowModel().rows.map(row => row.original as Role))}
+                onClick={() => exportToPDF(table.getSelectedRowModel().rows.map(row => row.original as User))}
               >
                 <FileDown className="mr-2 h-4 w-4" />
                 Export Selected ({table.getSelectedRowModel().rows.length})
@@ -230,11 +233,11 @@ export function DataTable<TData, TValue>({
           )}
           <Button onClick={onCreate}>
             <Plus className="mr-2 h-4 w-4" />
-            Add Role
+            Add User
           </Button>
           <Button 
             variant="outline"
-            onClick={() => exportToPDF(table.getFilteredRowModel().rows.map(row => row.original as Role))}
+            onClick={() => exportToPDF(table.getFilteredRowModel().rows.map(row => row.original as User))}
           >
             <FileDown className="mr-2 h-4 w-4" />
             Export All

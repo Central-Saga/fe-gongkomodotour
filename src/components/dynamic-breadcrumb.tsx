@@ -9,7 +9,7 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbLink, BreadcrumbP
 const routeMapping: Record<string, string> = {
   "dashboard": "Dashboard",
   "users": "Users",
-  "roles": "Role Management",
+  "roles": "Roles",
 };
 
 export function DynamicBreadcrumb() {

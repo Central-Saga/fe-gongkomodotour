@@ -1,5 +1,3 @@
-"use client"
-
 "use client";
 
 import { apiRequest } from '@/lib/api';
