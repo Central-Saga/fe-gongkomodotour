@@ -70,12 +70,17 @@ export const fetchCsrfToken = async (): Promise<void> => {
   }
 };
 
+interface RequestOptions {
+  headers?: Record<string, string>;
+  [key: string]: unknown;
+}
+
 // Generic API request function
 export const apiRequest = async <T>(
   method: 'GET' | 'POST' | 'PUT' | 'DELETE',
   url: string,
   data?: Record<string, unknown>,
-  options?: Record<string, unknown>
+  options?: RequestOptions
 ): Promise<T> => {
   try {
     console.log('Making request to:', `${baseURL}${url}`);
