@@ -21,6 +21,17 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useRouter } from "next/navigation";
 import { apiRequest } from "@/lib/api";
 
+interface LoginResponse {
+  access_token: string;
+  token_type: string;
+  user: {
+    id: number;
+    name: string;
+    email: string;
+  };
+  status: string;
+}
+
 // Define the form schema using Zod
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
@@ -49,7 +60,7 @@ export default function LoginPage() {
     try {
       setIsSubmitting(true);
       
-      await apiRequest('POST', '/api/login', {
+      const response = await apiRequest<LoginResponse>('POST', '/api/login', {
         email: values.email,
         password: values.password,
       }, {
@@ -58,6 +69,14 @@ export default function LoginPage() {
           'Accept': 'application/json',
         }
       });
+      
+      console.log('Login response:', response);
+      
+      // Simpan token ke cookies
+      if (response.access_token) {
+        document.cookie = `access_token=${response.access_token}; path=/`;
+        document.cookie = `token_type=${response.token_type}; path=/`;
+      }
       
       // Jika login berhasil, redirect ke halaman dashboard
       router.push('/dashboard');
