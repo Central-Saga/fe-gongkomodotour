@@ -138,12 +138,12 @@ const data = {
   ],
   adminAccess: [
     {
-      name: "User Management",
+      name: "Users",
       url: "/dashboard/users",
       icon: Users,
     },
     {
-      name: "Role Management",
+      name: "Roles",
       url: "/dashboard/roles",
       icon: Shield,
     },

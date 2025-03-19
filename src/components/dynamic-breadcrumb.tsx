@@ -8,7 +8,7 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbLink, BreadcrumbP
 // Mapping untuk nama-nama rute
 const routeMapping: Record<string, string> = {
   "dashboard": "Dashboard",
-  "users": "User Management",
+  "users": "Users",
   "roles": "Role Management",
 };
 
