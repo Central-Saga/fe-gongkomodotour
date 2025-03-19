@@ -1,34 +1,47 @@
-// app/dashboard/page.tsx
+"use client"
+
+"use client";
+
 import { apiRequest } from '@/lib/api';
 import { Role, ApiResponse } from '@/types/role';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useEffect, useState } from "react";
+import { columns } from "./columns";
+import { DataTable } from "./data-table";
 
-export default async function Dashboard() {
-  // const response: ApiResponse<Role> = await apiRequest<ApiResponse<Role>>(
-  //   'GET',
-  //   '/api/roles'
-  // );
-  // const roles: Role = response.data;
+export default function RolePages() {
+  const [data, setData] = useState<Role[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        setLoading(true);
+        const response: ApiResponse<Role[]> = await apiRequest<ApiResponse<Role[]>>(
+          'GET',
+          '/api/roles'
+        );
+        setData(response.data || []);
+        setError(null);
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : "Failed to fetch roles";
+        setError(errorMessage);
+        console.error("Error fetching roles:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRoles();
+  }, []);
+
+  if (loading) return <div className="container mx-auto p-4">Loading...</div>;
+  if (error) return <div className="container mx-auto p-4 text-red-600">{error}</div>;
 
   return (
     <div className="container mx-auto p-4">
-      {/* <Card>
-        <CardHeader>
-          <CardTitle>{role.name}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p><strong>ID:</strong> {role.id}</p>
-          <p><strong>Status:</strong> {role.status}</p>
-          <p><strong>Permissions:</strong></p>
-          <ul className="list-disc pl-5">
-            {role.permissions.map((permission, index) => (
-              <li key={index}>{permission}</li>
-            ))}
-          </ul>
-          <p><strong>Created At:</strong> {new Date(role.created_at).toLocaleString()}</p>
-          <p><strong>Updated At:</strong> {new Date(role.updated_at).toLocaleString()}</p>
-        </CardContent>
-      </Card> */}
+      <h1 className="text-2xl font-bold mb-4">Roles Dashboard</h1>
+      <DataTable columns={columns} data={data} />
     </div>
   );
 }
