@@ -33,25 +33,25 @@ export default function AboutUs() {
             <div
               style={{
                 position: "absolute",
-                left: "18rem", // Atur posisi horizontal gambar pertama
-                top: "0rem",  // Atur posisi vertikal gambar pertama
+                left: "20rem", // Atur posisi horizontal gambar pertama
+                top: "-3rem",  // Atur posisi vertikal gambar pertama
               }}
             >
               <Image
                 src="/img/hero-slide1.png"
                 alt="About Us Image 1"
-                width={250}
-                height={167}
+                width={350}
+                height={290}
                 className="h-auto object-cover rounded-lg shadow-lg"
-                style={{ width: "300px", height: "267px" }} // Ukuran tetap
+                style={{ width: "350px", height: "290px" }} // Ukuran tetap
               />
             </div>
             {/* Gambar Depan (Overlap) */}
             <div
               style={{
                 position: "absolute",
-                left: "7rem", // Atur posisi horizontal gambar kedua
-                top: "3rem",  // Atur posisi vertikal gambar kedua
+                left: "10rem", // Atur posisi horizontal gambar kedua
+                top: "0rem",  // Atur posisi vertikal gambar kedua
 
                 
               }}
@@ -59,10 +59,10 @@ export default function AboutUs() {
               <Image
                 src="/img/hero-slide2.png"
                 alt="About Us Image 2"
-                width={250}
-                height={167}
+                width={350}
+                height={290}
                 className="h-auto object-cover rounded-lg shadow-lg"
-                style={{ width: "300px", height: "267px" }} // Ukuran tetap
+                style={{ width: "350px", height: "290px" }} // Ukuran tetap
               />
             </div>
           </div>
