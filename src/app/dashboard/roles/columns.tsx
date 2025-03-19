@@ -2,10 +2,21 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { ArrowUpDown, Pencil, Trash } from "lucide-react";
+import { ArrowUpDown, Pencil, Trash, MoreHorizontal } from "lucide-react";
 import { Role } from "@/types/role";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-export const columns: ColumnDef<Role>[] = [
+interface ColumnsProps {
+  onEdit: (role: Role) => void;
+  onDelete: (role: Role) => void;
+}
+
+export const columns = ({ onEdit, onDelete }: ColumnsProps): ColumnDef<Role>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -28,18 +39,14 @@ export const columns: ColumnDef<Role>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "id",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="px-0"
-      >
-        ID
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
-    cell: ({ row }) => <div className="font-medium">{row.getValue("id")}</div>,
+    id: "no",
+    header: "No",
+    cell: ({ row, table }) => {
+      const pageSize = table.getState().pagination.pageSize;
+      const pageIndex = table.getState().pagination.pageIndex;
+      return <div className="font-medium">{pageIndex * pageSize + row.index + 1}</div>;
+    },
+    enableSorting: false,
   },
   {
     accessorKey: "name",
@@ -114,26 +121,29 @@ export const columns: ColumnDef<Role>[] = [
   },
   {
     id: "actions",
-    header: "Actions",
-    cell: ({ row }) => (
-      <div className="flex space-x-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => console.log(`Edit role: ${row.original.id}`)}
-        >
-          <Pencil />
-        </Button>
-        <Button
-          variant="destructive"
-          size="sm"
-          onClick={() => console.log(`Delete role: ${row.original.id}`)}
-        >
-          <Trash  />
-        </Button>
-      </div>
-    ),
-    enableSorting: false,
-    enableHiding: false,
+    cell: ({ row }) => {
+      const role = row.original;
+
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Open menu</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => onEdit(role)}>
+              <Pencil className="mr-2 h-4 w-4" />
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onDelete(role)}>
+              <Trash className="mr-2 h-4 w-4" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    },
   },
 ];

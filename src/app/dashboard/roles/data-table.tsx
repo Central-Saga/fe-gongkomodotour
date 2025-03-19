@@ -28,17 +28,19 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, ChevronDown } from 'lucide-react';
+import { ChevronDown, Plus } from 'lucide-react';
 import { useState } from "react";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  onCreate: () => void;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  onCreate,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -107,15 +109,15 @@ export function DataTable<TData, TValue>({
               onClick={() =>
                 console.log(
                   "Delete selected rows:",
-                  table.getSelectedRowModel().rows.map((row) => row.original.id)
+                  table.getSelectedRowModel().rows.map((row) => (row.original as any).id)
                 )
               }
             >
               Delete Selected ({table.getSelectedRowModel().rows.length})
             </Button>
           )}
-          <Button onClick={() => console.log("Add new role")}>
-            <Plus />
+          <Button onClick={onCreate}>
+            <Plus className="mr-2 h-4 w-4" />
             Add Role
           </Button>
         </div>
