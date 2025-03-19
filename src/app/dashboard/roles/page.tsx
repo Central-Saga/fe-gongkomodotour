@@ -4,11 +4,11 @@ import { Role, ApiResponse } from '@/types/role';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default async function Dashboard() {
-  const response: ApiResponse<Role> = await apiRequest<ApiResponse<Role>>(
-    'GET',
-    '/api/index-users'
-  );
-  const roles: Role = response.data;
+  // const response: ApiResponse<Role> = await apiRequest<ApiResponse<Role>>(
+  //   'GET',
+  //   '/api/roles'
+  // );
+  // const roles: Role = response.data;
 
   return (
     <div className="container mx-auto p-4">
