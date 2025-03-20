@@ -76,6 +76,12 @@ export default function LoginPage() {
       if (response.access_token) {
         document.cookie = `access_token=${response.access_token}; path=/`;
         document.cookie = `token_type=${response.token_type}; path=/`;
+        
+        // Simpan data user ke localStorage
+        localStorage.setItem('user', JSON.stringify({
+          name: response.user.name,
+          email: response.user.email
+        }));
       }
       
       // Jika login berhasil, redirect ke halaman dashboard

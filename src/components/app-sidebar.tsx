@@ -11,6 +11,7 @@ import {
   SquareTerminal,
   Users,
   Shield,
+  SquareUserRound
 } from "lucide-react"
 import Image from 'next/image'
 import logo from '../../public/img/logo.png';
@@ -147,10 +148,28 @@ const data = {
       url: "/dashboard/roles",
       icon: Shield,
     },
+    {
+      name: "Customers",
+      url: "/dashboard/customers",
+      icon: SquareUserRound,
+    },
   ],
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const [user, setUser] = React.useState<{
+    name: string;
+    email: string;
+  } | null>(null);
+
+  React.useEffect(() => {
+    // Ambil data user dari localStorage
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      setUser(JSON.parse(userData));
+    }
+  }, []);
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader className="flex items-center justify-center">
@@ -161,7 +180,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavAdmin adminAccess={data.adminAccess} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        {user && <NavUser user={{ ...user, avatar: '' }} />}
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
