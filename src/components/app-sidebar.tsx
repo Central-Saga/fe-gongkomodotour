@@ -52,7 +52,7 @@ const data = {
   ],
   navMain: [
     {
-      title: "Playground",
+      title: "Trips",
       url: "#",
       icon: SquareTerminal,
       isActive: true,
@@ -72,7 +72,7 @@ const data = {
       ],
     },
     {
-      title: "Models",
+      title: "Boats",
       url: "#",
       icon: Bot,
       items: [
@@ -91,7 +91,7 @@ const data = {
       ],
     },
     {
-      title: "Documentation",
+      title: "Transaction",
       url: "#",
       icon: BookOpen,
       items: [
@@ -114,7 +114,30 @@ const data = {
       ],
     },
     {
-      title: "Settings",
+      title: "Hotels",
+      url: "#",
+      icon: Settings2,
+      items: [
+        {
+          title: "General",
+          url: "#",
+        },
+        {
+          title: "Team",
+          url: "#",
+        },
+        {
+          title: "Billing",
+          url: "#",
+        },
+        {
+          title: "Limits",
+          url: "#",
+        },
+      ],
+    },
+    {
+      title: "Gallery",
       url: "#",
       icon: Settings2,
       items: [

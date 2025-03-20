@@ -172,7 +172,7 @@ export default function LoginPage() {
                     </FormItem>
                   )}
                 />
-                <a href="#" className="text-sm text-blue-600 hover:underline">
+                <a href="/auth/register" className="text-sm text-blue-600 hover:underline">
                   Forget Password?
                 </a>
               </div>
@@ -189,7 +189,7 @@ export default function LoginPage() {
               {/* Sign Up Link */}
               <p className="text-center text-sm text-gray-600">
                 I&apos;m a new user{' '}
-                <a href="#" className="text-blue-600 hover:underline">
+                <a href="/auth/register" className="text-blue-600 hover:underline">
                   Sign Up
                 </a>
               </p>
