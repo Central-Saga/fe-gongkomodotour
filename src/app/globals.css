@@ -123,4 +123,22 @@
   body {
     @apply bg-background text-foreground;
   }
+  
 }
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none; /* IE dan Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+  .no-arrow {
+    position: relative;
+  }
+  .no-arrow::before,
+  .no-arrow::after {
+    display: none !important; /* Menghilangkan panah bawaan */
+  }
+}
+

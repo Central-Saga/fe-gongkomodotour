@@ -48,7 +48,7 @@ export default function WhyChooseUs() {
           {reasons.map((reason, index) => (
             <div
               key={index}
-              className="bg-white p-6 shadow-md rounded-lg border border-gray-100 flex flex-col items-start"
+              className="bg-white p-6 shadow-md rounded-lg border border-gray-100 flex flex-col items-center"
             >
               {/* Placeholder untuk Ikon */}
               <div className="w-8 h-8 bg-gray-200 rounded-full mb-3"></div>
@@ -57,7 +57,7 @@ export default function WhyChooseUs() {
               >
                 {reason.title}
               </h3>
-              <p className="text-gray-600 text-sm">{reason.description}</p>
+              <p className="text-gray-600 text-sm items-center">{reason.description}</p>
             </div>
           ))}
         </div>

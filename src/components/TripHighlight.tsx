@@ -73,7 +73,7 @@ export default function TripHighlight() {
         </div>
         <div className="text-center mt-8">
           <Link href="/trip">
-          <button className="bg-yellow-500 text-white px-6 py-2 rounded-full hover:bg-yellow-600 transition-colors">
+          <button className="bg-[#CFB53B] text-white px-6 py-3 rounded-lg font-semibold text-sm hover:bg-[#7F6D1F] hover:scale-95 transition-all duration-300">
             See more
           </button>
           </Link>

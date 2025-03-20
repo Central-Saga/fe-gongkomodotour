@@ -45,7 +45,7 @@ export default function Gallery() {
   };
 
   return (
-    <section className="py-5 bg-gray-100">
+    <section className="py-18 bg-gray-100">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Kolom Kiri: Video Canvas dengan Judul dan Deskripsi */}
@@ -106,7 +106,7 @@ export default function Gallery() {
         <div className="flex justify-center mt-8">
           <Link href="/gallery">
           <Button
-          className="bg-[#f4d03f] text-white px-6 py-5 rounded-lg font-semibold text-sm hover:bg-[#d4a017] hover:scale-95 transition-all duration-300"
+          className="bg-[#CFB53B] text-white px-6 py-5 rounded-lg font-semibold text-sm hover:bg-[#7F6D1F] hover:scale-95 transition-all duration-300"
           >See More</Button>
           </Link>
         </div>

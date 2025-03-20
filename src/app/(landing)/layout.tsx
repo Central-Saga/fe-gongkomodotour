@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import LandingHeader from "@/components/LandingHeader";
 import Image from "next/image";
+import { FaFacebookF, FaInstagram, FaTwitter } from "react-icons/fa"; // Menggunakan ikon dari react-icons
 
 interface LandingLayoutProps {
   children: ReactNode;
@@ -14,13 +15,13 @@ export default function LandingLayout({ children }: LandingLayoutProps) {
       <footer className="bg-gray-600 text-white py-8 border-t border-b-2 border-gray-600">
         <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Kolom 1: Logo dan Ikon Media Sosial */}
-          <div className="flex flex-col items-center md:items-start">
+          <div className="flex flex-col items-center md:items-start ">
             <Image
               src="/img/logo.png"
               alt="Gong Komodo Tour Logo"
               width={180}
-              height={48}
-              className="h-12 w-auto mb-4"
+              height={100}
+              className="h-19 w-auto mb-4"
             />
             <div className="flex gap-4">
               <a
@@ -29,15 +30,15 @@ export default function LandingLayout({ children }: LandingLayoutProps) {
                 rel="noopener noreferrer"
                 className="w-8 h-8 flex items-center justify-center rounded-full bg-white text-gray-800"
               >
-                f
+                <FaFacebookF className="w-5 h-5" />
               </a>
               <a
-                href="https://instagram.com"
+                href="https://www.instagram.com/gongkomodo/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-8 h-8 flex items-center justify-center rounded-full bg-white text-gray-800"
               >
-                i
+                <FaInstagram className="w-5 h-5" />
               </a>
               <a
                 href="https://twitter.com"
@@ -45,13 +46,13 @@ export default function LandingLayout({ children }: LandingLayoutProps) {
                 rel="noopener noreferrer"
                 className="w-8 h-8 flex items-center justify-center rounded-full bg-white text-gray-800"
               >
-                t
+                <FaTwitter className="w-5 h-5" />
               </a>
             </div>
           </div>
           {/* Kolom 2: Company */}
           <div>
-            <h3 className="font-semibold mb-2">company</h3>
+            <h3 className="font-semibold mb-2 uppercase">Company</h3>
             <ul className="space-y-2">
               <li>
                 <a href="/about" className="hover:underline">
@@ -62,7 +63,7 @@ export default function LandingLayout({ children }: LandingLayoutProps) {
           </div>
           {/* Kolom 3: Service */}
           <div>
-            <h3 className="font-semibold mb-2">service</h3>
+            <h3 className="font-semibold mb-2 uppercase">Service</h3>
             <ul className="space-y-2">
               <li>
                 <a href="/open-trip" className="hover:underline">
@@ -88,7 +89,7 @@ export default function LandingLayout({ children }: LandingLayoutProps) {
           </div>
           {/* Kolom 4: Legal */}
           <div>
-            <h3 className="font-semibold mb-2">legal</h3>
+            <h3 className="font-semibold mb-2 uppercase">Legal</h3>
             <ul className="space-y-2">
               <li>
                 <a href="/terms" className="hover:underline">
@@ -103,7 +104,7 @@ export default function LandingLayout({ children }: LandingLayoutProps) {
             </ul>
           </div>
         </div>
-        <div className="mt-6 border-t border-gray-100"></div> {/* Garis di atas copyright */}
+        <div className="mt-25 border-t border-gray-100"></div>
         <p className="text-left mt-4 text-white pl-4">
           Copy Right © Central Saga
         </p>
