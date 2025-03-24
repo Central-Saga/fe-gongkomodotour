@@ -21,7 +21,7 @@ export default function AboutUs() {
               repudiandae accusamus eum ex quidem ratione?
             </p>
             <Link href="/about">
-              <button className="bg-[#CFB53B] text-white px-6 py-2 rounded-xl hover:bg-[#7F6D1F] transition-colors">
+              <button className="bg-[#CFB53B] text-white px-6 py-3 rounded-xl hover:bg-[#7F6D1F] transition-colors">
                 Read more
               </button>
             </Link>

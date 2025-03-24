@@ -26,14 +26,14 @@ const FAQ: React.FC<FAQProps> = () => {
   const faqsKanan: FAQItem[] = faqs.slice(3, 6);
 
   return (
-    <section className="py-10 bg-background">
+    <section className="py-10 bg-background" >
       <div className="container mx-auto px-4">
         <div className="text-center mb-6">
           <h2 className="text-3xl font-bold text-foreground">Hight Light Question (FAQ)</h2>
           <p className="text-muted-foreground mt-2">Frequently Asked Questions</p>
         </div>
         <Accordion type="single" collapsible className="w-full">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-5">
             {/* Kolom Kiri */}
             <div className="space-y-4">
               {faqsKiri.map((faq, index) => (
@@ -45,7 +45,9 @@ const FAQ: React.FC<FAQProps> = () => {
                       aria-hidden
                     />
                   </AccordionTrigger>
-                  <AccordionContent className="p-4 text-muted-foreground bg-card rounded-b-lg">
+                  <AccordionContent
+                    className="p-4 text-muted-foreground bg-card rounded-b-lg overflow-hidden transition-all duration-500 ease-in-out data-[state=open]:animate-slideDown data-[state=closed]:animate-slideUp"
+                  >
                     {faq.answer}
                   </AccordionContent>
                 </AccordionItem>
@@ -62,7 +64,9 @@ const FAQ: React.FC<FAQProps> = () => {
                       aria-hidden
                     />
                   </AccordionTrigger>
-                  <AccordionContent className="p-4 text-muted-foreground bg-card rounded-b-lg">
+                  <AccordionContent
+                    className="p-4 text-muted-foreground bg-card rounded-b-lg overflow-hidden transition-all duration-500 ease-in-out data-[state=open]:animate-slideDown data-[state=closed]:animate-slideUp"
+                  >
                     {faq.answer}
                   </AccordionContent>
                 </AccordionItem>

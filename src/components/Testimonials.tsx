@@ -100,10 +100,10 @@ export default function Testimoni() {
 
   return (
     <section
-      className="py-25 bg-cover bg-center w-full" // Mengatur section menjadi full-width
+      className="py-30  bg-cover bg-center  w-full" // Mengatur section menjadi full-width
       style={{ backgroundImage: "url('/img/bgtestimonial.jpg')" }}
     >
-      <div className="pl-10 pr-0"> {/* Padding hanya di sisi kiri */}
+      <div className="pl-10 pr-0 pt-30"> {/* Padding hanya di sisi kiri */}
         <h2 className="text-2xl font-semibold  text-[#f5f5f5] mb-2">New Latest</h2>
         <div
           ref={scrollContainerRef}
@@ -139,7 +139,7 @@ export default function Testimoni() {
                   alt={testimoni.nama}
                   width={40}
                   height={40}
-                  className="w-10 h-10 rounded-full mr-3"
+                  className="w-10 h-10 rounded-full mr-3 "
                   onDragStart={handleImageDragStart} // Mencegah drag default pada gambar
                 />
                 <div>

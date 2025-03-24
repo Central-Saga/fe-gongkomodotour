@@ -22,19 +22,19 @@ export default function LandingHeader() {
           <NavigationMenu>
             <NavigationMenuList className="flex space-x-4">
               <NavigationMenuItem>
-                <NavigationMenuLink href="#">Home</NavigationMenuLink>
+                <NavigationMenuLink href="/">Home</NavigationMenuLink>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <NavigationMenuLink href="#">Packages</NavigationMenuLink>
+                <NavigationMenuLink href="/paket">Packages</NavigationMenuLink>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <NavigationMenuLink href="#">Gallery</NavigationMenuLink>
+                <NavigationMenuLink href="/gallery">Gallery</NavigationMenuLink>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <NavigationMenuLink href="#">Blog</NavigationMenuLink>
+                <NavigationMenuLink href="/blog">Blog</NavigationMenuLink>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <NavigationMenuLink href="#">About Us</NavigationMenuLink>
+                <NavigationMenuLink href="/about-us">About Us</NavigationMenuLink>
               </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>
