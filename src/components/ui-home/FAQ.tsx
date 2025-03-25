@@ -26,7 +26,7 @@ const FAQ: React.FC<FAQProps> = () => {
   const faqsKanan: FAQItem[] = faqs.slice(3, 6);
 
   return (
-    <section className="py-10 bg-background" >
+    <section className="py-30 bg-background" >
       <div className="container mx-auto px-4">
         <div className="text-center mb-6">
           <h2 className="text-3xl font-bold text-foreground">Hight Light Question (FAQ)</h2>
