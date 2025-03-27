@@ -53,7 +53,7 @@ export default function OpenTrip() {
           src="/img/heroopen.png"
           alt="Open Trip Hero"
           fill
-          className="object-contain object-center"
+          className="object-cover object-center"
           quality={100}
           priority
         />

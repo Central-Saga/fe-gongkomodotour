@@ -1,10 +1,8 @@
 import React from 'react';
+import About from '@/components/ui-about/About';
 
 export default function AboutUsPage() {
   return (
-    <div>
-      <h1>About Us</h1>
-      <p>Welcome to our about us page.</p>
-    </div>
+    <About />
   );
 }

@@ -1,3 +1,4 @@
+// components/ui/TripHighlight.tsx
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -36,28 +37,32 @@ const customStyles = `
 export default function TripHighlight() {
   const highlights = [
     {
+      id: "stunning-flores-overland",
       image: "/img/benavillage.png",
       title: "Stunning Flores Overland",
       type: "Open Trip",
-      link: "/trip/stunning-flores-overland", // Link spesifik untuk trip ini
+      tripType: "open-trip",
     },
     {
+      id: "full-day-trip-speed-boat",
       image: "/img/kelorisland.png",
-      title: "Full Day Trip by Speed Boar",
+      title: "Full Day Trip by Speed Boat",
       type: "Private Trip",
-      link: "/trip/full-day-trip-speed-boar", // Link spesifik untuk trip ini
+      tripType: "private-trip",
     },
     {
+      id: "sailing-komodo-tour",
       image: "/img/komodoisland.png",
       title: "Sailing Komodo Tour",
       type: "Open Trip",
-      link: "/trip/sailing-komodo-tour", // Link spesifik untuk trip ini
+      tripType: "open-trip",
     },
     {
+      id: "explore-waerebo",
       image: "/img/waerebovillage.png",
       title: "Explore Waerebo",
       type: "Private Trip",
-      link: "/trip/explore-waerebo", // Link spesifik untuk trip ini
+      tripType: "private-trip",
     },
   ];
 
@@ -74,7 +79,10 @@ export default function TripHighlight() {
             const [isHovered, setIsHovered] = useState(false);
 
             return (
-              <Link key={index} href={highlight.link}>
+              <Link
+                key={index}
+                href={`/detail-paket/${highlight.tripType === "open-trip" ? "open-trip" : "private-trip"}?id=${highlight.id}`}
+              >
                 <Card
                   className="custom-card rounded-tr-sm overflow-hidden cursor-pointer"
                   onMouseEnter={() => setIsHovered(true)}
@@ -91,7 +99,11 @@ export default function TripHighlight() {
                         isHovered ? "opacity-65 bg-black" : "opacity-0"
                       }`}
                     />
-                    <div className="absolute top-5 left-5 bg-[#CFB53B] text-white text-xs font-semibold px-3 py-2 rounded">
+                    <div
+                      className={`absolute top-5 left-5 ${
+                        highlight.type === "Open Trip" ? "bg-[#19BC4F]" : "bg-[#E16238]"
+                      } text-white text-xs font-semibold px-3 py-2 rounded`}
+                    >
                       {highlight.type}
                     </div>
 
@@ -123,7 +135,7 @@ export default function TripHighlight() {
           })}
         </div>
         <div className="text-center mt-8">
-          <Link href="/trip">
+          <Link href="/paket/open-trip">
             <button className="bg-[#CFB53B] text-white px-6 py-3 rounded-lg font-semibold text-sm hover:bg-[#7F6D1F] hover:scale-95 transition-all duration-300">
               See more
             </button>
