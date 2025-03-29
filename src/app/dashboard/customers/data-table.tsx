@@ -300,12 +300,12 @@ export function DataTable<TData, TValue>({
               </Button>
             </>
           )}
-          <Button 
-            variant="outline"
+          <Button
+            className="bg-red-500 hover:bg-red-600 text-white transition-colors duration-200"
             onClick={() => exportToPDF(table.getFilteredRowModel().rows.map(row => row.original as Customer))}
           >
             <FileDown className="mr-2 h-4 w-4" />
-            Export Semua
+            Export All
           </Button>
         </div>
       </div>

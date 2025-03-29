@@ -55,8 +55,11 @@ export default function CustomerPage() {
 
   return (
     <div className="container mx-auto p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Customers</h1>
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Customers Management</h1>
+          <p className="text-gray-500 mt-1">Manage customer data and information</p>
+        </div>
       </div>
       <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
         <DataTable 
