@@ -6,17 +6,17 @@ import {
   BookOpen,
   Bot,
   Command,
-  Frame,
   GalleryVerticalEnd,
-  Map,
-  PieChart,
   Settings2,
   SquareTerminal,
+  Users,
+  Shield,
+  SquareUserRound
 } from "lucide-react"
 import Image from 'next/image'
 import logo from '../../public/img/logo.png';
 import { NavMain } from "@/components/nav-main"
-import { NavProjects } from "@/components/nav-projects"
+import { NavAdmin } from "@/components/nav-admin"
 import { NavUser } from "@/components/nav-user"
 import {
   Sidebar,
@@ -52,7 +52,7 @@ const data = {
   ],
   navMain: [
     {
-      title: "Playground",
+      title: "Trips",
       url: "#",
       icon: SquareTerminal,
       isActive: true,
@@ -72,7 +72,7 @@ const data = {
       ],
     },
     {
-      title: "Models",
+      title: "Boats",
       url: "#",
       icon: Bot,
       items: [
@@ -91,7 +91,7 @@ const data = {
       ],
     },
     {
-      title: "Documentation",
+      title: "Transaction",
       url: "#",
       icon: BookOpen,
       items: [
@@ -114,7 +114,30 @@ const data = {
       ],
     },
     {
-      title: "Settings",
+      title: "Hotels",
+      url: "#",
+      icon: Settings2,
+      items: [
+        {
+          title: "General",
+          url: "#",
+        },
+        {
+          title: "Team",
+          url: "#",
+        },
+        {
+          title: "Billing",
+          url: "#",
+        },
+        {
+          title: "Limits",
+          url: "#",
+        },
+      ],
+    },
+    {
+      title: "Gallery",
       url: "#",
       icon: Settings2,
       items: [
@@ -137,26 +160,39 @@ const data = {
       ],
     },
   ],
-  projects: [
+  adminAccess: [
     {
-      name: "Design Engineering",
-      url: "#",
-      icon: Frame,
+      name: "Users",
+      url: "/dashboard/users",
+      icon: Users,
     },
     {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: PieChart,
+      name: "Roles",
+      url: "/dashboard/roles",
+      icon: Shield,
     },
     {
-      name: "Travel",
-      url: "#",
-      icon: Map,
+      name: "Customers",
+      url: "/dashboard/customers",
+      icon: SquareUserRound,
     },
   ],
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const [user, setUser] = React.useState<{
+    name: string;
+    email: string;
+  } | null>(null);
+
+  React.useEffect(() => {
+    // Ambil data user dari localStorage
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      setUser(JSON.parse(userData));
+    }
+  }, []);
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader className="flex items-center justify-center">
@@ -164,10 +200,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        <NavAdmin adminAccess={data.adminAccess} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        {user && <NavUser user={{ ...user, avatar: '' }} />}
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

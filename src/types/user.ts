@@ -1,9 +1,10 @@
-// types/role.ts
-export interface Role {
+export interface User {
   id: number;
   name: string;
-  status: "Aktif" | "Non Aktif";
-  permissions: string[];
+  email: string;
+  role: string;
+  password: string;
+  status: string;
   created_at: string;
   updated_at: string;
 }
@@ -13,3 +14,4 @@ export interface ApiResponse<T> {
   message?: string;
   status: number;
 }
+

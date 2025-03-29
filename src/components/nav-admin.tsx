@@ -1,10 +1,11 @@
 "use client"
 
 import {
-  Folder,
-  Forward,
+  Users,
+  Shield,
   MoreHorizontal,
   Trash2,
+  Edit,
   type LucideIcon,
 } from "lucide-react"
 
@@ -25,10 +26,24 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 
-export function NavProjects({
-  projects,
+// Data admin akses default
+const defaultAdminAccess = [
+  {
+    name: "User Management",
+    url: "/dashboard/users",
+    icon: Users,
+  },
+  {
+    name: "Role Management",
+    url: "/dashboard/roles",
+    icon: Shield,
+  },
+]
+
+export function NavAdmin({
+  adminAccess = defaultAdminAccess,
 }: {
-  projects: {
+  adminAccess?: {
     name: string
     url: string
     icon: LucideIcon
@@ -38,9 +53,9 @@ export function NavProjects({
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel>Projects</SidebarGroupLabel>
+      <SidebarGroupLabel>Admin Akses</SidebarGroupLabel>
       <SidebarMenu>
-        {projects.map((item) => (
+        {adminAccess.map((item) => (
           <SidebarMenuItem key={item.name}>
             <SidebarMenuButton asChild>
               <a href={item.url}>
@@ -61,28 +76,18 @@ export function NavProjects({
                 align={isMobile ? "end" : "start"}
               >
                 <DropdownMenuItem>
-                  <Folder className="text-muted-foreground" />
-                  <span>View Project</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Forward className="text-muted-foreground" />
-                  <span>Share Project</span>
+                  <Edit className="text-muted-foreground" />
+                  <span>Edit {item.name}</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
                   <Trash2 className="text-muted-foreground" />
-                  <span>Delete Project</span>
+                  <span>Delete {item.name}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </SidebarMenuItem>
         ))}
-        <SidebarMenuItem>
-          <SidebarMenuButton className="text-sidebar-foreground/70">
-            <MoreHorizontal className="text-sidebar-foreground/70" />
-            <span>More</span>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
       </SidebarMenu>
     </SidebarGroup>
   )
