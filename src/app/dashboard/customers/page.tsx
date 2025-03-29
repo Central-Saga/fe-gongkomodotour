@@ -58,10 +58,12 @@ export default function CustomerPage() {
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Customers</h1>
       </div>
-      <DataTable 
-        columns={columns({ onDelete: handleDelete })} 
-        data={data}
-      />
+      <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+        <DataTable 
+          columns={columns({ onDelete: handleDelete })} 
+          data={data}
+        />
+      </div>
     </div>
   )
 } 
