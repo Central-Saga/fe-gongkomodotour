@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
+import { Badge } from "@/components/ui/badge";
 interface ColumnsProps {
   onEdit: (user: User) => void;
   onDelete: (user: User) => void;
@@ -88,7 +88,14 @@ export const columns = ({ onEdit, onDelete }: ColumnsProps): ColumnDef<User>[] =
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
-    cell: ({ row }) => <div>{row.getValue("status")}</div>,
+    cell: ({ row }) => {
+      const status = row.getValue("status") as string;
+      return (
+        <Badge className={`${status === "Aktif" ? "bg-emerald-500" : "bg-red-500"} text-white`}>
+          {status}
+        </Badge>
+      );
+    },
   },
   {
     accessorKey: "role",

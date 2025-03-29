@@ -181,22 +181,22 @@ export function DataTable<TData, TValue>({
             onChange={(event) =>
               table.getColumn("name")?.setFilterValue(event.target.value)
             }
-            className="max-w-sm"
+            className="max-w-sm border-gray-200 focus:border-blue-500 focus:ring-blue-500"
           />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="ml-auto">
+              <Button variant="outline" className="ml-auto border-gray-200 hover:bg-gray-50">
                 Columns <ChevronDown className="ml-2 h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="bg-white shadow-lg rounded-lg border border-gray-100">
               {table
                 .getAllColumns()
                 .filter((column) => column.getCanHide())
                 .map((column) => (
                   <DropdownMenuCheckboxItem
                     key={column.id}
-                    className="capitalize"
+                    className="capitalize hover:bg-gray-50 cursor-pointer"
                     checked={column.getIsVisible()}
                     onCheckedChange={(value) => column.toggleVisibility(!!value)}
                   >
@@ -217,11 +217,12 @@ export function DataTable<TData, TValue>({
                     table.getSelectedRowModel().rows.map((row) => (row.original as Role).id)
                   )
                 }
+                className="bg-red-500 hover:bg-red-600 text-white transition-colors duration-200"
               >
                 Delete Selected ({table.getSelectedRowModel().rows.length})
               </Button>
               <Button 
-                variant="outline"
+                className="bg-blue-500 hover:bg-blue-600 text-white transition-colors duration-200"
                 onClick={() => exportToPDF(table.getSelectedRowModel().rows.map(row => row.original as Role))}
               >
                 <FileDown className="mr-2 h-4 w-4" />
@@ -229,12 +230,12 @@ export function DataTable<TData, TValue>({
               </Button>
             </>
           )}
-          <Button onClick={onCreate}>
+          <Button onClick={onCreate} className="bg-yellow-500 hover:bg-yellow-600 text-white transition-colors duration-200">
             <Plus className="mr-2 h-4 w-4" />
             Add Role
           </Button>
           <Button 
-            variant="outline"
+            className="bg-red-500 hover:bg-red-600 text-white transition-colors duration-200"
             onClick={() => exportToPDF(table.getFilteredRowModel().rows.map(row => row.original as Role))}
           >
             <FileDown className="mr-2 h-4 w-4" />
@@ -244,13 +245,13 @@ export function DataTable<TData, TValue>({
       </div>
 
       {/* Table */}
-      <div className="rounded-md border">
+      <div className="rounded-md border border-gray-200">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
+              <TableRow key={headerGroup.id} className="bg-gray-50 rounded-lg hover:bg-gray-50">
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
+                  <TableHead key={header.id} className="text-gray-700 font-semibold">
                     {header.isPlaceholder
                       ? null
                       : flexRender(header.column.columnDef.header, header.getContext())}
@@ -265,9 +266,10 @@ export function DataTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  className="hover:bg-gray-50 transition-colors duration-200"
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell key={cell.id} className="text-gray-700">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
@@ -275,8 +277,8 @@ export function DataTable<TData, TValue>({
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No results.
+                <TableCell colSpan={columns.length} className="h-24 text-center text-gray-500">
+                  No results found.
                 </TableCell>
               </TableRow>
             )}
@@ -285,25 +287,25 @@ export function DataTable<TData, TValue>({
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between px-2 py-4">
-        <div className="text-sm text-muted-foreground">
+      <div className="flex items-center justify-between px-2 py-4 rounded-b-md">
+        <div className="text-sm text-gray-600">
           {table.getFilteredSelectedRowModel().rows.length} of {table.getFilteredRowModel().rows.length} row(s) selected.
         </div>
         <div className="flex items-center gap-x-6">
           <div className="flex items-center gap-x-2">
-            <p className="text-sm font-medium">Rows per page</p>
+            <p className="text-sm font-medium text-gray-700">Rows per page</p>
             <Select
               value={table.getState().pagination.pageSize.toString()}
               onValueChange={(value) => {
                 table.setPageSize(Number(value))
               }}
             >
-              <SelectTrigger className="h-8 w-[70px]">
+              <SelectTrigger className="h-8 w-[70px] border-gray-200">
                 <SelectValue placeholder={table.getState().pagination.pageSize} />
               </SelectTrigger>
-              <SelectContent side="top">
+              <SelectContent side="top" className="bg-white shadow-lg rounded-lg border border-gray-100">
                 {[10, 20, 30, 40, 50].map((pageSize) => (
-                  <SelectItem key={pageSize} value={pageSize.toString()}>
+                  <SelectItem key={pageSize} value={pageSize.toString()} className="hover:bg-gray-50 cursor-pointer">
                     {pageSize}
                   </SelectItem>
                 ))}
@@ -311,14 +313,14 @@ export function DataTable<TData, TValue>({
             </Select>
           </div>
           <div className="flex items-center gap-x-2 lg:gap-x-3">
-            <div className="text-sm whitespace-nowrap">
+            <div className="text-sm text-gray-700 whitespace-nowrap">
               Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
             </div>
             <div className="flex items-center gap-x-1">
               <Button
                 variant="outline"
                 size="icon"
-                className="h-8 w-8"
+                className="h-8 w-8 border-gray-200 hover:bg-gray-50"
                 onClick={() => table.setPageIndex(0)}
                 disabled={!table.getCanPreviousPage()}
               >
@@ -327,7 +329,7 @@ export function DataTable<TData, TValue>({
               <Button
                 variant="outline"
                 size="icon"
-                className="h-8 w-8"
+                className="h-8 w-8 border-gray-200 hover:bg-gray-50"
                 onClick={() => table.previousPage()}
                 disabled={!table.getCanPreviousPage()}
               >
@@ -336,7 +338,7 @@ export function DataTable<TData, TValue>({
               <Button
                 variant="outline"
                 size="icon"
-                className="h-8 w-8"
+                className="h-8 w-8 border-gray-200 hover:bg-gray-50"
                 onClick={() => table.nextPage()}
                 disabled={!table.getCanNextPage()}
               >
@@ -345,7 +347,7 @@ export function DataTable<TData, TValue>({
               <Button
                 variant="outline"
                 size="icon"
-                className="h-8 w-8"
+                className="h-8 w-8 border-gray-200 hover:bg-gray-50"
                 onClick={() => table.setPageIndex(table.getPageCount() - 1)}
                 disabled={!table.getCanNextPage()}
               >

@@ -4,14 +4,13 @@ import * as React from "react"
 import {
   AudioWaveform,
   BookOpen,
-  Bot,
   Command,
   GalleryVerticalEnd,
   Settings2,
-  SquareTerminal,
   Users,
   Shield,
-  SquareUserRound
+  SquareUserRound,
+  Compass
 } from "lucide-react"
 import Image from 'next/image'
 import logo from '../../public/img/logo.png';
@@ -53,40 +52,17 @@ const data = {
   navMain: [
     {
       title: "Trips",
-      url: "#",
-      icon: SquareTerminal,
+      url: "/dashboard/trips",
+      icon: Compass,
       isActive: true,
       items: [
         {
-          title: "History",
-          url: "#",
+          title: "Trips",
+          url: "/dashboard/trips",
         },
         {
-          title: "Starred",
-          url: "#",
-        },
-        {
-          title: "Settings",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Boats",
-      url: "#",
-      icon: Bot,
-      items: [
-        {
-          title: "Genesis",
-          url: "#",
-        },
-        {
-          title: "Explorer",
-          url: "#",
-        },
-        {
-          title: "Quantum",
-          url: "#",
+          title: "Boats",
+          url: "/dashboard/boats",
         },
       ],
     },

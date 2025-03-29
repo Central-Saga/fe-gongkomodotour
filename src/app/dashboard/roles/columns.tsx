@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 
 interface ColumnsProps {
   onEdit: (role: Role) => void;
@@ -74,7 +75,14 @@ export const columns = ({ onEdit, onDelete }: ColumnsProps): ColumnDef<Role>[] =
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
-    cell: ({ row }) => <div>{row.getValue("status")}</div>,
+    cell: ({ row }) => {
+      const status = row.getValue("status") as string;
+      return (
+        <Badge className={`${status === "Aktif" ? "bg-emerald-500 hover:bg-emerald-600" : "bg-red-500 hover:bg-red-600"} text-white transition-colors duration-200`}>
+          {status}
+        </Badge>
+      );
+    },
   },
   {
     accessorKey: "permissions",
@@ -127,17 +135,23 @@ export const columns = ({ onEdit, onDelete }: ColumnsProps): ColumnDef<Role>[] =
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
+            <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-gray-100 rounded-full transition-colors duration-200">
               <span className="sr-only">Open menu</span>
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onEdit(role)}>
+          <DropdownMenuContent align="end" className="bg-white shadow-lg rounded-lg border border-gray-100">
+            <DropdownMenuItem 
+              onClick={() => onEdit(role)} 
+              className="hover:bg-gray-50 cursor-pointer text-gray-700"
+            >
               <Pencil className="mr-2 h-4 w-4" />
               Edit
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onDelete(role)}>
+            <DropdownMenuItem 
+              onClick={() => onDelete(role)} 
+              className="hover:bg-gray-50 cursor-pointer text-red-600"
+            >
               <Trash className="mr-2 h-4 w-4" />
               Delete
             </DropdownMenuItem>

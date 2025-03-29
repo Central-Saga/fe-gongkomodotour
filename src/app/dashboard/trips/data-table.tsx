@@ -1,6 +1,6 @@
-// app/dashboard/roles/data-table.tsx
-"use client";
+"use client"
 
+import * as React from "react"
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -12,7 +12,8 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from "@tanstack/react-table";
+} from "@tanstack/react-table"
+
 import {
   Table,
   TableBody,
@@ -20,97 +21,106 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+} from "@/components/ui/table"
+
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ChevronDown, Plus, FileDown, ChevronsRight, ChevronRight, ChevronsLeft, ChevronLeft } from 'lucide-react';
-import { useState } from "react";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-import { User } from "@/types/user";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+} from "@/components/ui/dropdown-menu"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { ChevronDown, FileDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
+import { useState } from "react"
+import jsPDF from "jspdf"
+import autoTable from "jspdf-autotable"
+import { Trip } from "@/types/trips"
+
 interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[];
-  data: TData[];
-  onCreate: () => void;
+  columns: ColumnDef<TData, TValue>[]
+  data: TData[]
 }
 
-const exportToPDF = (data: User[]) => {
-  const doc = new jsPDF();
-  const pageWidth = doc.internal.pageSize.getWidth();
+const exportToPDF = (data: Trip[]) => {
+  const doc = new jsPDF()
+  const pageWidth = doc.internal.pageSize.getWidth()
   
   // Add header section (centered)
-  doc.setFontSize(16);
-  doc.setFont("helvetica", "bold");
-  const companyName = "Gong Komodo Tour";
-  const companyNameWidth = doc.getTextWidth(companyName);
-  const companyNameX = (pageWidth - companyNameWidth) / 2;
-  const companyNameY = 20;
-  doc.text(companyName, companyNameX, companyNameY);
+  doc.setFontSize(16)
+  doc.setFont("helvetica", "bold")
+  const companyName = "Gong Komodo Tour"
+  const companyNameWidth = doc.getTextWidth(companyName)
+  const companyNameX = (pageWidth - companyNameWidth) / 2
+  const companyNameY = 20
+  doc.text(companyName, companyNameX, companyNameY)
   
   // Address and phone (centered below company name)
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10)
+  doc.setFont("helvetica", "normal")
   const address = [
     "Jl. Ciung Wanara I No.42, Renon,",
     "Kec. Denpasar Tim., Kota Denpasar,",
     "Bali 80234",
     "0812-3867-588"
-  ];
+  ]
   
-  let yPos = companyNameY + 10;
+  let yPos = companyNameY + 10
   address.forEach(line => {
-    const lineWidth = doc.getTextWidth(line);
-    const lineX = (pageWidth - lineWidth) / 2;
-    doc.text(line, lineX, yPos);
-    yPos += 6;
-  });
+    const lineWidth = doc.getTextWidth(line)
+    const lineX = (pageWidth - lineWidth) / 2
+    doc.text(line, lineX, yPos)
+    yPos += 6
+  })
 
   // Add divider line
-  doc.setLineWidth(0.5);
-  doc.line(14, yPos + 5, pageWidth - 14, yPos + 5);
+  doc.setLineWidth(0.5)
+  doc.line(14, yPos + 5, pageWidth - 14, yPos + 5)
   
   // Add report title (centered)
-  doc.setFontSize(14);
-  doc.setFont("helvetica", "bold");
-  const reportTitle = "Users Report";
-  const reportTitleWidth = doc.getTextWidth(reportTitle);
-  const reportTitleX = (pageWidth - reportTitleWidth) / 2;
-  doc.text(reportTitle, reportTitleX, yPos + 20);
+  doc.setFontSize(14)
+  doc.setFont("helvetica", "bold")
+  const reportTitle = "Trip Report"
+  const reportTitleWidth = doc.getTextWidth(reportTitle)
+  const reportTitleX = (pageWidth - reportTitleWidth) / 2
+  doc.text(reportTitle, reportTitleX, yPos + 20)
   
   // Add generated date (right aligned)
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  const dateText = `Generated on: ${new Date().toLocaleString()}`;
-  doc.text(dateText, pageWidth - 14, yPos + 30, { align: 'right' });
+  doc.setFontSize(10)
+  doc.setFont("helvetica", "normal")
+  const dateText = `Generated on: ${new Date().toLocaleString()}`
+  doc.text(dateText, pageWidth - 14, yPos + 30, { align: 'right' })
   
   // Define the columns for the table
   const tableColumn = [
     "No",
-    "Name",
-    "Email",
+    "Nama Trip",
+    "Tipe Trip",
+    "Jam Mulai",
+    "Jam Selesai",
     "Status",
-    "Role",
     "Created At",
     "Updated At"
-  ];
+  ]
   
   // Map the data to match the columns
   const tableRows = data.map((item, index) => [
     index + 1,
     item.name,
-    item.email,
+    item.type,
+    item.start_time,
+    item.end_time,
     item.status,
-    Array.isArray(item.role) ? item.role.join(", ") : item.role,
     new Date(item.created_at).toLocaleString(),
     new Date(item.updated_at).toLocaleString(),
-  ]);
+  ])
 
   // Generate the table
   autoTable(doc, {
@@ -130,28 +140,32 @@ const exportToPDF = (data: User[]) => {
     },
     columnStyles: {
       0: { halign: 'center' }, // No
-      1: { halign: 'left' },   // Name
-      2: { halign: 'left' },   // Email
-      3: { halign: 'center' }, // Status
-      4: { halign: 'left' },   // Role
-      5: { halign: 'center' }, // Created At
-      6: { halign: 'center' }, // Updated At
+      1: { halign: 'left' },   // Nama Trip
+      2: { halign: 'center' }, // Tipe Trip
+      3: { halign: 'center' }, // Jam Mulai
+      4: { halign: 'center' }, // Jam Selesai
+      5: { halign: 'center' }, // Status
+      6: { halign: 'center' }, // Created At
+      7: { halign: 'center' }, // Updated At
     },
-  });
+  })
 
   // Save the PDF
-  doc.save("users-report.pdf");
-};
+  doc.save("trip-report.pdf")
+}
 
 export function DataTable<TData, TValue>({
   columns,
   data,
-  onCreate,
 }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = useState({});
+  const [sorting, setSorting] = useState<SortingState>([])
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
+  const [rowSelection, setRowSelection] = useState({})
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 10,
+  })
 
   const table = useReactTable({
     data,
@@ -164,13 +178,15 @@ export function DataTable<TData, TValue>({
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    onPaginationChange: setPagination,
     state: {
       sorting,
       columnFilters,
       columnVisibility,
       rowSelection,
+      pagination,
     },
-  });
+  })
 
   return (
     <div>
@@ -178,7 +194,7 @@ export function DataTable<TData, TValue>({
       <div className="flex items-center justify-between py-4">
         <div className="flex items-center space-x-2">
           <Input
-            placeholder="Filter by name..."
+            placeholder="Filter berdasarkan nama..."
             value={(table.getColumn("name")?.getFilterValue() as string) || ""}
             onChange={(event) =>
               table.getColumn("name")?.setFilterValue(event.target.value)
@@ -188,23 +204,31 @@ export function DataTable<TData, TValue>({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="ml-auto">
-                Columns <ChevronDown className="ml-2 h-4 w-4" />
+                Kolom <ChevronDown className="ml-2 h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               {table
                 .getAllColumns()
                 .filter((column) => column.getCanHide())
-                .map((column) => (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                  >
-                    {column.id}
-                  </DropdownMenuCheckboxItem>
-                ))}
+                .map((column) => {
+                  const columnLabels: Record<string, string> = {
+                    name: "Nama Trip",
+                    type: "Tipe Trip",
+                    start_time: "Jam Mulai",
+                    end_time: "Jam Selesai",
+                    status: "Status"
+                  }
+                  return (
+                    <DropdownMenuCheckboxItem
+                      key={column.id}
+                      checked={column.getIsVisible()}
+                      onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                    >
+                      {columnLabels[column.id] || column.id}
+                    </DropdownMenuCheckboxItem>
+                  )
+                })}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -216,46 +240,45 @@ export function DataTable<TData, TValue>({
                 onClick={() =>
                   console.log(
                     "Delete selected rows:",
-                    table.getSelectedRowModel().rows.map((row) => (row.original as User).id)
+                    table.getSelectedRowModel().rows.map((row) => (row.original as Trip).id)
                   )
                 }
               >
-                Delete Selected ({table.getSelectedRowModel().rows.length})
+                Hapus Terpilih ({table.getSelectedRowModel().rows.length})
               </Button>
               <Button 
                 variant="outline"
-                onClick={() => exportToPDF(table.getSelectedRowModel().rows.map(row => row.original as User))}
+                onClick={() => exportToPDF(table.getSelectedRowModel().rows.map(row => row.original as Trip))}
               >
                 <FileDown className="mr-2 h-4 w-4" />
-                Export Selected ({table.getSelectedRowModel().rows.length})
+                Export Terpilih ({table.getSelectedRowModel().rows.length})
               </Button>
             </>
           )}
-          <Button onClick={onCreate} className="bg-yellow-500 hover:bg-yellow-600 text-white">
-            <Plus className="mr-2 h-4 w-4" />
-            Add User
-          </Button>
-          <Button
-            className="bg-red-500 hover:bg-red-600 text-white"
-            onClick={() => exportToPDF(table.getFilteredRowModel().rows.map(row => row.original as User))}
+          <Button 
+            variant="outline"
+            onClick={() => exportToPDF(table.getFilteredRowModel().rows.map(row => row.original as Trip))}
           >
             <FileDown className="mr-2 h-4 w-4" />
-            Export All
+            Export Semua
           </Button>
         </div>
       </div>
 
       {/* Table */}
-      <div className="rounded-md border">
+      <div className="rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
+                  <TableHead key={header.id} colSpan={header.colSpan}>
                     {header.isPlaceholder
                       ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                   </TableHead>
                 ))}
               </TableRow>
@@ -270,15 +293,21 @@ export function DataTable<TData, TValue>({
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No results.
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
+                  Tidak ada data.
                 </TableCell>
               </TableRow>
             )}
@@ -358,5 +387,5 @@ export function DataTable<TData, TValue>({
         </div>
       </div>
     </div>
-  );
-}
+  )
+} 
