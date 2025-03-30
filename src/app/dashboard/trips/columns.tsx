@@ -4,16 +4,11 @@ import { ColumnDef } from "@tanstack/react-table"
 import { Trip } from "@/types/trips"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { MoreHorizontal, Trash, ArrowUpDown, ChevronDown, ChevronRight } from "lucide-react"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { ArrowUpDown, ChevronDown, ChevronRight, MoreHorizontal, Trash } from "lucide-react"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 interface ColumnsProps {
-  onDelete: (trip: Trip) => void
+  onDelete: (trip: Trip) => void;
 }
 
 export const columns = ({ onDelete }: ColumnsProps): ColumnDef<Trip>[] => [
@@ -122,9 +117,6 @@ export const columns = ({ onDelete }: ColumnsProps): ColumnDef<Trip>[] => [
     cell: ({ row }) => {
       const status = row.getValue("status") as string
       return (
-        // <Badge variant={status === "Aktif" ? "default" : "destructive"}>
-        //   {status}
-        // </Badge>
         <Badge className={`${status === "Aktif" ? "bg-emerald-500" : "bg-red-500"} text-white`}>
           {status}
         </Badge>
@@ -135,26 +127,23 @@ export const columns = ({ onDelete }: ColumnsProps): ColumnDef<Trip>[] => [
     id: "actions",
     header: () => null,
     cell: ({ row }) => {
-      const trip = row.original
-
+      const trip = row.original;
       return (
-        <div className="text-right">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Buka menu</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onDelete(trip)}>
-                <Trash className="mr-2 h-4 w-4" />
-                Hapus
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      )
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Buka menu</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => onDelete(trip)}>
+              <Trash className="mr-2 h-4 w-4" />
+              Hapus
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
     },
     enableHiding: false,
   },

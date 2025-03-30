@@ -33,6 +33,7 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
+  DropdownMenuItem,
 } from "@/components/ui/dropdown-menu"
 import {
   Select,
@@ -41,7 +42,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { ChevronDown, FileDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Plus } from 'lucide-react'
+import { ChevronDown, FileDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Plus, MoreHorizontal, Pencil, Trash } from 'lucide-react'
 import { useState } from "react"
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
@@ -55,8 +56,8 @@ import {
 import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 
-interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[]
+interface DataTableProps<TData> {
+  columns: ColumnDef<TData, string>[]
   data: TData[]
 }
 
@@ -159,10 +160,10 @@ const exportToPDF = (data: Trip[]) => {
   doc.save("trip-report.pdf")
 }
 
-export function DataTable<TData, TValue>({
+export function DataTable({
   columns,
   data,
-}: DataTableProps<TData, TValue>) {
+}: DataTableProps<Trip>) {
   const router = useRouter()
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -174,9 +175,49 @@ export function DataTable<TData, TValue>({
     pageSize: 10,
   })
 
+  const handleEdit = (trip: Trip) => {
+    router.push(`/dashboard/trips/${trip.id}/edit`)
+  }
+
+  const handleDelete = (trip: Trip) => {
+    console.log("Delete trip:", trip.id)
+  }
+
   const table = useReactTable({
     data,
-    columns,
+    columns: [
+      ...columns.filter(col => col.id !== "actions"),
+      {
+        id: "actions",
+        header: () => null,
+        cell: ({ row }) => {
+          const trip = row.original
+          return (
+            <div className="text-right">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-8 w-8 p-0">
+                    <span className="sr-only">Buka menu</span>
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleEdit(trip)}>
+                    <Pencil className="mr-2 h-4 w-4" />
+                    Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleDelete(trip)}>
+                    <Trash className="mr-2 h-4 w-4" />
+                    Hapus
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )
+        },
+        enableHiding: false,
+      }
+    ],
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -198,7 +239,7 @@ export function DataTable<TData, TValue>({
     },
   })
 
-  const renderSubComponent = ({ row }: { row: Row<TData> }) => {
+  const renderSubComponent = ({ row }: { row: Row<Trip> }) => {
     const trip = row.original as Trip
     return (
       <div className="p-6 bg-muted/50 rounded-lg">

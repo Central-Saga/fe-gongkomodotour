@@ -1,12 +1,15 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, use } from "react"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { toast } from "sonner"
 import { Loader2, Plus, Trash } from "lucide-react"
+import { apiRequest } from "@/lib/api"
+import { Trip } from "@/types/trips"
+import { ApiResponse } from "@/types/role"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -63,7 +66,8 @@ const tripSchema = z.object({
   }))
 })
 
-export default function EditTripPage({ params }: { params: { id: string } }) {
+export default function EditTripPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -100,19 +104,35 @@ export default function EditTripPage({ params }: { params: { id: string } }) {
     const fetchTrip = async () => {
       try {
         setIsLoading(true)
-        const response = await fetch(`/api/trips/${params.id}`)
+        console.log('Fetching trip with ID:', id)
+        const response = await apiRequest<ApiResponse<Trip>>(
+          'GET',
+          `/api/trips/${id}`
+        )
         
-        if (!response.ok) {
-          throw new Error("Gagal mengambil data trip")
+        console.log('Raw API Response:', response)
+
+        if (!response) {
+          throw new Error("Data trip tidak ditemukan")
         }
 
-        const data = await response.json()
+        // Pastikan response memiliki data property
+        if (!response.data) {
+          throw new Error("Format data tidak valid")
+        }
         
-        // Reset form dengan data yang ada
-        form.reset(data)
+        // Validasi data sebelum direset ke form
+        try {
+          const validatedData = tripSchema.parse(response.data)
+          console.log('Validated data:', validatedData)
+          form.reset(validatedData)
+        } catch (validationError) {
+          console.error("Validation error:", validationError)
+          throw new Error("Data trip tidak valid")
+        }
       } catch (error) {
-        toast.error("Gagal mengambil data trip")
-        console.error(error)
+        console.error("Error fetching trip:", error)
+        toast.error(error instanceof Error ? error.message : "Gagal mengambil data trip")
         router.push("/dashboard/trips")
       } finally {
         setIsLoading(false)
@@ -120,30 +140,26 @@ export default function EditTripPage({ params }: { params: { id: string } }) {
     }
 
     fetchTrip()
-  }, [params.id, form, router])
+  }, [id, form, router])
 
   const onSubmit = async (values: z.infer<typeof tripSchema>) => {
     try {
       setIsSubmitting(true)
+      console.log('Updating trip with ID:', id)
+      console.log('Update data:', values)
       
-      const response = await fetch(`/api/trips/${params.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(values),
-      })
-
-      if (!response.ok) {
-        throw new Error("Gagal mengupdate trip")
-      }
+      await apiRequest(
+        'PUT',
+        `/api/trips/${id}`,
+        values
+      )
 
       toast.success("Trip berhasil diupdate")
       router.push("/dashboard/trips")
       router.refresh()
     } catch (error) {
-      toast.error("Gagal mengupdate trip")
-      console.error(error)
+      console.error("Error updating trip:", error)
+      toast.error(error instanceof Error ? error.message : "Gagal mengupdate trip")
     } finally {
       setIsSubmitting(false)
     }
