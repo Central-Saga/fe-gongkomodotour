@@ -41,7 +41,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { ChevronDown, FileDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
+import { ChevronDown, FileDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Plus } from 'lucide-react'
 import { useState } from "react"
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
@@ -52,6 +52,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { useRouter } from "next/navigation"
+import { Badge } from "@/components/ui/badge"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -161,6 +163,7 @@ export function DataTable<TData, TValue>({
   columns,
   data,
 }: DataTableProps<TData, TValue>) {
+  const router = useRouter()
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
@@ -218,7 +221,7 @@ export function DataTable<TData, TValue>({
                   </div>
                 </div>
                 <div>
-                  <p className="text-gray-600 font-medium mb-2">Note:</p>
+                  <p className="text-gray-600 font-medium mb-2">Catatan:</p>
                   <div className="bg-gray-50 p-3 rounded-md">
                     <p className="text-gray-800 whitespace-pre-wrap break-words">{trip.note}</p>
                   </div>
@@ -242,13 +245,13 @@ export function DataTable<TData, TValue>({
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-gray-600 font-medium mb-2">Start Time:</p>
+                    <p className="text-gray-600 font-medium mb-2">Waktu Mulai:</p>
                     <div className="bg-gray-50 p-3 rounded-md">
                       <p className="text-gray-800">{trip.start_time}</p>
                     </div>
                   </div>
                   <div>
-                    <p className="text-gray-600 font-medium mb-2">End Time:</p>
+                    <p className="text-gray-600 font-medium mb-2">Waktu Selesai:</p>
                     <div className="bg-gray-50 p-3 rounded-md">
                       <p className="text-gray-800">{trip.end_time}</p>
                     </div>
@@ -266,8 +269,8 @@ export function DataTable<TData, TValue>({
                 <div key={index} className="bg-gray-50 p-4 rounded-md">
                   <div className="flex flex-col">
                     <p className="font-medium text-gray-800 mb-2 text-base inline-flex items-center">
-                      <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-md mr-2">
-                        Day {itinerary.day_number}
+                      <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-md mr-2">
+                        Hari {itinerary.day_number}
                       </span>
                     </p>
                     <div className="bg-white p-3 rounded-md border border-gray-100">
@@ -281,41 +284,219 @@ export function DataTable<TData, TValue>({
 
           {/* Flight Schedules */}
           <div className="bg-white p-6 rounded-lg shadow-sm">
-            <h4 className="font-semibold text-lg mb-4 text-gray-800 border-b pb-2">Flight Schedules</h4>
+            <h4 className="font-semibold text-lg mb-4 text-gray-800 border-b pb-2">Jadwal Penerbangan</h4>
             <div className="grid gap-4 md:grid-cols-2">
               {trip.flight_schedules.map((schedule, index) => (
                 <div key={index} className="bg-gray-50 p-4 rounded-md">
                   <p className="font-medium text-gray-800 mb-3 text-base break-words">{schedule.route}</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <p className="text-gray-600 font-medium">ETD:</p>
-                      <div className="bg-white p-2 rounded border border-gray-100">
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <p className="text-gray-800 break-words line-clamp-2 cursor-help">{schedule.etd_text}</p>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p className="max-w-xs break-words">{schedule.etd_text}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <div>
+                        <p className="text-gray-600 font-medium">ETD Time:</p>
+                        <div className="bg-white p-2 rounded border border-gray-100">
+                          <p className="text-gray-800">{schedule.etd_time}</p>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-gray-600 font-medium">ETD Text:</p>
+                        <div className="bg-white p-2 rounded border border-gray-100">
+                          <p className="text-gray-800">{schedule.etd_text}</p>
+                        </div>
                       </div>
                     </div>
-                    <div className="space-y-1">
-                      <p className="text-gray-600 font-medium">ETA:</p>
-                      <div className="bg-white p-2 rounded border border-gray-100">
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <p className="text-gray-800 break-words line-clamp-2 cursor-help">{schedule.eta_text}</p>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p className="max-w-xs break-words">{schedule.eta_text}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                    <div className="space-y-2">
+                      <div>
+                        <p className="text-gray-600 font-medium">ETA Time:</p>
+                        <div className="bg-white p-2 rounded border border-gray-100">
+                          <p className="text-gray-800">{schedule.eta_time}</p>
+                        </div>
                       </div>
+                      <div>
+                        <p className="text-gray-600 font-medium">ETA Text:</p>
+                        <div className="bg-white p-2 rounded border border-gray-100">
+                          <p className="text-gray-800">{schedule.eta_text}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Trip Durations & Prices */}
+          <div className="bg-white p-6 rounded-lg shadow-sm">
+            <h4 className="font-semibold text-lg mb-4 text-gray-800 border-b pb-2">Durasi & Harga</h4>
+            <div className="space-y-6">
+              {trip.trip_durations.map((duration, index) => (
+                <div key={index} className="bg-gray-50 p-4 rounded-md">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                    <div>
+                      <p className="text-gray-600 font-medium mb-1">Label Durasi:</p>
+                      <div className="bg-white p-2 rounded border border-gray-100">
+                        <p className="text-gray-800">{duration.duration_label}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-gray-600 font-medium mb-1">Jumlah Hari:</p>
+                      <div className="bg-white p-2 rounded border border-gray-100">
+                        <p className="text-gray-800">{duration.duration_days}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-gray-600 font-medium mb-1">Jumlah Malam:</p>
+                      <div className="bg-white p-2 rounded border border-gray-100">
+                        <p className="text-gray-800">{duration.duration_nights}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-gray-600 font-medium mb-1">Status:</p>
+                      <div className="bg-white p-2 rounded border border-gray-100">
+                        <Badge className={`${duration.status === "Aktif" ? "bg-emerald-500" : "bg-red-500"} text-white`}>
+                          {duration.status}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                  {duration.trip_prices.length > 0 && (
+                    <div>
+                      <p className="font-medium text-gray-800 mb-3">Harga per Pax:</p>
+                      <div className="space-y-3">
+                        {duration.trip_prices.map((price, priceIndex) => (
+                          <div key={priceIndex} className="bg-white p-3 rounded-md border border-gray-100">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                              <div>
+                                <p className="text-gray-600 text-sm">Min Pax:</p>
+                                <p className="font-medium">{price.pax_min}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-600 text-sm">Max Pax:</p>
+                                <p className="font-medium">{price.pax_max}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-600 text-sm">Harga per Pax:</p>
+                                <p className="font-medium">{price.price_per_pax}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-600 text-sm">Status:</p>
+                                <Badge className={`${price.status === "Aktif" ? "bg-emerald-500" : "bg-red-500"} text-white`}>
+                                  {price.status}
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Additional Fees */}
+          <div className="bg-white p-6 rounded-lg shadow-sm">
+            <h4 className="font-semibold text-lg mb-4 text-gray-800 border-b pb-2">Biaya Tambahan</h4>
+            <div className="space-y-4">
+              {trip.additional_fees.map((fee, index) => (
+                <div key={index} className="bg-gray-50 p-4 rounded-md">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                    <div>
+                      <p className="text-gray-600 font-medium mb-1">Kategori:</p>
+                      <div className="bg-white p-2 rounded border border-gray-100">
+                        <p className="text-gray-800">{fee.fee_category}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-gray-600 font-medium mb-1">Harga:</p>
+                      <div className="bg-white p-2 rounded border border-gray-100">
+                        <p className="text-gray-800">{fee.price}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-gray-600 font-medium mb-1">Wilayah:</p>
+                      <div className="bg-white p-2 rounded border border-gray-100">
+                        <p className="text-gray-800">{fee.region}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-gray-600 font-medium mb-1">Satuan:</p>
+                      <div className="bg-white p-2 rounded border border-gray-100">
+                        <p className="text-gray-800">{fee.unit}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                      <p className="text-gray-600 font-medium mb-1">Min Pax:</p>
+                      <div className="bg-white p-2 rounded border border-gray-100">
+                        <p className="text-gray-800">{fee.pax_min}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-gray-600 font-medium mb-1">Max Pax:</p>
+                      <div className="bg-white p-2 rounded border border-gray-100">
+                        <p className="text-gray-800">{fee.pax_max}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-gray-600 font-medium mb-1">Tipe Hari:</p>
+                      <div className="bg-white p-2 rounded border border-gray-100">
+                        <p className="text-gray-800">{fee.day_type}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-gray-600 font-medium mb-1">Status:</p>
+                      <div className="bg-white p-2 rounded border border-gray-100">
+                        <Badge className={`${fee.status === "Aktif" ? "bg-emerald-500" : "bg-red-500"} text-white`}>
+                          {fee.status}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Surcharges */}
+          <div className="bg-white p-6 rounded-lg shadow-sm">
+            <h4 className="font-semibold text-lg mb-4 text-gray-800 border-b pb-2">Surcharge</h4>
+            <div className="space-y-4">
+              {trip.surcharges.map((surcharge, index) => (
+                <div key={index} className="bg-gray-50 p-4 rounded-md">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                    <div>
+                      <p className="text-gray-600 font-medium mb-1">Musim:</p>
+                      <div className="bg-white p-2 rounded border border-gray-100">
+                        <p className="text-gray-800">{surcharge.season}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-gray-600 font-medium mb-1">Tanggal Mulai:</p>
+                      <div className="bg-white p-2 rounded border border-gray-100">
+                        <p className="text-gray-800">{surcharge.start_date}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-gray-600 font-medium mb-1">Tanggal Selesai:</p>
+                      <div className="bg-white p-2 rounded border border-gray-100">
+                        <p className="text-gray-800">{surcharge.end_date}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-gray-600 font-medium mb-1">Harga:</p>
+                      <div className="bg-white p-2 rounded border border-gray-100">
+                        <p className="text-gray-800">{surcharge.surcharge_price}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-gray-600 font-medium mb-1">Status:</p>
+                    <div className="bg-white p-2 rounded border border-gray-100">
+                      <Badge className={`${surcharge.status === "Aktif" ? "bg-emerald-500" : "bg-red-500"} text-white`}>
+                        {surcharge.status}
+                      </Badge>
                     </div>
                   </div>
                 </div>
@@ -392,6 +573,13 @@ export function DataTable<TData, TValue>({
               </Button>
             </>
           )}
+          <Button 
+            onClick={() => router.push('/dashboard/trips/create')}
+            className="bg-yellow-500 hover:bg-yellow-600 text-white transition-colors duration-200"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Tambah Trip
+          </Button>
           <Button 
             className="bg-red-500 hover:bg-red-600 text-white transition-colors duration-200"
             variant="outline"

@@ -44,14 +44,14 @@ export interface FlightSchedule {
 export interface AdditionalFee {
   id: number
   trip_id: number
-  fee_category: "Transfer" | "Tiket Masuk" | "Parkir"
-  price: string
-  region: "Domestic" | "Overseas"
-  unit: "per_day" | "per_pax" | "per_day_guide" | "per_5pax"
+  fee_category: string
+  price: number
+  region: "Domestic" | "Overseas" | "Domestic & Overseas"
+  unit: "per_pax" | "per_5pax" | "per_day" | "per_day_guide"
   pax_min: number
   pax_max: number
-  day_type: "Weekend" | "Weekday"
-  is_required: number
+  day_type: "Weekday" | "Weekend" | null
+  is_required: boolean
   status: "Aktif" | "Non Aktif"
   created_at: string
   updated_at: string
@@ -60,10 +60,10 @@ export interface AdditionalFee {
 export interface Surcharge {
   id: number
   trip_id: number
-  season: "High Season" | "Low Season"
+  season: string
   start_date: string
   end_date: string
-  surcharge_price: string
+  surcharge_price: number
   status: "Aktif" | "Non Aktif"
   created_at: string
   updated_at: string
