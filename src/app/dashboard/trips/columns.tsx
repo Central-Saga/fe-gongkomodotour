@@ -3,23 +3,40 @@
 import { ColumnDef } from "@tanstack/react-table"
 import { Trip } from "@/types/trips"
 import { Badge } from "@/components/ui/badge"
-import { format } from "date-fns"
-import { id } from 'date-fns/locale'
 import { Button } from "@/components/ui/button"
-import { MoreHorizontal, Trash } from "lucide-react"
+import { MoreHorizontal, Trash, ArrowUpDown, ChevronDown, ChevronRight } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ArrowUpDown } from "lucide-react"
 
 interface ColumnsProps {
   onDelete: (trip: Trip) => void
 }
 
 export const columns = ({ onDelete }: ColumnsProps): ColumnDef<Trip>[] => [
+  {
+    id: "expander",
+    header: () => null,
+    cell: ({ row }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => row.toggleExpanded()}
+          className="p-0 w-6 h-6"
+        >
+          {row.getIsExpanded() ? (
+            <ChevronDown className="h-4 w-4" />
+          ) : (
+            <ChevronRight className="h-4 w-4" />
+          )}
+        </Button>
+      )
+    },
+    enableHiding: false,
+  },
   {
     id: "select",
     header: ({ table }) => (
@@ -88,40 +105,6 @@ export const columns = ({ onDelete }: ColumnsProps): ColumnDef<Trip>[] => [
           {type}
         </Badge>
       )
-    },
-  },
-  {
-    accessorKey: "start_time",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="px-0"
-      >
-        Jam Mulai
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
-    cell: ({ row }) => {
-      const time = row.getValue("start_time") as string
-      return format(new Date(`2000-01-01 ${time}`), 'HH:mm', { locale: id })
-    },
-  },
-  {
-    accessorKey: "end_time",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="px-0"
-      >
-        Jam Selesai
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
-    cell: ({ row }) => {
-      const time = row.getValue("end_time") as string
-      return format(new Date(`2000-01-01 ${time}`), 'HH:mm', { locale: id })
     },
   },
   {

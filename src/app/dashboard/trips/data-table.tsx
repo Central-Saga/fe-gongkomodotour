@@ -12,6 +12,9 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
+  getExpandedRowModel,
+  Row,
+  ExpandedState,
 } from "@tanstack/react-table"
 
 import {
@@ -43,6 +46,12 @@ import { useState } from "react"
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
 import { Trip } from "@/types/trips"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -103,8 +112,6 @@ const exportToPDF = (data: Trip[]) => {
     "No",
     "Nama Trip",
     "Tipe Trip",
-    "Jam Mulai",
-    "Jam Selesai",
     "Status",
     "Created At",
     "Updated At"
@@ -115,8 +122,6 @@ const exportToPDF = (data: Trip[]) => {
     index + 1,
     item.name,
     item.type,
-    item.start_time,
-    item.end_time,
     item.status,
     new Date(item.created_at).toLocaleString(),
     new Date(item.updated_at).toLocaleString(),
@@ -142,11 +147,9 @@ const exportToPDF = (data: Trip[]) => {
       0: { halign: 'center' }, // No
       1: { halign: 'left' },   // Nama Trip
       2: { halign: 'center' }, // Tipe Trip
-      3: { halign: 'center' }, // Jam Mulai
-      4: { halign: 'center' }, // Jam Selesai
-      5: { halign: 'center' }, // Status
-      6: { halign: 'center' }, // Created At
-      7: { halign: 'center' }, // Updated At
+      3: { halign: 'center' }, // Status
+      4: { halign: 'center' }, // Created At
+      5: { halign: 'center' }, // Updated At
     },
   })
 
@@ -162,6 +165,7 @@ export function DataTable<TData, TValue>({
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
+  const [expanded, setExpanded] = useState<ExpandedState>({})
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
@@ -178,15 +182,150 @@ export function DataTable<TData, TValue>({
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    onExpandedChange: setExpanded,
+    getExpandedRowModel: getExpandedRowModel(),
     onPaginationChange: setPagination,
     state: {
       sorting,
       columnFilters,
       columnVisibility,
       rowSelection,
+      expanded,
       pagination,
     },
   })
+
+  const renderSubComponent = ({ row }: { row: Row<TData> }) => {
+    const trip = row.original as Trip
+    return (
+      <div className="p-6 bg-muted/50 rounded-lg">
+        {/* Informasi Trip */}
+        <div className="space-y-6 max-w-4xl mx-auto">
+          <div className="bg-white p-6 rounded-lg shadow-sm">
+            <h4 className="font-semibold text-lg mb-4 text-gray-800 border-b pb-2">Informasi Trip</h4>
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="space-y-4">
+                <div>
+                  <p className="text-gray-600 font-medium mb-2">Include:</p>
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <p className="text-gray-800 whitespace-pre-wrap break-words">{trip.include}</p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-gray-600 font-medium mb-2">Exclude:</p>
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <p className="text-gray-800 whitespace-pre-wrap break-words">{trip.exclude}</p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-gray-600 font-medium mb-2">Note:</p>
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <p className="text-gray-800 whitespace-pre-wrap break-words">{trip.note}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-gray-600 font-medium mb-2">Meeting Point:</p>
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <p className="text-gray-800 break-words line-clamp-2 cursor-help">{trip.meeting_point}</p>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs break-words">{trip.meeting_point}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-gray-600 font-medium mb-2">Start Time:</p>
+                    <div className="bg-gray-50 p-3 rounded-md">
+                      <p className="text-gray-800">{trip.start_time}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-gray-600 font-medium mb-2">End Time:</p>
+                    <div className="bg-gray-50 p-3 rounded-md">
+                      <p className="text-gray-800">{trip.end_time}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Itinerary */}
+          <div className="bg-white p-6 rounded-lg shadow-sm">
+            <h4 className="font-semibold text-lg mb-4 text-gray-800 border-b pb-2">Itinerary</h4>
+            <div className="space-y-6">
+              {trip.itineraries.map((itinerary, index) => (
+                <div key={index} className="bg-gray-50 p-4 rounded-md">
+                  <div className="flex flex-col">
+                    <p className="font-medium text-gray-800 mb-2 text-base inline-flex items-center">
+                      <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-md mr-2">
+                        Day {itinerary.day_number}
+                      </span>
+                    </p>
+                    <div className="bg-white p-3 rounded-md border border-gray-100">
+                      <p className="text-gray-700 whitespace-pre-wrap leading-relaxed break-words">{itinerary.activities}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Flight Schedules */}
+          <div className="bg-white p-6 rounded-lg shadow-sm">
+            <h4 className="font-semibold text-lg mb-4 text-gray-800 border-b pb-2">Flight Schedules</h4>
+            <div className="grid gap-4 md:grid-cols-2">
+              {trip.flight_schedules.map((schedule, index) => (
+                <div key={index} className="bg-gray-50 p-4 rounded-md">
+                  <p className="font-medium text-gray-800 mb-3 text-base break-words">{schedule.route}</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <p className="text-gray-600 font-medium">ETD:</p>
+                      <div className="bg-white p-2 rounded border border-gray-100">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <p className="text-gray-800 break-words line-clamp-2 cursor-help">{schedule.etd_text}</p>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="max-w-xs break-words">{schedule.etd_text}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-gray-600 font-medium">ETA:</p>
+                      <div className="bg-white p-2 rounded border border-gray-100">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <p className="text-gray-800 break-words line-clamp-2 cursor-help">{schedule.eta_text}</p>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="max-w-xs break-words">{schedule.eta_text}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div>
@@ -215,8 +354,6 @@ export function DataTable<TData, TValue>({
                   const columnLabels: Record<string, string> = {
                     name: "Nama Trip",
                     type: "Tipe Trip",
-                    start_time: "Jam Mulai",
-                    end_time: "Jam Selesai",
                     status: "Status"
                   }
                   return (
@@ -256,11 +393,12 @@ export function DataTable<TData, TValue>({
             </>
           )}
           <Button 
+            className="bg-red-500 hover:bg-red-600 text-white transition-colors duration-200"
             variant="outline"
             onClick={() => exportToPDF(table.getFilteredRowModel().rows.map(row => row.original as Trip))}
           >
             <FileDown className="mr-2 h-4 w-4" />
-            Export Semua
+            Export All
           </Button>
         </div>
       </div>
@@ -287,19 +425,27 @@ export function DataTable<TData, TValue>({
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
+                <React.Fragment key={row.id}>
+                  <TableRow
+                    data-state={row.getIsSelected() && "selected"}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                  {row.getIsExpanded() && (
+                    <TableRow key={`${row.id}-expanded`}>
+                      <TableCell colSpan={row.getVisibleCells().length}>
+                        {renderSubComponent({ row })}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </React.Fragment>
               ))
             ) : (
               <TableRow>
