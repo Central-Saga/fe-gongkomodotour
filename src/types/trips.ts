@@ -69,6 +69,27 @@ export interface Surcharge {
   updated_at: string
 }
 
+export interface TripFile {
+  id: number
+  trip_id: number
+  file_url: string
+  title: string
+  description: string | null
+  is_external: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface TripAsset {
+  id: number
+  title: string
+  description: string | null
+  file_url: string
+  is_external: boolean
+  created_at: string
+  updated_at: string
+}
+
 export interface Trip {
   id: number
   name: string
@@ -88,6 +109,7 @@ export interface Trip {
   trip_durations: TripDuration[]
   additional_fees: AdditionalFee[]
   surcharges: Surcharge[]
+  assets: TripAsset[]
 }
 
 export type TripResponse = Trip[] 

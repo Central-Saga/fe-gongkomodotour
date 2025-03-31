@@ -46,7 +46,7 @@ import { ChevronDown, FileDown, ChevronLeft, ChevronRight, ChevronsLeft, Chevron
 import { useState } from "react"
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
-import { Trip } from "@/types/trips"
+import { Trip, TripAsset } from "@/types/trips"
 import {
   Tooltip,
   TooltipContent,
@@ -55,10 +55,22 @@ import {
 } from "@/components/ui/tooltip"
 import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
+import Image from "next/image"
+import { ImageModal } from "@/components/ui/image-modal"
 
 interface DataTableProps<TData> {
   columns: ColumnDef<TData, string>[]
   data: TData[]
+}
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+
+// Fungsi untuk mendapatkan URL gambar
+const getImageUrl = (fileUrl: string) => {
+  if (fileUrl.startsWith('http')) {
+    return fileUrl
+  }
+  return `${API_URL}${fileUrl}`
 }
 
 const exportToPDF = (data: Trip[]) => {
@@ -170,6 +182,7 @@ export function DataTable({
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
   const [expanded, setExpanded] = useState<ExpandedState>({})
+  const [selectedImage, setSelectedImage] = useState<TripAsset | null>(null)
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
@@ -241,6 +254,7 @@ export function DataTable({
 
   const renderSubComponent = ({ row }: { row: Row<Trip> }) => {
     const trip = row.original as Trip
+    
     return (
       <div className="p-6 bg-muted/50 rounded-lg">
         {/* Informasi Trip */}
@@ -545,6 +559,63 @@ export function DataTable({
             </div>
           </div>
         </div>
+
+        {/* Gambar Trip - Dipindahkan ke bawah */}
+        {trip.assets && trip.assets.length > 0 && (
+          <div className="bg-white p-6 rounded-lg shadow-sm mt-6">
+            <h4 className="font-semibold text-lg mb-4 text-gray-800 border-b pb-2">Gambar Trip</h4>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {trip.assets.map((asset, index) => {
+                const imageUrl = getImageUrl(asset.file_url)
+                return (
+                  <div 
+                    key={index} 
+                    className="space-y-2 cursor-pointer group"
+                    onClick={() => setSelectedImage(asset)}
+                  >
+                    <div className="relative aspect-square rounded-lg overflow-hidden border border-gray-200">
+                      <Image
+                        src={imageUrl}
+                        alt={asset.title || `Gambar ${index + 1}`}
+                        fill
+                        sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 16vw"
+                        className="object-cover transition-transform duration-200 group-hover:scale-105"
+                        onError={(e) => {
+                          console.error(`Error loading image ${index}:`, e)
+                          const target = e.target as HTMLImageElement
+                          target.src = '/placeholder-image.png'
+                        }}
+                        priority={index < 4}
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200" />
+                    </div>
+                    {asset.title && (
+                      <p className="text-sm text-gray-600 text-center truncate" title={asset.title}>
+                        {asset.title}
+                      </p>
+                    )}
+                    {asset.description && (
+                      <p className="text-xs text-gray-500 text-center truncate" title={asset.description}>
+                        {asset.description}
+                      </p>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Image Modal */}
+        {selectedImage && (
+          <ImageModal
+            isOpen={!!selectedImage}
+            onClose={() => setSelectedImage(null)}
+            imageUrl={getImageUrl(selectedImage.file_url)}
+            title={selectedImage.title}
+            description={selectedImage.description || undefined}
+          />
+        )}
       </div>
     )
   }

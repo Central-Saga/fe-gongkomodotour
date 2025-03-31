@@ -26,6 +26,9 @@ import { useState } from "react"
 import { Loader2, Plus, Trash } from "lucide-react"
 import { toast } from "sonner"
 import { apiRequest } from "@/lib/api"
+import { FileUpload } from "@/components/ui/file-upload"
+import { TripFile } from "@/types/trips"
+import { ApiResponse } from "@/types/role"
 
 const tripSchema = z.object({
   name: z.string().min(1, "Nama trip harus diisi"),
@@ -91,6 +94,7 @@ const tripSchema = z.object({
 export default function CreateTripPage() {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [existingFiles, setExistingFiles] = useState<TripFile[]>([])
 
   const defaultValues: z.infer<typeof tripSchema> = {
     name: "",
@@ -147,6 +151,86 @@ export default function CreateTripPage() {
     defaultValues
   })
 
+  const handleFileUpload = async (files: File[], titles: string[], descriptions: string[]) => {
+    try {
+      if (files.length > 0) {
+        // Upload file fisik
+        await handlePhysicalFileUpload(files, titles, descriptions)
+      } else {
+        // Upload URL
+        await handleUrlUpload(titles, descriptions)
+      }
+    } catch (error) {
+      console.error("Error uploading files:", error)
+      toast.error("Gagal mengupload file")
+      throw error
+    }
+  }
+
+  const handlePhysicalFileUpload = async (files: File[], titles: string[], descriptions: string[]) => {
+    const formData = new FormData()
+    formData.append('model_type', 'trip')
+    formData.append('is_external', '0') // 0 untuk false
+    
+    files.forEach((file, index) => {
+      formData.append('files[]', file)
+      formData.append('file_titles[]', titles[index])
+      formData.append('file_descriptions[]', descriptions[index] || '')
+    })
+
+    const response = await apiRequest<ApiResponse<TripFile[]>>(
+      'POST',
+      '/api/assets/multiple',
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    )
+
+    if (response.data) {
+      setExistingFiles(prev => [...prev, ...response.data])
+      toast.success("File berhasil diupload")
+    }
+  }
+
+  const handleUrlUpload = async (urls: string[], descriptions: string[]) => {
+    // Untuk URL, kita kirim sebagai JSON biasa
+    const payload = {
+      model_type: 'trip',
+      is_external: '1', // 1 untuk true
+      file_urls: urls,
+      file_url_titles: urls.map((url) => url.split('/').pop() || url),
+      file_url_descriptions: descriptions
+    }
+
+    const response = await apiRequest<ApiResponse<TripFile[]>>(
+      'POST',
+      '/api/assets/multiple',
+      payload
+    )
+
+    if (response.data) {
+      setExistingFiles(prev => [...prev, ...response.data])
+      toast.success("URL berhasil ditambahkan")
+    }
+  }
+
+  const handleFileDelete = async (fileUrl: string) => {
+    try {
+      await apiRequest(
+        'DELETE',
+        `/api/assets/${encodeURIComponent(fileUrl)}`
+      )
+      setExistingFiles(prev => prev.filter(file => file.file_url !== fileUrl))
+      toast.success("File berhasil dihapus")
+    } catch (error) {
+      console.error("Error deleting file:", error)
+      toast.error("Gagal menghapus file")
+    }
+  }
+
   const onSubmit = async (values: z.infer<typeof tripSchema>) => {
     try {
       setIsSubmitting(true)
@@ -158,6 +242,20 @@ export default function CreateTripPage() {
       )
 
       if (response) {
+        const tripId = (response as ApiResponse<{ id: number }>).data.id
+
+        // Update model_id untuk file yang sudah diupload
+        if (existingFiles.length > 0) {
+          await apiRequest(
+            'PUT',
+            `/api/assets/batch-update`,
+            {
+              file_ids: existingFiles.map(file => file.id),
+              model_id: tripId
+            }
+          )
+        }
+
         toast.success("Trip berhasil dibuat")
         router.push("/dashboard/trips")
         router.refresh()
@@ -1248,16 +1346,31 @@ export default function CreateTripPage() {
 
                 {/* Action Buttons */}
                 <div className="flex justify-end gap-4 pt-6 border-t">
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Simpan
+                  </Button>
+                </div>
+
+                {/* File Upload Section */}
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900 mb-6">Gambar Trip</h2>
+                  <FileUpload
+                    onUpload={handleFileUpload}
+                    onDelete={handleFileDelete}
+                    existingFiles={existingFiles}
+                    maxFiles={5}
+                    maxSize={2 * 1024 * 1024} // 2MB
+                  />
+                </div>
+
+                <div className="flex justify-end gap-4 pt-6 border-t">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => router.push("/dashboard/trips")}
                   >
                     Batal
-                  </Button>
-                  <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Simpan
                   </Button>
                 </div>
               </div>
