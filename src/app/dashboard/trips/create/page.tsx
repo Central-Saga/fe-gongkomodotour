@@ -50,15 +50,20 @@ const tripSchema = z.object({
   })),
   flight_schedules: z.array(z.object({
     route: z.string().min(1, "Rute harus diisi"),
-    etd_time: z.string()
-      .min(1, "ETD harus diisi")
-      .transform(val => val ? `${val}` : val),
-    eta_time: z.string()
-      .min(1, "ETA harus diisi")
-      .transform(val => val ? `${val}` : val),
+    etd_time: z.string(),
+    eta_time: z.string(),
     etd_text: z.string().optional(),
     eta_text: z.string().optional()
-  })),
+  })).refine((schedules) => {
+    return schedules.every((schedule) => {
+      const hasValidEtd = (schedule.etd_time && schedule.etd_time.length > 0) || (schedule.etd_text && schedule.etd_text.length > 0);
+      const hasValidEta = (schedule.eta_time && schedule.eta_time.length > 0) || (schedule.eta_text && schedule.eta_text.length > 0);
+      return hasValidEtd && hasValidEta;
+    });
+  }, {
+    message: "Setiap jadwal penerbangan harus memiliki waktu atau teks untuk ETD dan ETA",
+    path: ["flight_schedules"]
+  }),
   trip_durations: z.array(z.object({
     duration_label: z.string().min(1, "Label durasi harus diisi"),
     duration_days: z.number().min(1, "Jumlah hari harus diisi"),
@@ -480,17 +485,19 @@ export default function CreateTripPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        const currentSchedules = form.getValues("flight_schedules")
-                        form.setValue("flight_schedules", [
-                          ...currentSchedules,
-                          {
-                            route: "",
-                            etd_time: "",
-                            eta_time: "",
-                            etd_text: "",
-                            eta_text: ""
-                          }
-                        ])
+                        const existingSchedules = form.getValues("flight_schedules") || [];
+                        const newSchedule = {
+                          route: "",
+                          etd_time: "",
+                          eta_time: "",
+                          etd_text: "",
+                          eta_text: ""
+                        };
+                        form.setValue("flight_schedules", [...existingSchedules, newSchedule], {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                          shouldTouch: true
+                        });
                       }}
                     >
                       <Plus className="w-4 h-4 mr-2" />
@@ -499,7 +506,7 @@ export default function CreateTripPage() {
                   </div>
 
                   <div className="space-y-6">
-                    {form.watch("flight_schedules").map((_, index) => (
+                    {form.watch("flight_schedules")?.map((schedule, index) => (
                       <div key={index} className="p-4 bg-gray-50 rounded-lg space-y-4">
                         <div className="flex justify-between items-center">
                           <h3 className="font-medium">Jadwal {index + 1}</h3>
@@ -509,10 +516,15 @@ export default function CreateTripPage() {
                               variant="ghost"
                               size="sm"
                               onClick={() => {
-                                const currentSchedules = form.getValues("flight_schedules")
+                                const schedules = form.getValues("flight_schedules") || [];
                                 form.setValue("flight_schedules", 
-                                  currentSchedules.filter((_, i) => i !== index)
-                                )
+                                  schedules.filter((_, i) => i !== index),
+                                  {
+                                    shouldValidate: true,
+                                    shouldDirty: true,
+                                    shouldTouch: true
+                                  }
+                                );
                               }}
                             >
                               <Trash className="w-4 h-4 text-red-500" />
@@ -539,7 +551,7 @@ export default function CreateTripPage() {
                             name={`flight_schedules.${index}.etd_time`}
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>ETD</FormLabel>
+                                <FormLabel>ETD (Waktu)</FormLabel>
                                 <FormControl>
                                   <Input 
                                     type="time" 
@@ -564,7 +576,7 @@ export default function CreateTripPage() {
                             name={`flight_schedules.${index}.eta_time`}
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>ETA</FormLabel>
+                                <FormLabel>ETA (Waktu)</FormLabel>
                                 <FormControl>
                                   <Input 
                                     type="time" 
@@ -589,9 +601,17 @@ export default function CreateTripPage() {
                             name={`flight_schedules.${index}.etd_text`}
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>ETD Text</FormLabel>
+                                <FormLabel>ETD (Text) - Contoh: H+1</FormLabel>
                                 <FormControl>
-                                  <Input placeholder="H+1" {...field} />
+                                  <Input 
+                                    placeholder="H+1" 
+                                    {...field}
+                                    value={field.value || ""}
+                                    onChange={(e) => {
+                                      const text = e.target.value;
+                                      field.onChange(text);
+                                    }}
+                                  />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -602,9 +622,17 @@ export default function CreateTripPage() {
                             name={`flight_schedules.${index}.eta_text`}
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>ETA Text</FormLabel>
+                                <FormLabel>ETA (Text) - Contoh: H-1</FormLabel>
                                 <FormControl>
-                                  <Input placeholder="H-1" {...field} />
+                                  <Input 
+                                    placeholder="H-1" 
+                                    {...field}
+                                    value={field.value || ""}
+                                    onChange={(e) => {
+                                      const text = e.target.value;
+                                      field.onChange(text);
+                                    }}
+                                  />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>

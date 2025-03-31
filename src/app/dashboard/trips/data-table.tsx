@@ -576,7 +576,7 @@ export function DataTable({
         {trip.assets && trip.assets.length > 0 && (
           <div className="bg-white p-6 rounded-lg shadow-sm mt-6">
             <h4 className="font-semibold text-lg mb-4 text-gray-800 border-b pb-2">Gambar Trip</h4>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {trip.assets.map((asset, index) => {
                 const imageUrl = getImageUrl(asset.file_url)
                 return (
@@ -585,19 +585,19 @@ export function DataTable({
                     className="space-y-2 cursor-pointer group"
                     onClick={() => setSelectedImage(asset)}
                   >
-                    <div className="relative aspect-square rounded-lg overflow-hidden border border-gray-200">
+                    <div className="relative aspect-[4/3] rounded-lg overflow-hidden border border-gray-200">
                       <Image
                         src={imageUrl}
                         alt={asset.title || `Gambar ${index + 1}`}
                         fill
-                        sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 16vw"
+                        sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
                         className="object-cover transition-transform duration-200 group-hover:scale-105"
                         onError={(e) => {
                           console.error(`Error loading image ${index}:`, e)
                           const target = e.target as HTMLImageElement
                           target.src = '/placeholder-image.png'
                         }}
-                        priority={index < 4}
+                        priority={index < 5}
                       />
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200" />
                     </div>
