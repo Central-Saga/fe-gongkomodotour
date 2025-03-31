@@ -60,10 +60,8 @@ export const columns = ({ onDelete }: ColumnsProps): ColumnDef<Trip>[] => [
   {
     id: "no",
     header: "No",
-    cell: ({ row, table }) => {
-      const pageSize = table.getState().pagination.pageSize
-      const pageIndex = table.getState().pagination.pageIndex
-      return <div className="w-[50px] font-medium">{pageIndex * pageSize + row.index + 1}</div>
+    cell: ({ row }) => {
+      return <div className="w-[50px] font-medium">{row.index + 1}</div>
     },
     enableSorting: false,
     enableHiding: false,
