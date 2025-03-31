@@ -28,6 +28,8 @@ export default function TripPage() {
       )
       console.log('Raw API Response:', response)
       console.log('Response data:', response.data)
+      
+      
       setData(response.data || [])
       setError(null)
     } catch (err: unknown) {
@@ -61,13 +63,18 @@ export default function TripPage() {
 
   return (
     <div className="container mx-auto p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Trips</h1>
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Trips Management</h1>
+          <p className="text-gray-500 mt-1">Manage trip data and information</p>
+        </div>
       </div>
-      <DataTable 
-        columns={columns({ onDelete: handleDelete })} 
-        data={data}
-      />
+      <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+        <DataTable 
+          columns={columns({ onDelete: handleDelete })} 
+          data={data}
+        />
+      </div>
     </div>
   )
 } 

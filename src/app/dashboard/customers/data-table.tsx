@@ -300,12 +300,12 @@ export function DataTable<TData, TValue>({
               </Button>
             </>
           )}
-          <Button 
-            variant="outline"
+          <Button
+            className="bg-red-500 hover:bg-red-600 text-white transition-colors duration-200"
             onClick={() => exportToPDF(table.getFilteredRowModel().rows.map(row => row.original as Customer))}
           >
             <FileDown className="mr-2 h-4 w-4" />
-            Export Semua
+            Export All
           </Button>
         </div>
       </div>
@@ -369,8 +369,8 @@ export function DataTable<TData, TValue>({
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between px-2 py-4">
-        <div className="text-sm text-muted-foreground">
+      <div className="flex items-center justify-between px-2 py-4 bg-gray-50 rounded-b-md">
+        <div className="text-sm text-gray-600">
           {table.getFilteredSelectedRowModel().rows.length} of {table.getFilteredRowModel().rows.length} row(s) selected.
         </div>
         <div className="flex items-center gap-x-6">

@@ -287,7 +287,7 @@ export function DataTable<TData, TValue>({
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between px-2 py-4 rounded-b-md">
+      <div className="flex items-center justify-between px-2 py-4 bg-gray-50 rounded-b-md">
         <div className="text-sm text-gray-600">
           {table.getFilteredSelectedRowModel().rows.length} of {table.getFilteredRowModel().rows.length} row(s) selected.
         </div>

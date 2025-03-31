@@ -107,7 +107,7 @@ export default function RolePages() {
           <p className="text-gray-500 mt-1">Manage user roles and permissions</p>
         </div>
       </div>
-      <div className="">
+      <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
         <DataTable 
           columns={columns({ onEdit: handleEdit, onDelete: handleDelete })} 
           data={data}

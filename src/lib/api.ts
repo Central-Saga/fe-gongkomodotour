@@ -79,7 +79,7 @@ interface RequestOptions {
 export const apiRequest = async <T>(
   method: 'GET' | 'POST' | 'PUT' | 'DELETE',
   url: string,
-  data?: Record<string, unknown>,
+  data?: Record<string, unknown> | FormData,
   options?: RequestOptions
 ): Promise<T> => {
   try {
@@ -97,15 +97,17 @@ export const apiRequest = async <T>(
       }
     }
 
+    const headers: HeadersInit = {
+      ...options?.headers,
+      'X-XSRF-TOKEN': decodeURIComponent(xsrfToken),
+      ...(data instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
+    };
+
     const response = await api({
       method,
       url,
       data,
-      ...options,
-      headers: {
-        ...options?.headers,
-        'X-XSRF-TOKEN': decodeURIComponent(xsrfToken),
-      },
+      headers,
     });
 
     console.log('Response:', response.data);

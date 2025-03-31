@@ -52,6 +52,8 @@ const createFormSchema = baseSchema.extend({
   path: ["password_confirmation"],
 })
 
+export const formSchema = createFormSchema;
+
 const editFormSchema = baseSchema.extend({
   password: z.string().min(8, {
     message: "Password must be at least 8 characters.",
