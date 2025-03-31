@@ -36,7 +36,7 @@ const tripSchema = z.object({
   status: z.enum(["Aktif", "Non Aktif"]),
   include: z.string().min(1, "Include harus diisi"),
   exclude: z.string().min(1, "Exclude harus diisi"),
-  note: z.string().optional(),
+  note: z.string().min(1, "Catatan harus diisi"),
   meeting_point: z.string().min(1, "Meeting point harus diisi"),
   start_time: z.string()
     .min(1, "Waktu mulai harus diisi")
@@ -56,8 +56,8 @@ const tripSchema = z.object({
     eta_time: z.string()
       .min(1, "ETA harus diisi")
       .transform(val => val ? `${val}` : val),
-    etd_text: z.string().min(1, "ETD text harus diisi"),
-    eta_text: z.string().min(1, "ETA text harus diisi")
+    etd_text: z.string().optional(),
+    eta_text: z.string().optional()
   })),
   trip_durations: z.array(z.object({
     duration_label: z.string().min(1, "Label durasi harus diisi"),
@@ -67,7 +67,7 @@ const tripSchema = z.object({
     prices: z.array(z.object({
       pax_min: z.number().min(1, "Minimal pax harus diisi"),
       pax_max: z.number().min(1, "Maksimal pax harus diisi"),
-      price_per_pax: z.string().min(1, "Harga per pax harus diisi"),
+      price_per_pax: z.number().min(0, "Harga per pax harus diisi"),
       status: z.enum(["Aktif", "Non Aktif"])
     }))
   })),
@@ -81,14 +81,14 @@ const tripSchema = z.object({
     day_type: z.enum(["Weekday", "Weekend"]).nullable(),
     is_required: z.boolean(),
     status: z.enum(["Aktif", "Non Aktif"])
-  })),
+  })).optional(),
   surcharges: z.array(z.object({
     season: z.string().min(1, "Nama musim harus diisi"),
     start_date: z.string().min(1, "Tanggal mulai harus diisi"),
     end_date: z.string().min(1, "Tanggal selesai harus diisi"),
     surcharge_price: z.number().min(0, "Harga surcharge harus diisi"),
     status: z.enum(["Aktif", "Non Aktif"])
-  }))
+  })).optional()
 })
 
 export default function CreateTripPage() {
@@ -124,28 +124,12 @@ export default function CreateTripPage() {
       prices: [{
         pax_min: 1,
         pax_max: 1,
-        price_per_pax: "",
+        price_per_pax: 0,
         status: "Aktif"
       }]
     }],
-    additional_fees: [{
-      fee_category: "",
-      price: 0,
-      region: "Domestic",
-      unit: "per_day",
-      pax_min: 1,
-      pax_max: 1,
-      day_type: "Weekday",
-      is_required: false,
-      status: "Aktif"
-    }],
-    surcharges: [{
-      season: "",
-      start_date: "",
-      end_date: "",
-      surcharge_price: 0,
-      status: "Aktif"
-    }]
+    additional_fees: undefined,
+    surcharges: undefined
   }
 
   const form = useForm<z.infer<typeof tripSchema>>({
@@ -314,15 +298,12 @@ export default function CreateTripPage() {
                           <FormControl>
                             <Input 
                               type="time" 
-                              step="1"
                               {...field}
-                              value={field.value ? field.value.substring(0, 8) : ""}
+                              value={field.value ? field.value.substring(0, 5) : ""}
                               onChange={(e) => {
                                 const time = e.target.value;
                                 if (time) {
-                                  // Pastikan format waktu selalu HH:mm:ss
-                                  const [hours, minutes] = time.split(':');
-                                  field.onChange(`${hours}:${minutes}:00`);
+                                  field.onChange(`${time}:00`);
                                 } else {
                                   field.onChange("");
                                 }
@@ -343,15 +324,12 @@ export default function CreateTripPage() {
                           <FormControl>
                             <Input 
                               type="time" 
-                              step="1"
                               {...field}
-                              value={field.value ? field.value.substring(0, 8) : ""}
+                              value={field.value ? field.value.substring(0, 5) : ""}
                               onChange={(e) => {
                                 const time = e.target.value;
                                 if (time) {
-                                  // Pastikan format waktu selalu HH:mm:ss
-                                  const [hours, minutes] = time.split(':');
-                                  field.onChange(`${hours}:${minutes}:00`);
+                                  field.onChange(`${time}:00`);
                                 } else {
                                   field.onChange("");
                                 }
@@ -613,7 +591,7 @@ export default function CreateTripPage() {
                               <FormItem>
                                 <FormLabel>ETD Text</FormLabel>
                                 <FormControl>
-                                  <Input placeholder="Terminal 3" {...field} />
+                                  <Input placeholder="H+1" {...field} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -626,7 +604,7 @@ export default function CreateTripPage() {
                               <FormItem>
                                 <FormLabel>ETA Text</FormLabel>
                                 <FormControl>
-                                  <Input placeholder="Terminal Domestik" {...field} />
+                                  <Input placeholder="H-1" {...field} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -658,7 +636,7 @@ export default function CreateTripPage() {
                             prices: [{
                               pax_min: 1,
                               pax_max: 2,
-                              price_per_pax: "",
+                              price_per_pax: 0,
                               status: "Aktif"
                             }]
                           }
@@ -779,7 +757,7 @@ export default function CreateTripPage() {
                                   {
                                     pax_min: currentPrices.length > 0 ? currentPrices[currentPrices.length - 1].pax_max + 1 : 1,
                                     pax_max: currentPrices.length > 0 ? currentPrices[currentPrices.length - 1].pax_max + 2 : 2,
-                                    price_per_pax: "",
+                                    price_per_pax: 0,
                                     status: "Aktif"
                                   }
                                 ])
@@ -836,7 +814,15 @@ export default function CreateTripPage() {
                                     <FormItem>
                                       <FormLabel>Harga per Pax</FormLabel>
                                       <FormControl>
-                                        <Input placeholder="Contoh: 1000000" {...field} />
+                                        <Input 
+                                          type="number"
+                                          min="0"
+                                          {...field}
+                                          onChange={(e) => {
+                                            const value = e.target.value === '' ? 0 : Number(e.target.value);
+                                            field.onChange(value);
+                                          }}
+                                        />
                                       </FormControl>
                                       <FormMessage />
                                     </FormItem>
@@ -904,7 +890,7 @@ export default function CreateTripPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        const currentFees = form.getValues("additional_fees")
+                        const currentFees = form.getValues("additional_fees") || []
                         form.setValue("additional_fees", [
                           ...currentFees,
                           {
@@ -927,7 +913,7 @@ export default function CreateTripPage() {
                   </div>
 
                   <div className="space-y-6">
-                    {form.watch("additional_fees").map((fee, fIndex) => (
+                    {(form.watch("additional_fees") || []).map((fee, fIndex) => (
                       <div key={fIndex} className="p-4 bg-gray-50 rounded-lg space-y-6">
                         <div className="flex justify-between items-center">
                           <h3 className="font-medium">Fee {fIndex + 1}</h3>
@@ -937,7 +923,7 @@ export default function CreateTripPage() {
                               variant="ghost"
                               size="sm"
                               onClick={() => {
-                                const currentFees = form.getValues("additional_fees")
+                                const currentFees = form.getValues("additional_fees") || []
                                 form.setValue("additional_fees", 
                                   currentFees.filter((_, i) => i !== fIndex)
                                 )
@@ -1163,7 +1149,7 @@ export default function CreateTripPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        const currentSurcharges = form.getValues("surcharges")
+                        const currentSurcharges = form.getValues("surcharges") || []
                         form.setValue("surcharges", [
                           ...currentSurcharges,
                           {
@@ -1182,7 +1168,7 @@ export default function CreateTripPage() {
                   </div>
 
                   <div className="space-y-6">
-                    {form.watch("surcharges").map((surcharge, sIndex) => (
+                    {(form.watch("surcharges") || []).map((surcharge, sIndex) => (
                       <div key={sIndex} className="p-4 bg-gray-50 rounded-lg space-y-6">
                         <div className="flex justify-between items-center">
                           <h3 className="font-medium">Surcharge {sIndex + 1}</h3>
@@ -1192,7 +1178,7 @@ export default function CreateTripPage() {
                               variant="ghost"
                               size="sm"
                               onClick={() => {
-                                const currentSurcharges = form.getValues("surcharges")
+                                const currentSurcharges = form.getValues("surcharges") || []
                                 form.setValue("surcharges", 
                                   currentSurcharges.filter((_, i) => i !== sIndex)
                                 )
@@ -1254,7 +1240,10 @@ export default function CreateTripPage() {
                                     type="number"
                                     min="0"
                                     {...field}
-                                    onChange={e => field.onChange(parseInt(e.target.value))}
+                                    onChange={(e) => {
+                                      const value = e.target.value === '' ? 0 : Number(e.target.value);
+                                      field.onChange(value);
+                                    }}
                                   />
                                 </FormControl>
                                 <FormMessage />
