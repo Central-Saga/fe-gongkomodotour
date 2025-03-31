@@ -1304,7 +1304,6 @@ export default function CreateTripPage() {
                     onDelete={handleFileDelete}
                     maxFiles={5}
                     maxSize={2 * 1024 * 1024} // 2MB
-                    hideUploadButton={true}
                   />
                 </div>
 

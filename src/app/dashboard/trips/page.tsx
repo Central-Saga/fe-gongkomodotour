@@ -29,10 +29,6 @@ export default function TripPage() {
       console.log('Raw API Response:', response)
       console.log('Response data:', response.data)
       
-      // Log files dari setiap trip
-      response.data.forEach((trip, index) => {
-        console.log(`Trip ${index + 1} files:`, trip.files)
-      })
       
       setData(response.data || [])
       setError(null)
