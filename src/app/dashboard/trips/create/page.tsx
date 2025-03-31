@@ -28,6 +28,7 @@ import { toast } from "sonner"
 import { apiRequest } from "@/lib/api"
 import { FileUpload } from "@/components/ui/file-upload"
 import { ApiResponse } from "@/types/role"
+import { TipTapEditor } from "@/components/ui/tiptap-editor"
 
 const tripSchema = z.object({
   name: z.string().min(1, "Nama trip harus diisi"),
@@ -375,10 +376,10 @@ export default function CreateTripPage() {
                         <FormItem>
                           <FormLabel>Include</FormLabel>
                           <FormControl>
-                            <Textarea 
+                            <TipTapEditor
+                              value={field.value}
+                              onChange={field.onChange}
                               placeholder="Masukkan fasilitas yang termasuk dalam trip"
-                              className="min-h-[100px]"
-                              {...field}
                             />
                           </FormControl>
                           <FormMessage />
@@ -393,10 +394,10 @@ export default function CreateTripPage() {
                         <FormItem>
                           <FormLabel>Exclude</FormLabel>
                           <FormControl>
-                            <Textarea
+                            <TipTapEditor
+                              value={field.value}
+                              onChange={field.onChange}
                               placeholder="Masukkan fasilitas yang tidak termasuk dalam trip"
-                              className="min-h-[100px]"
-                              {...field}
                             />
                           </FormControl>
                           <FormMessage />
@@ -477,10 +478,10 @@ export default function CreateTripPage() {
                             <FormItem>
                               <FormLabel>Aktivitas</FormLabel>
                               <FormControl>
-                                <Textarea
-                                  placeholder="Masukkan detail aktivitas"
-                                  className="min-h-[100px]"
-                                  {...field}
+                                <TipTapEditor
+                                  value={field.value}
+                                  onChange={field.onChange}
+                                  placeholder="Masukkan detail aktivitas untuk hari ini"
                                 />
                               </FormControl>
                               <FormMessage />

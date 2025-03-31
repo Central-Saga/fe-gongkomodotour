@@ -172,6 +172,10 @@ const exportToPDF = (data: Trip[]) => {
   doc.save("trip-report.pdf")
 }
 
+function HtmlContent({ html }: { html: string }) {
+  return <div dangerouslySetInnerHTML={{ __html: html }} className="prose max-w-none" />
+}
+
 export function DataTable({
   columns,
   data,
@@ -256,23 +260,27 @@ export function DataTable({
     const trip = row.original as Trip
     
     return (
-      <div className="p-6 bg-muted/50 rounded-lg">
+      <div className="p-4 bg-muted/50 rounded-lg">
         {/* Informasi Trip */}
-        <div className="space-y-6 max-w-4xl mx-auto">
-          <div className="bg-white p-6 rounded-lg shadow-sm">
+        <div className="space-y-4 max-w-5xl mx-auto">
+          <div className="bg-white p-4 rounded-lg shadow-sm">
             <h4 className="font-semibold text-lg mb-4 text-gray-800 border-b pb-2">Informasi Trip</h4>
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-4 lg:grid-cols-2">
               <div className="space-y-4">
                 <div>
                   <p className="text-gray-600 font-medium mb-2">Include:</p>
-                  <div className="bg-gray-50 p-3 rounded-md">
-                    <p className="text-gray-800 whitespace-pre-wrap break-words">{trip.include}</p>
+                  <div className="bg-gray-50 p-3 rounded-md overflow-auto">
+                    <div className="prose prose-sm max-w-none">
+                      <HtmlContent html={trip.include} />
+                    </div>
                   </div>
                 </div>
                 <div>
                   <p className="text-gray-600 font-medium mb-2">Exclude:</p>
-                  <div className="bg-gray-50 p-3 rounded-md">
-                    <p className="text-gray-800 whitespace-pre-wrap break-words">{trip.exclude}</p>
+                  <div className="bg-gray-50 p-3 rounded-md overflow-auto">
+                    <div className="prose prose-sm max-w-none">
+                      <HtmlContent html={trip.exclude} />
+                    </div>
                   </div>
                 </div>
                 <div>
@@ -289,7 +297,7 @@ export function DataTable({
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <p className="text-gray-800 break-words line-clamp-2 cursor-help">{trip.meeting_point}</p>
+                          <p className="text-gray-800 break-words">{trip.meeting_point}</p>
                         </TooltipTrigger>
                         <TooltipContent>
                           <p className="max-w-xs break-words">{trip.meeting_point}</p>
@@ -317,11 +325,11 @@ export function DataTable({
           </div>
 
           {/* Itinerary */}
-          <div className="bg-white p-6 rounded-lg shadow-sm">
+          <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm">
             <h4 className="font-semibold text-lg mb-4 text-gray-800 border-b pb-2">Itinerary</h4>
             <div className="space-y-6">
-              {trip.itineraries.map((itinerary, index) => (
-                <div key={index} className="bg-gray-50 p-4 rounded-md">
+              {trip.itineraries.sort((a, b) => a.day_number - b.day_number).map((itinerary, index) => (
+                <div key={index} className="bg-gray-50 p-3 sm:p-4 rounded-md">
                   <div className="flex flex-col">
                     <p className="font-medium text-gray-800 mb-2 text-base inline-flex items-center">
                       <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-md mr-2">
@@ -329,7 +337,11 @@ export function DataTable({
                       </span>
                     </p>
                     <div className="bg-white p-3 rounded-md border border-gray-100">
-                      <p className="text-gray-700 whitespace-pre-wrap leading-relaxed break-words">{itinerary.activities}</p>
+                      <div className="bg-gray-50 p-3 rounded-md overflow-auto">
+                        <div className="prose prose-sm max-w-none prose-headings:mt-2 prose-p:my-1 prose-ul:my-1 prose-li:my-0.5">
+                          <HtmlContent html={itinerary.activities} />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -621,7 +633,7 @@ export function DataTable({
   }
 
   return (
-    <div>
+    <div className="container mx-auto max-w-7xl">
       {/* Toolbar */}
       <div className="flex items-center justify-between py-4">
         <div className="flex items-center space-x-2">
