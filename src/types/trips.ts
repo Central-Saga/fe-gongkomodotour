@@ -11,10 +11,17 @@ export interface TripPrice {
 
 export interface TripDuration {
   id: number
+  trip_id: number
   duration_label: string
   duration_days: number
   duration_nights: number
   status: "Aktif" | "Non Aktif"
+  prices: {
+    pax_min: number
+    pax_max: number
+    price_per_pax: string
+    status: "Aktif" | "Non Aktif"
+  }[]
   created_at: string
   updated_at: string
   trip_prices: TripPrice[]

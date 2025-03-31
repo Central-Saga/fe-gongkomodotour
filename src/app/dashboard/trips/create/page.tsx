@@ -27,7 +27,6 @@ import { Loader2, Plus, Trash } from "lucide-react"
 import { toast } from "sonner"
 import { apiRequest } from "@/lib/api"
 import { FileUpload } from "@/components/ui/file-upload"
-import { TripFile } from "@/types/trips"
 import { ApiResponse } from "@/types/role"
 
 const tripSchema = z.object({
@@ -64,7 +63,7 @@ const tripSchema = z.object({
     duration_days: z.number().min(1, "Jumlah hari harus diisi"),
     duration_nights: z.number().min(0, "Jumlah malam harus diisi"),
     status: z.enum(["Aktif", "Non Aktif"]),
-    trip_prices: z.array(z.object({
+    prices: z.array(z.object({
       pax_min: z.number().min(1, "Minimal pax harus diisi"),
       pax_max: z.number().min(1, "Maksimal pax harus diisi"),
       price_per_pax: z.string().min(1, "Harga per pax harus diisi"),
@@ -94,7 +93,9 @@ const tripSchema = z.object({
 export default function CreateTripPage() {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [existingFiles, setExistingFiles] = useState<TripFile[]>([])
+  const [files, setFiles] = useState<File[]>([])
+  const [fileTitles, setFileTitles] = useState<string[]>([])
+  const [fileDescriptions, setFileDescriptions] = useState<string[]>([])
 
   const defaultValues: z.infer<typeof tripSchema> = {
     name: "",
@@ -119,7 +120,7 @@ export default function CreateTripPage() {
       duration_days: 1,
       duration_nights: 0,
       status: "Aktif",
-      trip_prices: [{
+      prices: [{
         pax_min: 1,
         pax_max: 1,
         price_per_pax: "",
@@ -151,79 +152,12 @@ export default function CreateTripPage() {
     defaultValues
   })
 
-  const handleFileUpload = async (files: File[], titles: string[], descriptions: string[]) => {
-    try {
-      if (files.length > 0) {
-        // Upload file fisik
-        await handlePhysicalFileUpload(files, titles, descriptions)
-      } else {
-        // Upload URL
-        await handleUrlUpload(titles, descriptions)
-      }
-    } catch (error) {
-      console.error("Error uploading files:", error)
-      toast.error("Gagal mengupload file")
-      throw error
-    }
-  }
-
-  const handlePhysicalFileUpload = async (files: File[], titles: string[], descriptions: string[]) => {
-    const formData = new FormData()
-    formData.append('model_type', 'trip')
-    formData.append('is_external', '0') // 0 untuk false
-    
-    files.forEach((file, index) => {
-      formData.append('files[]', file)
-      formData.append('file_titles[]', titles[index])
-      formData.append('file_descriptions[]', descriptions[index] || '')
-    })
-
-    const response = await apiRequest<ApiResponse<TripFile[]>>(
-      'POST',
-      '/api/assets/multiple',
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
-    )
-
-    if (response.data) {
-      setExistingFiles(prev => [...prev, ...response.data])
-      toast.success("File berhasil diupload")
-    }
-  }
-
-  const handleUrlUpload = async (urls: string[], descriptions: string[]) => {
-    // Untuk URL, kita kirim sebagai JSON biasa
-    const payload = {
-      model_type: 'trip',
-      is_external: '1', // 1 untuk true
-      file_urls: urls,
-      file_url_titles: urls.map((url) => url.split('/').pop() || url),
-      file_url_descriptions: descriptions
-    }
-
-    const response = await apiRequest<ApiResponse<TripFile[]>>(
-      'POST',
-      '/api/assets/multiple',
-      payload
-    )
-
-    if (response.data) {
-      setExistingFiles(prev => [...prev, ...response.data])
-      toast.success("URL berhasil ditambahkan")
-    }
-  }
-
   const handleFileDelete = async (fileUrl: string) => {
     try {
       await apiRequest(
         'DELETE',
         `/api/assets/${encodeURIComponent(fileUrl)}`
       )
-      setExistingFiles(prev => prev.filter(file => file.file_url !== fileUrl))
       toast.success("File berhasil dihapus")
     } catch (error) {
       console.error("Error deleting file:", error)
@@ -235,6 +169,7 @@ export default function CreateTripPage() {
     try {
       setIsSubmitting(true)
       
+      // 1. Create trip dulu untuk mendapatkan trip_id
       const response = await apiRequest(
         'POST',
         '/api/trips',
@@ -244,14 +179,27 @@ export default function CreateTripPage() {
       if (response) {
         const tripId = (response as ApiResponse<{ id: number }>).data.id
 
-        // Update model_id untuk file yang sudah diupload
-        if (existingFiles.length > 0) {
+        // 2. Upload files jika ada
+        if (files.length > 0) {
+          const formData = new FormData()
+          formData.append('model_type', 'trip')
+          formData.append('model_id', tripId.toString())
+          formData.append('is_external', '0')
+          
+          files.forEach((file: File, index: number) => {
+            formData.append('files[]', file)
+            formData.append('file_titles[]', fileTitles[index])
+            formData.append('file_descriptions[]', fileDescriptions[index] || '')
+          })
+
           await apiRequest(
-            'PUT',
-            `/api/assets/batch-update`,
+            'POST',
+            '/api/assets/multiple',
+            formData,
             {
-              file_ids: existingFiles.map(file => file.id),
-              model_id: tripId
+              headers: {
+                'Content-Type': 'multipart/form-data',
+              },
             }
           )
         }
@@ -706,7 +654,7 @@ export default function CreateTripPage() {
                             duration_days: 1,
                             duration_nights: 0,
                             status: "Aktif",
-                            trip_prices: [{
+                            prices: [{
                               pax_min: 1,
                               pax_max: 2,
                               price_per_pax: "",
@@ -824,8 +772,8 @@ export default function CreateTripPage() {
                               variant="outline"
                               size="sm"
                               onClick={() => {
-                                const currentPrices = form.getValues(`trip_durations.${dIndex}.trip_prices`)
-                                form.setValue(`trip_durations.${dIndex}.trip_prices`, [
+                                const currentPrices = form.getValues(`trip_durations.${dIndex}.prices`)
+                                form.setValue(`trip_durations.${dIndex}.prices`, [
                                   ...currentPrices,
                                   {
                                     pax_min: currentPrices.length > 0 ? currentPrices[currentPrices.length - 1].pax_max + 1 : 1,
@@ -842,11 +790,11 @@ export default function CreateTripPage() {
                           </div>
 
                           <div className="space-y-4">
-                            {duration.trip_prices.map((_, pIndex) => (
+                            {duration.prices.map((_, pIndex) => (
                               <div key={pIndex} className="grid grid-cols-5 gap-4 p-4 bg-white rounded-lg items-end">
                                 <FormField
                                   control={form.control}
-                                  name={`trip_durations.${dIndex}.trip_prices.${pIndex}.pax_min`}
+                                  name={`trip_durations.${dIndex}.prices.${pIndex}.pax_min`}
                                   render={({ field }) => (
                                     <FormItem>
                                       <FormLabel>Minimal Pax</FormLabel>
@@ -864,7 +812,7 @@ export default function CreateTripPage() {
                                 />
                                 <FormField
                                   control={form.control}
-                                  name={`trip_durations.${dIndex}.trip_prices.${pIndex}.pax_max`}
+                                  name={`trip_durations.${dIndex}.prices.${pIndex}.pax_max`}
                                   render={({ field }) => (
                                     <FormItem>
                                       <FormLabel>Maksimal Pax</FormLabel>
@@ -882,7 +830,7 @@ export default function CreateTripPage() {
                                 />
                                 <FormField
                                   control={form.control}
-                                  name={`trip_durations.${dIndex}.trip_prices.${pIndex}.price_per_pax`}
+                                  name={`trip_durations.${dIndex}.prices.${pIndex}.price_per_pax`}
                                   render={({ field }) => (
                                     <FormItem>
                                       <FormLabel>Harga per Pax</FormLabel>
@@ -895,7 +843,7 @@ export default function CreateTripPage() {
                                 />
                                 <FormField
                                   control={form.control}
-                                  name={`trip_durations.${dIndex}.trip_prices.${pIndex}.status`}
+                                  name={`trip_durations.${dIndex}.prices.${pIndex}.status`}
                                   render={({ field }) => (
                                     <FormItem>
                                       <FormLabel>Status</FormLabel>
@@ -925,9 +873,9 @@ export default function CreateTripPage() {
                                         size="icon"
                                         className="h-10"
                                         onClick={() => {
-                                          const currentPrices = form.getValues(`trip_durations.${dIndex}.trip_prices`)
+                                          const currentPrices = form.getValues(`trip_durations.${dIndex}.prices`)
                                           form.setValue(
-                                            `trip_durations.${dIndex}.trip_prices`,
+                                            `trip_durations.${dIndex}.prices`,
                                             currentPrices.filter((_, i) => i !== pIndex)
                                           )
                                         }}
@@ -1344,26 +1292,23 @@ export default function CreateTripPage() {
                   </div>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex justify-end gap-4 pt-6 border-t">
-                  <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Simpan
-                  </Button>
-                </div>
-
                 {/* File Upload Section */}
                 <div>
                   <h2 className="text-xl font-semibold text-gray-900 mb-6">Gambar Trip</h2>
                   <FileUpload
-                    onUpload={handleFileUpload}
+                    onUpload={async (files, titles, descriptions) => {
+                      setFiles(files)
+                      setFileTitles(titles)
+                      setFileDescriptions(descriptions)
+                    }}
                     onDelete={handleFileDelete}
-                    existingFiles={existingFiles}
                     maxFiles={5}
                     maxSize={2 * 1024 * 1024} // 2MB
+                    hideUploadButton={true}
                   />
                 </div>
 
+                {/* Action Buttons */}
                 <div className="flex justify-end gap-4 pt-6 border-t">
                   <Button
                     type="button"
@@ -1371,6 +1316,10 @@ export default function CreateTripPage() {
                     onClick={() => router.push("/dashboard/trips")}
                   >
                     Batal
+                  </Button>
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Simpan
                   </Button>
                 </div>
               </div>

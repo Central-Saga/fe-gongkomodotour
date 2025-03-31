@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react"
 import { useDropzone } from "react-dropzone"
-import { Loader2, Upload, X, Link } from "lucide-react"
+import { Upload, X, Link } from "lucide-react"
 import Image from "next/image"
 
 import { Button } from "@/components/ui/button"
@@ -36,7 +36,6 @@ export function FileUpload({
     'image/*': ['.png', '.jpg', '.jpeg', '.gif']
   }
 }: FileUploadProps) {
-  const [isUploading, setIsUploading] = useState(false)
   const [activeTab, setActiveTab] = useState<"file" | "url">("file")
   const [files, setFiles] = useState<Array<{
     file: File
@@ -50,7 +49,7 @@ export function FileUpload({
     description: string
   }>>([])
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (files.length + acceptedFiles.length > maxFiles) {
       toast.error(`Maksimal ${maxFiles} file`)
       return
@@ -64,39 +63,18 @@ export function FileUpload({
     }))
 
     setFiles(prev => [...prev, ...newFiles])
-  }, [files.length, maxFiles])
+    await onUpload(
+      [...files, ...newFiles].map(f => f.file),
+      [...files, ...newFiles].map(f => f.title),
+      [...files, ...newFiles].map(f => f.description)
+    )
+  }, [files, maxFiles, onUpload])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept,
     maxSize
   })
-
-  const handleUpload = async () => {
-    try {
-      setIsUploading(true)
-      if (activeTab === "file") {
-        await onUpload(
-          files.map(f => f.file),
-          files.map(f => f.title),
-          files.map(f => f.description)
-        )
-        setFiles([])
-      } else {
-        await onUpload(
-          [],
-          urls.map(u => u.url),
-          urls.map(u => u.description)
-        )
-        setUrls([])
-      }
-    } catch (error) {
-      toast.error("Gagal mengupload file")
-      console.error("Upload error:", error)
-    } finally {
-      setIsUploading(false)
-    }
-  }
 
   const removeFile = (index: number) => {
     if (activeTab === "file") {
@@ -160,6 +138,44 @@ export function FileUpload({
               Maksimal {maxFiles} file, ukuran maksimal {maxSize / (1024 * 1024)}MB
             </p>
           </div>
+
+          {files.length > 0 && (
+            <div className="mt-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {files.map((file, index) => (
+                  <div key={index} className="p-4 border rounded-lg relative">
+                    <button
+                      onClick={() => removeFile(index)}
+                      className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full z-10"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                    <div className="space-y-2">
+                      <div className="h-32 w-full relative rounded-lg overflow-hidden">
+                        <Image
+                          src={file.preview}
+                          alt={file.title}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      <Input
+                        placeholder="Judul"
+                        value={file.title}
+                        onChange={(e) => updateFileInfo(index, 'title', e.target.value)}
+                      />
+                      <Textarea
+                        placeholder="Deskripsi (opsional)"
+                        value={file.description}
+                        onChange={(e) => updateFileInfo(index, 'description', e.target.value)}
+                        className="h-20 min-h-0 resize-none"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </TabsContent>
         <TabsContent value="url">
           <div className="space-y-4">
@@ -233,55 +249,6 @@ export function FileUpload({
               </div>
             ))}
           </div>
-        </div>
-      )}
-
-      {/* New Files */}
-      {(files.length > 0 || urls.length > 0) && (
-        <div className="space-y-4">
-          <h3 className="text-sm font-medium">File baru</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {activeTab === "file" ? (
-              files.map((file, index) => (
-                <div key={index} className="relative">
-                  <div className="aspect-square relative rounded-lg overflow-hidden">
-                    <Image
-                      src={file.preview}
-                      alt={file.title}
-                      fill
-                      className="object-cover"
-                    />
-                    <button
-                      onClick={() => removeFile(index)}
-                      className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                  <div className="mt-2 space-y-2">
-                    <Input
-                      placeholder="Judul file"
-                      value={file.title}
-                      onChange={(e) => updateFileInfo(index, 'title', e.target.value)}
-                    />
-                    <Textarea
-                      placeholder="Deskripsi (opsional)"
-                      value={file.description}
-                      onChange={(e) => updateFileInfo(index, 'description', e.target.value)}
-                    />
-                  </div>
-                </div>
-              ))
-            ) : null}
-          </div>
-          <Button
-            onClick={handleUpload}
-            disabled={isUploading}
-            className="w-full"
-          >
-            {isUploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Upload {activeTab === "file" ? "File" : "URL"}
-          </Button>
         </div>
       )}
     </div>

@@ -66,10 +66,10 @@ const tripSchema = z.object({
     duration_days: z.number().min(1, "Jumlah hari harus diisi"),
     duration_nights: z.number().min(0, "Jumlah malam harus diisi"),
     status: z.enum(["Aktif", "Non Aktif"]),
-    trip_prices: z.array(z.object({
+    prices: z.array(z.object({
       pax_min: z.number().min(1, "Minimal pax harus diisi"),
       pax_max: z.number().min(1, "Maksimal pax harus diisi"),
-      price_per_pax: z.number().min(1, "Harga per pax harus diisi"),
+      price_per_pax: z.string().min(1, "Harga per pax harus diisi"),
       status: z.enum(["Aktif", "Non Aktif"])
     }))
   })),
@@ -112,6 +112,10 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [existingFiles, setExistingFiles] = useState<TripAsset[]>([])
+  const [filesToDelete, setFilesToDelete] = useState<number[]>([])
+  const [files, setFiles] = useState<File[]>([])
+  const [fileTitles, setFileTitles] = useState<string[]>([])
+  const [fileDescriptions, setFileDescriptions] = useState<string[]>([])
 
   const form = useForm<z.infer<typeof tripSchema>>({
     resolver: zodResolver(tripSchema),
@@ -131,10 +135,10 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
         duration_days: 1,
         duration_nights: 0,
         status: "Aktif",
-        trip_prices: [{
+        prices: [{
           pax_min: 1,
           pax_max: 1,
-          price_per_pax: 0,
+          price_per_pax: "",
           status: "Aktif"
         }]
       }],
@@ -180,7 +184,26 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
         }
         
         try {
-          const validatedData = tripSchema.parse(response.data)
+          // Pastikan setiap trip_duration memiliki field prices dengan nilai yang valid
+          const data = {
+            ...response.data,
+            trip_durations: response.data.trip_durations.map(duration => ({
+              ...duration,
+              prices: duration.trip_prices?.map(price => ({
+                pax_min: price.pax_min,
+                pax_max: price.pax_max,
+                price_per_pax: price.price_per_pax || "0",
+                status: price.status
+              })) || [{
+                pax_min: 1,
+                pax_max: 1,
+                price_per_pax: "0",
+                status: "Aktif"
+              }]
+            }))
+          }
+          
+          const validatedData = tripSchema.parse(data)
           console.log('Validated data:', validatedData)
           form.reset(validatedData)
           setExistingFiles(response.data.assets || [])
@@ -200,17 +223,74 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
     fetchTrip()
   }, [id, form, router])
 
+  const handleFileDelete = async (fileUrl: string) => {
+    try {
+      // Cari asset berdasarkan file_url
+      const asset = existingFiles.find(file => file.file_url === fileUrl)
+      if (!asset) {
+        throw new Error("Asset tidak ditemukan")
+      }
+
+      // Tambahkan ke daftar file yang akan dihapus
+      setFilesToDelete(prev => [...prev, asset.id])
+      // Hapus dari tampilan
+      setExistingFiles(prev => prev.filter(file => file.file_url !== fileUrl))
+      toast.success("File akan dihapus setelah menyimpan perubahan")
+    } catch (error) {
+      console.error("Error deleting file:", error)
+      toast.error("Gagal menghapus file")
+    }
+  }
+
   const onSubmit = async (values: z.infer<typeof tripSchema>) => {
     try {
       setIsSubmitting(true)
       console.log('Updating trip with ID:', id)
       console.log('Update data:', values)
       
+      // 1. Update trip data
       await apiRequest(
         'PUT',
         `/api/trips/${id}`,
         values
       )
+
+      // 2. Delete files if any
+      if (filesToDelete.length > 0) {
+        await Promise.all(
+          filesToDelete.map(fileId =>
+            apiRequest(
+              'DELETE',
+              `/api/assets/${fileId}`
+            )
+          )
+        )
+      }
+
+      // 3. Upload new files if any
+      if (files.length > 0) {
+        const formData = new FormData()
+        formData.append('model_type', 'trip')
+        formData.append('model_id', id)
+        formData.append('is_external', '0')
+        
+        files.forEach((file, index) => {
+          formData.append('files[]', file)
+          formData.append('file_titles[]', fileTitles[index])
+          formData.append('file_descriptions[]', fileDescriptions[index] || '')
+        })
+
+        await apiRequest(
+          'POST',
+          '/api/assets/multiple',
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          }
+        )
+      }
 
       toast.success("Trip berhasil diupdate")
       router.push("/dashboard/trips")
@@ -220,94 +300,6 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
       toast.error(error instanceof Error ? error.message : "Gagal mengupdate trip")
     } finally {
       setIsSubmitting(false)
-    }
-  }
-
-  const handleFileUpload = async (files: File[], titles: string[], descriptions: string[]) => {
-    try {
-      if (files.length > 0) {
-        // Upload file fisik
-        await handlePhysicalFileUpload(files, titles, descriptions)
-      } else {
-        // Upload URL
-        await handleUrlUpload(titles, descriptions)
-      }
-    } catch (error) {
-      console.error("Error uploading files:", error)
-      toast.error("Gagal mengupload file")
-      throw error
-    }
-  }
-
-  const handlePhysicalFileUpload = async (files: File[], titles: string[], descriptions: string[]) => {
-    const formData = new FormData()
-    formData.append('model_type', 'trip')
-    formData.append('model_id', id)
-    formData.append('is_external', '0') // 0 untuk false
-    
-    files.forEach((file, index) => {
-      formData.append('files[]', file)
-      formData.append('file_titles[]', titles[index])
-      formData.append('file_descriptions[]', descriptions[index] || '')
-    })
-
-    const response = await apiRequest<ApiResponse<TripAsset[]>>(
-      'POST',
-      '/api/assets/multiple',
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
-    )
-
-    if (response.data) {
-      setExistingFiles(prev => [...prev, ...response.data])
-      toast.success("File berhasil diupload")
-    }
-  }
-
-  const handleUrlUpload = async (urls: string[], descriptions: string[]) => {
-    // Untuk URL, kita kirim sebagai JSON biasa
-    const payload = {
-      model_type: 'trip',
-      model_id: id,
-      is_external: '1', // 1 untuk true
-      file_urls: urls,
-      file_url_titles: urls.map((url) => url.split('/').pop() || url),
-      file_url_descriptions: descriptions
-    }
-
-    const response = await apiRequest<ApiResponse<TripAsset[]>>(
-      'POST',
-      '/api/assets/multiple',
-      payload
-    )
-
-    if (response.data) {
-      setExistingFiles(prev => [...prev, ...response.data])
-      toast.success("URL berhasil ditambahkan")
-    }
-  }
-
-  const handleFileDelete = async (fileUrl: string) => {
-    try {
-      // Cari asset berdasarkan file_url
-      const asset = existingFiles.find(file => file.file_url === fileUrl)
-      if (!asset) {
-        throw new Error("Asset tidak ditemukan")
-      }
-
-      await apiRequest(
-        'DELETE',
-        `/api/assets/${asset.id}`
-      )
-      setExistingFiles(prev => prev.filter(file => file.file_url !== fileUrl))
-      toast.success("File berhasil dihapus")
-    } catch (error) {
-      console.error("Error deleting file:", error)
-      toast.error("Gagal menghapus file")
     }
   }
 
@@ -337,7 +329,11 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
                 <div>
                   <h2 className="text-xl font-semibold text-gray-900 mb-6">Gambar Trip</h2>
                   <FileUpload
-                    onUpload={handleFileUpload}
+                    onUpload={async (files, titles, descriptions) => {
+                      setFiles(files)
+                      setFileTitles(titles)
+                      setFileDescriptions(descriptions)
+                    }}
                     onDelete={handleFileDelete}
                     existingFiles={existingFiles}
                     maxFiles={5}
@@ -771,10 +767,10 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
                             duration_days: 1,
                             duration_nights: 0,
                             status: "Aktif",
-                            trip_prices: [{
+                            prices: [{
                               pax_min: 1,
                               pax_max: 2,
-                              price_per_pax: 0,
+                              price_per_pax: "",
                               status: "Aktif"
                             }]
                           }
@@ -889,13 +885,13 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
                               variant="outline"
                               size="sm"
                               onClick={() => {
-                                const currentPrices = form.getValues(`trip_durations.${dIndex}.trip_prices`)
-                                form.setValue(`trip_durations.${dIndex}.trip_prices`, [
+                                const currentPrices = form.getValues(`trip_durations.${dIndex}.prices`)
+                                form.setValue(`trip_durations.${dIndex}.prices`, [
                                   ...currentPrices,
                                   {
                                     pax_min: currentPrices.length > 0 ? currentPrices[currentPrices.length - 1].pax_max + 1 : 1,
                                     pax_max: currentPrices.length > 0 ? currentPrices[currentPrices.length - 1].pax_max + 2 : 2,
-                                    price_per_pax: 0,
+                                    price_per_pax: "",
                                     status: "Aktif"
                                   }
                                 ])
@@ -907,11 +903,11 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
                           </div>
 
                           <div className="space-y-4">
-                            {duration.trip_prices.map((_, pIndex) => (
+                            {duration.prices.map((_, pIndex) => (
                               <div key={pIndex} className="grid grid-cols-5 gap-4 p-4 bg-white rounded-lg items-end">
                                 <FormField
                                   control={form.control}
-                                  name={`trip_durations.${dIndex}.trip_prices.${pIndex}.pax_min`}
+                                  name={`trip_durations.${dIndex}.prices.${pIndex}.pax_min`}
                                   render={({ field }) => (
                                     <FormItem>
                                       <FormLabel>Minimal Pax</FormLabel>
@@ -929,7 +925,7 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
                                 />
                                 <FormField
                                   control={form.control}
-                                  name={`trip_durations.${dIndex}.trip_prices.${pIndex}.pax_max`}
+                                  name={`trip_durations.${dIndex}.prices.${pIndex}.pax_max`}
                                   render={({ field }) => (
                                     <FormItem>
                                       <FormLabel>Maksimal Pax</FormLabel>
@@ -947,12 +943,16 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
                                 />
                                 <FormField
                                   control={form.control}
-                                  name={`trip_durations.${dIndex}.trip_prices.${pIndex}.price_per_pax`}
+                                  name={`trip_durations.${dIndex}.prices.${pIndex}.price_per_pax`}
                                   render={({ field }) => (
                                     <FormItem>
                                       <FormLabel>Harga per Pax</FormLabel>
                                       <FormControl>
-                                        <Input placeholder="Contoh: 1000000" {...field} />
+                                        <Input 
+                                          type="text"
+                                          placeholder="Contoh: 1000000" 
+                                          {...field}
+                                        />
                                       </FormControl>
                                       <FormMessage />
                                     </FormItem>
@@ -960,7 +960,7 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
                                 />
                                 <FormField
                                   control={form.control}
-                                  name={`trip_durations.${dIndex}.trip_prices.${pIndex}.status`}
+                                  name={`trip_durations.${dIndex}.prices.${pIndex}.status`}
                                   render={({ field }) => (
                                     <FormItem>
                                       <FormLabel>Status</FormLabel>
@@ -990,9 +990,9 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
                                         size="icon"
                                         className="h-10"
                                         onClick={() => {
-                                          const currentPrices = form.getValues(`trip_durations.${dIndex}.trip_prices`)
+                                          const currentPrices = form.getValues(`trip_durations.${dIndex}.prices`)
                                           form.setValue(
-                                            `trip_durations.${dIndex}.trip_prices`,
+                                            `trip_durations.${dIndex}.prices`,
                                             currentPrices.filter((_, i) => i !== pIndex)
                                           )
                                         }}
