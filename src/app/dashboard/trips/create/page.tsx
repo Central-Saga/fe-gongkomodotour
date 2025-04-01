@@ -945,21 +945,19 @@ export default function CreateTripPage() {
                       <div key={fIndex} className="p-4 bg-gray-50 rounded-lg space-y-6">
                         <div className="flex justify-between items-center">
                           <h3 className="font-medium">Fee {fIndex + 1}</h3>
-                          {fIndex > 0 && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                const currentFees = form.getValues("additional_fees") || []
-                                form.setValue("additional_fees", 
-                                  currentFees.filter((_, i) => i !== fIndex)
-                                )
-                              }}
-                            >
-                              <Trash className="w-4 h-4 text-red-500" />
-                            </Button>
-                          )}
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const currentFees = form.getValues("additional_fees") || []
+                              form.setValue("additional_fees", 
+                                currentFees.filter((_, i) => i !== fIndex)
+                              )
+                            }}
+                          >
+                            <Trash className="w-4 h-4 text-red-500" />
+                          </Button>
                         </div>
 
                         <div className="grid grid-cols-4 gap-4 mb-4">
@@ -1200,21 +1198,19 @@ export default function CreateTripPage() {
                       <div key={sIndex} className="p-4 bg-gray-50 rounded-lg space-y-6">
                         <div className="flex justify-between items-center">
                           <h3 className="font-medium">Surcharge {sIndex + 1}</h3>
-                          {sIndex > 0 && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                const currentSurcharges = form.getValues("surcharges") || []
-                                form.setValue("surcharges", 
-                                  currentSurcharges.filter((_, i) => i !== sIndex)
-                                )
-                              }}
-                            >
-                              <Trash className="w-4 h-4 text-red-500" />
-                            </Button>
-                          )}
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const currentSurcharges = form.getValues("surcharges") || []
+                              form.setValue("surcharges", 
+                                currentSurcharges.filter((_, i) => i !== sIndex)
+                              )
+                            }}
+                          >
+                            <Trash className="w-4 h-4 text-red-500" />
+                          </Button>
                         </div>
 
                         <div className="grid grid-cols-4 gap-4">
