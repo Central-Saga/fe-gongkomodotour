@@ -207,4 +207,26 @@
     scroll-snap-align: start; /* Setiap section akan menempel di bagian atas layar */
     scroll-snap-stop: always; /* Memastikan scroll berhenti di setiap section */
   }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Untuk browser berbasis Webkit */
+  }
+  
+  .scrollbar-hide {
+    -ms-overflow-style: none; /* Untuk Internet Explorer dan Edge lama */
+    scrollbar-width: none; /* Untuk Firefox */
+  }
+  
+  
+  /* Animasi smooth scrolling */
+  .scroll-smooth {
+    scroll-behavior: smooth;
+  }
+  /* Tambahkan ini jika shadow masih tidak terlihat */
+  .shadow-md {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .shadow-lg {
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+  }
 }

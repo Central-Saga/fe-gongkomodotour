@@ -11,9 +11,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { format } from "date-fns";
 
-// Definisikan tipe untuk data paket
 interface PackageData {
   id: string;
   title: string;
@@ -22,61 +26,106 @@ interface PackageData {
   destination: string;
   daysTrip: string;
   description: string;
-  itinerary: string[];
+  itinerary: { day: string; activities: string[] }[];
   information: string;
   boat: string;
   groupSize?: string;
   privateGuide?: string;
   images: string[];
   destinations?: number;
+  include?: string[];
+  exclude?: string[];
+  session?: {
+    highSeason: { period: string; price: string };
+    peakSeason: { period: string; price: string };
+  };
+  flightInfo?: {
+    guideFee1: string;
+    guideFee2: string;
+  };
+  boatImages?: { image: string; title: string }[]; // Tambahkan properti ini
 }
 
-// Definisikan tipe untuk props komponen
 interface DetailPaketOpenTripProps {
   data: PackageData;
 }
 
-// Gunakan React.FC dengan tipe props yang tepat
 const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
   const [activeTab, setActiveTab] = useState("description");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedDay, setSelectedDay] = useState(0); // Tambahkan state untuk hari yang dipilih
 
   return (
-    <div className="py-12 px-4">
-      {/* Section 1: Gambar */}
-      <div className="relative mb-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Gambar Utama */}
-          <div className="relative h-[400px] md:h-[450px]">
-            <Image
-              src={data.images[0]}
-              alt={data.title}
-              layout="fill"
-              objectFit="cover"
-              className="rounded-sm"
-            />
-          </div>
-          {/* Gambar Kecil */}
-          <div className="grid grid-cols-2 gap-4">
-            {data.images.slice(1, 5).map((image, index) => (
-              <div key={index} className="relative h-[120px] md:h-[180px]">
+    <div className="py-4 px-4">
+    {/* Section 1: Gambar */}
+    <div className="relative mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+        {/* Gambar Utama */}
+        <div className="relative h-[400px] md:h-[458px] md:col-span-7">
+          <Image
+            src={data.images[0]}
+            alt={data.title}
+            layout="fill"
+            objectFit="cover"
+            className="rounded-sm"
+          />
+        </div>
+
+        {/* Gambar Kecil */}
+        <div className="grid grid-cols-2 gap-4 md:col-span-5">
+          {data.images.slice(1, 4).map((image, index) => (
+            <div
+              key={index}
+              className="relative h-[196px] md:h-[221px] w-full"
+            >
+              <Image
+                src={image}
+                alt={`${data.title} ${index + 1}`}
+                layout="fill"
+                objectFit="cover"
+                className="rounded-sm"
+              />
+            </div>
+          ))}
+
+          {/* Gambar ke-4 dengan More Info */}
+          <Dialog>
+            <DialogTrigger asChild>
+              <div className="relative h-[196px] md:h-[221px] w-full flex items-center justify-center rounded-sm cursor-pointer">
                 <Image
-                  src={image}
-                  alt={`${data.title} ${index + 1}`}
+                  src={data.images[4]}
+                  alt="More Info Background"
                   layout="fill"
                   objectFit="cover"
                   className="rounded-sm"
                 />
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                  <p className="text-white font-semibold">More Info</p>
+                </div>
               </div>
-            ))}
-            {data.images.length > 5 && (
-              <div className="relative h-[120px] md:h-[180px] flex items-center justify-center bg-gray-200 rounded-lg">
-                <p className="text-gray-600 font-semibold">More Info</p>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+              <div className="grid grid-cols-2 gap-4">
+                {data.images.slice(4).map((image, index) => (
+                  <div
+                    key={index}
+                    className="relative h-[150px] w-[150px] md:h-[200px] md:w-[200px]"
+                  >
+                    <Image
+                      src={image}
+                      alt={`${data.title} ${index + 4}`}
+                      layout="fill"
+                      objectFit="cover"
+                      className="rounded-sm"
+                    />
+                  </div>
+                ))}
               </div>
-            )}
-          </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
+    </div>
 
       {/* Section 2: Judul dan Rating */}
       <div className="mb-4 bg-[#f5f5f5] p-6 rounded-lg shadow-xl">
@@ -95,7 +144,7 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
       {/* Section 3: Destinasi */}
       <div className="bg-[#f5f5f5] p-6 rounded-lg shadow-md mb-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 md:mb-0 max-w-6xl">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-80 mb-4 md:mb-0 max-w-6xl">
             <div className="flex items-start">
               <Image
                 src="/img/Meeting.png"
@@ -124,7 +173,7 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
             </div>
             <div className="flex items-start">
               <Image
-                src="/img/Routine.png"
+                src="/img/icon/durasi.png"
                 alt="Days Trip Icon"
                 width={50}
                 height={50}
@@ -164,17 +213,10 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
             )}
           </div>
         </div>
-        {/* Field Opsional untuk Open Trip */}
-        {/* {data.groupSize && (
-          <div className="flex items-center mt-4 max-w-6xl">
-            <span className="text-gray-600 font-semibold mr-2">Group Size:</span>
-            <span className="text-gray-600">{data.groupSize}</span>
-          </div>
-        )} */}
       </div>
 
       {/* Section 4: Tab Navigasi dan Konten */}
-      <div className=" bg-white p-6 rounded-lg shadow-md">
+      <div className="bg-white p-6 rounded-lg shadow-md">
         <div className="flex space-x-4 mb-6">
           <Button
             variant={activeTab === "description" ? "default" : "outline"}
@@ -183,7 +225,7 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
               activeTab === "description"
                 ? "bg-[#CFB53B] text-white"
                 : "bg-gray-200 text-gray-800"
-            } px-6 py-2 rounded-lg font-semibold text-sm hover:bg-[#7F6D1F] hover:text-white transition-all duration-300`}
+            } px-7 py-6 rounded-lg font-semibold text-sm hover:bg-[#7F6D1F] hover:text-white transition-all duration-300`}
           >
             Description
           </Button>
@@ -194,7 +236,7 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
               activeTab === "itinerary"
                 ? "bg-[#CFB53B] text-white"
                 : "bg-gray-200 text-gray-800"
-            } px-6 py-2 rounded-lg font-semibold text-sm hover:bg-[#7F6D1F] hover:text-white transition-all duration-300`}
+            } px-7 py-6 rounded-lg font-semibold text-sm hover:bg-[#7F6D1F] hover:text-white transition-all duration-300`}
           >
             Itinerary
           </Button>
@@ -205,7 +247,7 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
               activeTab === "information"
                 ? "bg-[#CFB53B] text-white"
                 : "bg-gray-200 text-gray-800"
-            } px-6 py-2 rounded-lg font-semibold text-sm hover:bg-[#7F6D1F] hover:text-white transition-all duration-300`}
+            } px-7 py-6  rounded-lg font-semibold text-sm hover:bg-[#7F6D1F] hover:text-white transition-all duration-300`}
           >
             Information
           </Button>
@@ -216,7 +258,7 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
               activeTab === "boat"
                 ? "bg-[#CFB53B] text-white"
                 : "bg-gray-200 text-gray-800"
-            } px-6 py-2 rounded-lg font-semibold text-sm hover:bg-[#7F6D1F] hover:text-white transition-all duration-300`}
+            } px-7 py-6  rounded-lg font-semibold text-sm hover:bg-[#7F6D1F] hover:text-white transition-all duration-300`}
           >
             Boat
           </Button>
@@ -225,36 +267,147 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
         <div>
           {activeTab === "description" && (
             <div>
-              <h2 className="text-2xl font-semibold text-gray-800 mb-4">Description</h2>
+              <h1 className="text-3xl font-bold text-gray-800 mb-2">Description</h1>
+              <div className="w-[150px] h-[3px] bg-[#CFB53B] mb-6"></div>
               <p className="text-gray-600">{data.description}</p>
             </div>
           )}
-          {activeTab === "itinerary" && (
-            <div>
-              <h2 className="text-2xl font-semibold text-gray-800 mb-4">Itinerary</h2>
-              <ul className="list-disc list-inside text-gray-600">
+        {activeTab === "itinerary" && (
+          <div>
+            {/* Header Itinerary dengan Tombol Days */}
+            <div className="mb-6">
+              {/* Judul Itinerary */}
+              <div className="flex flex-col items-start">
+                <h1 className="text-3xl font-bold text-gray-800">Itinerary</h1>
+                {/* Garis di bawah judul */}
+                <div className="w-[120px] h-[3px] bg-[#CFB53B] mt-1"></div>
+              </div>
+
+              {/* Tombol Days */}
+              <div className="flex justify-center space-x-4 mt-4">
                 {data.itinerary.map((item, index) => (
-                  <li key={index}>{item}</li>
+                  <button
+                    key={index}
+                    onClick={() => setSelectedDay(index)}
+                    className={`px-4 py-2 rounded-lg font-semibold text-sm ${
+                      selectedDay === index
+                        ? "bg-[#f4f4f4] text-black border-t-4 border-[#CFB53B]"
+                        : "bg-gray-200 text-gray-800"
+                    } hover:bg-[#7F6D1F] hover:text-white transition-all duration-300`}
+                  >
+                    {item.day}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* Garis di bawah judul
+            <div className="w-[120px] h-[3px] bg-[#CFB53B] mb-6"></div> */}
+
+            {/* Display Activities for Selected Day */}
+            <div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">
+                {data.itinerary[selectedDay]?.day}
+              </h2>
+              <ul className="list-disc list-inside text-gray-600 space-y-2">
+                {data.itinerary[selectedDay]?.activities.map((activity, index) => (
+                  <li key={index}>{activity}</li>
                 ))}
               </ul>
             </div>
-          )}
+          </div>
+        )}
           {activeTab === "information" && (
-            <div>
-              <h2 className="text-2xl font-semibold text-gray-800 mb-4">Information</h2>
-              <p className="text-gray-600">{data.information}</p>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">Information</h1>
+            <div className="w-[140px] h-[3px] bg-[#CFB53B] mb-6"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Kolom Kiri */}
+              <div className="space-y-6">
+                {/* Include Section */}
+                <div className="bg-[#f5f5f5] p-6 rounded-lg shadow-sm min-h-[250px] flex flex-col">
+                  <h2 className="text-xl font-bold text-gray-800 mb-4">Include</h2>
+                  <ul className="list-disc list-inside space-y-2">
+                    {data.include?.map((item, index) => (
+                      <li key={index} className="text-gray-600 text-sm">{item}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Session Section */}
+                <div className="bg-[#f5f5f5] p-6 rounded-lg shadow-sm min-h-[250px] flex flex-col">
+                  <h2 className="text-xl font-bold text-gray-800 mb-4">Season</h2>
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-semibold text-gray-700">High Season Period:</h4>
+                      <p className="text-gray-600 text-sm">{data.session?.highSeason.period}</p>
+                      <p className="text-[#CFB53B] font-bold mt-1 text-sm">{data.session?.highSeason.price}</p>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-700">Peak Season Period:</h4>
+                      <p className="text-gray-600 text-sm">{data.session?.peakSeason.period}</p>
+                      <p className="text-[#CFB53B] font-bold mt-1 text-sm">{data.session?.peakSeason.price}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Kolom Kanan */}
+              <div className="space-y-6">
+                {/* Exclude Section */}
+                <div className="bg-[#f5f5f5] p-6 rounded-lg shadow-sm min-h-[250px] flex flex-col">
+                  <h2 className="text-xl font-bold text-gray-800 mb-4">Exclude</h2>
+                  <ul className="list-disc list-inside space-y-2">
+                    {data.exclude?.map((item, index) => (
+                      <li key={index} className="text-gray-600 text-sm">{item}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Flight Information */}
+                <div className="bg-[#f5f5f5] p-6 rounded-lg shadow-sm min-h-[250px] flex flex-col">
+                  <h2 className="text-xl font-bold text-gray-800 mb-4">Flight Information</h2>
+                  <div className="space-y-2">
+                    <p className="text-gray-600 text-sm">{data.flightInfo?.guideFee1}</p>
+                    <p className="text-gray-600 text-sm">{data.flightInfo?.guideFee2}</p>
+                  </div>
+                </div>
+              </div>
             </div>
-          )}
-          {activeTab === "boat" && (
-            <div>
-              <h2 className="text-2xl font-semibold text-gray-800 mb-4">Boat</h2>
-              <p className="text-gray-600">{data.boat}</p>
+          </div>
+        )}
+        {activeTab === "boat" && (
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">Boat</h1>
+            <div className="w-[80px] h-[3px] bg-[#CFB53B] mb-6"></div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 max-w-8xl mx-auto items-center mb-6">
+              {data.boatImages?.map((boat, index) => (
+                <div
+                  key={index}
+                  className="relative group overflow-hidden rounded-lg shadow-lg"
+                >
+                  {/* Gambar Boat */}
+                  <div className="relative h-[330px] w-full">
+                    <Image
+                      src={boat.image}
+                      alt={boat.title}
+                      layout="fill"
+                      objectFit="cover"
+                      className="rounded-lg transition-transform duration-300 group-hover:scale-110"
+                    />
+                  </div>
+                  {/* Overlay dengan Judul */}
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <p className="text-white font-semibold text-lg">{boat.title}</p>
+                  </div>
+                </div>
+              ))}
             </div>
-          )}
+          </div>
+        )}
+        </div>
         </div>
       </div>
-    </div>
-  );
-};
+            );
+          };
 
-export default DetailPaketOpenTrip;
+          export default DetailPaketOpenTrip;

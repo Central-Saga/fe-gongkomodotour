@@ -31,8 +31,9 @@ const customStyles = `
 export default function LandingHero() {
   const slides = [
     "/img/hero-slide1.png",
+    "/img/hero-bg-luxury.jpg",
+    "/img/hero-bg_phinisi.jpg",
     "/img/hero-slide2.png",
-    "/img/hero-slide3.png",
   ];
 
   return (
