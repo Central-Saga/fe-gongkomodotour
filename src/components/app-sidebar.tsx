@@ -64,6 +64,10 @@ const data = {
           title: "Boats",
           url: "/dashboard/boats",
         },
+        {
+          title: "Hotels",
+          url: "/dashboard/hotels",
+        },
       ],
     },
     {

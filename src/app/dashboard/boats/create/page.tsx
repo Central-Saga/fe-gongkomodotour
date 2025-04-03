@@ -37,7 +37,9 @@ const boatSchema = z.object({
   status: z.enum(["Aktif", "Non Aktif"]),
   cabins: z.array(z.object({
     cabin_name: z.string().min(1, "Nama kabin harus diisi"),
-    bed_type: z.string().min(1, "Tipe bed harus diisi"),
+    bed_type: z.enum(["king", "single", "double", "queen"], {
+      required_error: "Tipe bed harus dipilih"
+    }),
     min_pax: z.number().min(1, "Minimal pax harus diisi"),
     max_pax: z.number().min(1, "Maksimal pax harus diisi"),
     base_price: z.number().min(0, "Harga dasar harus diisi"),
@@ -64,7 +66,7 @@ export default function CreateBoatPage() {
     status: "Aktif",
     cabins: [{
       cabin_name: "",
-      bed_type: "",
+      bed_type: "king",
       min_pax: 1,
       max_pax: 1,
       base_price: 0,
@@ -348,7 +350,7 @@ export default function CreateBoatPage() {
                           ...currentCabins,
                           {
                             cabin_name: "",
-                            bed_type: "",
+                            bed_type: "king",
                             min_pax: 1,
                             max_pax: 1,
                             base_price: 0,
@@ -405,9 +407,19 @@ export default function CreateBoatPage() {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel>Tipe Bed</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="Contoh: Queen Bed" {...field} />
-                                </FormControl>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Pilih tipe bed" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="king">King Bed</SelectItem>
+                                    <SelectItem value="queen">Queen Bed</SelectItem>
+                                    <SelectItem value="double">Double Bed</SelectItem>
+                                    <SelectItem value="single">Single Bed</SelectItem>
+                                  </SelectContent>
+                                </Select>
                                 <FormMessage />
                               </FormItem>
                             )}
