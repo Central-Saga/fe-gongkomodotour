@@ -12,9 +12,7 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-  getExpandedRowModel,
   Row,
-  ExpandedState,
 } from "@tanstack/react-table"
 
 import {
@@ -48,9 +46,6 @@ import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
 import { Hotel } from "@/types/hotels"
 import { useRouter } from "next/navigation"
-import { Badge } from "@/components/ui/badge"
-import Image from "next/image"
-import { ImageModal } from "@/components/ui/image-modal"
 import { toast } from "sonner"
 import { apiRequest } from "@/lib/api"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
@@ -192,8 +187,6 @@ export function DataTable({
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
-  const [expanded, setExpanded] = useState<ExpandedState>({})
-  const [selectedImage, setSelectedImage] = useState<Hotel | null>(null)
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
@@ -293,15 +286,12 @@ export function DataTable({
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
-    onExpandedChange: setExpanded,
-    getExpandedRowModel: getExpandedRowModel(),
     onPaginationChange: setPagination,
     state: {
       sorting,
       columnFilters,
       columnVisibility,
       rowSelection,
-      expanded,
       pagination,
     },
   })

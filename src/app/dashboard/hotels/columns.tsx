@@ -4,7 +4,7 @@ import { ColumnDef } from "@tanstack/react-table"
 import { Hotel } from "@/types/hotels"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ArrowUpDown, ChevronDown, ChevronRight, MoreHorizontal, Pencil, Trash } from "lucide-react"
+import { ArrowUpDown, MoreHorizontal, Pencil, Trash } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useRouter } from "next/navigation"
 
@@ -42,26 +42,6 @@ const ActionsCell = ({ hotel, onDelete }: { hotel: Hotel, onDelete: (hotel: Hote
 };
 
 export const columns = ({ onDelete }: ColumnsProps): ColumnDef<Hotel>[] => [
-  {
-    id: "expander",
-    header: () => null,
-    cell: ({ row }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => row.toggleExpanded()}
-          className="p-0 w-6 h-6"
-        >
-          {row.getIsExpanded() ? (
-            <ChevronDown className="h-4 w-4" />
-          ) : (
-            <ChevronRight className="h-4 w-4" />
-          )}
-        </Button>
-      )
-    },
-    enableHiding: false,
-  },
   {
     id: "select",
     header: ({ table }) => (
