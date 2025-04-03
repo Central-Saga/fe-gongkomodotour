@@ -2,6 +2,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Instagram, Facebook, Youtube, MessageCircle, Music, Home } from "lucide-react";
+import { FaInstagram, FaWhatsapp, FaFacebookF, FaYoutube, FaTiktok } from "react-icons/fa";
 
 export default function AboutUsPage() {
   return (
@@ -143,26 +144,27 @@ export default function AboutUsPage() {
               </div>
             </div>
           </div>
-          {/* Ikon Media Sosial */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 justify-center">
-            <Link href="https://instagram.com" target="_blank" className="flex justify-center">
-              <Instagram className="w-8 h-8 text-pink-500 hover:text-pink-700 transition-colors" />
-            </Link>
-            <Link href="https://whatsapp.com" target="_blank" className="flex justify-center">
-              <MessageCircle className="w-8 h-8 text-green-500 hover:text-green-700 transition-colors" />
-            </Link>
-            <Link href="https://facebook.com" target="_blank" className="flex justify-center">
-              <Facebook className="w-8 h-8 text-blue-600 hover:text-blue-800 transition-colors" />
-            </Link>
-            <Link href="https://youtube.com" target="_blank" className="flex justify-center">
-              <Youtube className="w-8 h-8 text-red-600 hover:text-red-800 transition-colors" />
-            </Link>
-            <Link href="https://tiktok.com" target="_blank" className="flex justify-center">
-              <Music className="w-8 h-8 text-black hover:text-gray-700 transition-colors" />
-            </Link>
-          </div>
-        </div>
-      </section>
-    </div>
+        {/* Ikon Media Sosial */}
+{/* Ikon Media Sosial */}
+<div className="grid grid-cols-2 md:grid-cols-5 gap-4 justify-center mt-8">
+  <Link href="https://instagram.com" target="_blank" className="flex justify-center">
+    <FaInstagram className="w-8 h-8 text-pink-500 hover:text-pink-700 transition-colors" />
+  </Link>
+  <Link href="https://whatsapp.com" target="_blank" className="flex justify-center">
+    <FaWhatsapp className="w-8 h-8 text-green-500 hover:text-green-700 transition-colors" />
+  </Link>
+  <Link href="https://facebook.com" target="_blank" className="flex justify-center">
+    <FaFacebookF className="w-8 h-8 text-blue-600 hover:text-blue-800 transition-colors" />
+  </Link>
+  <Link href="https://youtube.com" target="_blank" className="flex justify-center">
+    <FaYoutube className="w-8 h-8 text-red-600 hover:text-red-800 transition-colors" />
+  </Link>
+  <Link href="https://tiktok.com" target="_blank" className="flex justify-center">
+    <FaTiktok className="w-8 h-8 text-black hover:text-gray-700 transition-colors" />
+  </Link>
+</div>
+                </div>
+              </section>
+            </div>
   );
 }

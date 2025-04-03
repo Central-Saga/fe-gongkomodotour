@@ -30,20 +30,20 @@ export default function WhyChooseUs() {
       titleColor: "text-purple-500",
       icon: "/img/lovepath.png",
     },
-    // {
-    //   title: "Melakukan Liburan Tanpa Beban",
-    //   description:
-    //     "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-    //   titleColor: "text-yellow-500",
-    //   icon: "/img/island.png",
-    // },
-    // {
-    //   title: "Melakukan Liburan menyenangkan",
-    //   description:
-    //     "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-    //   titleColor: "text-orange-500",
-    //   icon: "/img/gendola.png",
-    // },
+    {
+      title: "Melakukan Liburan Tanpa Beban",
+      description:
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+      titleColor: "text-yellow-500",
+      icon: "/img/island.png",
+    },
+    {
+      title: "Melakukan Liburan menyenangkan",
+      description:
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+      titleColor: "text-orange-500",
+      icon: "/img/gendola.png",
+    },
   ];
 
   return (
