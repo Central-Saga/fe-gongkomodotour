@@ -78,6 +78,9 @@ export const columns = ({ onDelete }: ColumnsProps): ColumnDef<Boat>[] => [
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
+    cell: ({ row }) => (
+      <div className="min-w-[180px]">{row.getValue("boat_name")}</div>
+    ),
   },
   {
     accessorKey: "status",
@@ -94,9 +97,11 @@ export const columns = ({ onDelete }: ColumnsProps): ColumnDef<Boat>[] => [
     cell: ({ row }) => {
       const status = row.getValue("status") as string
       return (
-        <Badge className={`${status === "Aktif" ? "bg-emerald-500" : "bg-red-500"} text-white`}>
-          {status}
-        </Badge>
+        <div className="min-w-[100px]">
+          <Badge className={`${status === "Aktif" ? "bg-emerald-500" : "bg-red-500"} text-white`}>
+            {status}
+          </Badge>
+        </div>
       )
     },
   },
@@ -105,15 +110,7 @@ export const columns = ({ onDelete }: ColumnsProps): ColumnDef<Boat>[] => [
     header: "Jumlah Kabin",
     cell: ({ row }) => {
       const cabins = row.original.cabin
-      return <div>{cabins.length} kabin</div>
-    },
-  },
-  {
-    accessorKey: "spesification",
-    header: "Spesifikasi",
-    cell: ({ row }) => {
-      const spec = row.getValue("spesification") as string
-      return <div className="max-w-[300px] truncate">{spec}</div>
+      return <div className="min-w-[120px]">{cabins.length} kabin</div>
     },
   },
   {

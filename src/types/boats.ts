@@ -10,6 +10,7 @@ export interface Cabin {
   status: "Aktif" | "Non Aktif"
   created_at: string
   updated_at: string
+  assets: BoatAsset[]
 }
 
 export interface BoatAsset {

@@ -4,14 +4,15 @@ import { ColumnDef } from "@tanstack/react-table"
 import { Trip } from "@/types/trips"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ArrowUpDown, ChevronDown, ChevronRight, MoreHorizontal, Trash } from "lucide-react"
+import { ArrowUpDown, ChevronDown, ChevronRight, MoreHorizontal, Trash, Pencil } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 interface ColumnsProps {
   onDelete: (trip: Trip) => void;
+  onEdit: (trip: Trip) => void;
 }
 
-export const columns = ({ onDelete }: ColumnsProps): ColumnDef<Trip>[] => [
+export const columns = ({ onDelete, onEdit }: ColumnsProps): ColumnDef<Trip>[] => [
   {
     id: "expander",
     header: () => null,
@@ -135,6 +136,10 @@ export const columns = ({ onDelete }: ColumnsProps): ColumnDef<Trip>[] => [
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => onEdit(trip)}>
+              <Pencil className="mr-2 h-4 w-4" />
+              Edit
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onDelete(trip)}>
               <Trash className="mr-2 h-4 w-4" />
               Hapus

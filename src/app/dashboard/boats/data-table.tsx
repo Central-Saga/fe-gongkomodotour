@@ -255,24 +255,48 @@ export function DataTable({
         <div className="space-y-4 max-w-5xl mx-auto">
           <div className="bg-white p-4 rounded-lg shadow-sm">
             <h4 className="font-semibold text-lg mb-4 text-gray-800 border-b pb-2">Informasi Kapal</h4>
-            <div className="grid gap-4 lg:grid-cols-2">
+            <div className="grid gap-4">
               <div className="space-y-4">
                 <div>
                   <p className="text-gray-600 font-medium mb-2">Spesifikasi:</p>
-                  <div className="bg-gray-50 p-3 rounded-md overflow-auto">
-                    <p className="text-gray-800 whitespace-pre-wrap break-words">{boat.spesification}</p>
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <div 
+                      className="prose prose-sm max-w-none"
+                      style={{ 
+                        maxWidth: '100%',
+                        overflowX: 'auto',
+                        whiteSpace: 'nowrap'
+                      }}
+                      dangerouslySetInnerHTML={{ __html: boat.spesification }}
+                    />
                   </div>
                 </div>
                 <div>
                   <p className="text-gray-600 font-medium mb-2">Informasi Kabin:</p>
-                  <div className="bg-gray-50 p-3 rounded-md overflow-auto">
-                    <p className="text-gray-800 whitespace-pre-wrap break-words">{boat.cabin_information}</p>
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <div 
+                      className="prose prose-sm max-w-none"
+                      style={{ 
+                        maxWidth: '100%',
+                        overflowX: 'auto',
+                        whiteSpace: 'nowrap'
+                      }}
+                      dangerouslySetInnerHTML={{ __html: boat.cabin_information }}
+                    />
                   </div>
                 </div>
                 <div>
                   <p className="text-gray-600 font-medium mb-2">Fasilitas:</p>
                   <div className="bg-gray-50 p-3 rounded-md">
-                    <p className="text-gray-800 whitespace-pre-wrap break-words">{boat.facilities}</p>
+                    <div 
+                      className="prose prose-sm max-w-none"
+                      style={{ 
+                        maxWidth: '100%',
+                        overflowX: 'auto',
+                        whiteSpace: 'nowrap'
+                      }}
+                      dangerouslySetInnerHTML={{ __html: boat.facilities }}
+                    />
                   </div>
                 </div>
               </div>
@@ -280,7 +304,7 @@ export function DataTable({
           </div>
 
           {/* Kabin */}
-          <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm">
+          <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm min-w-[800px]">
             <h4 className="font-semibold text-lg mb-4 text-gray-800 border-b pb-2">Daftar Kabin</h4>
             <div className="space-y-6">
               {boat.cabin.map((cabin, index) => (
@@ -327,6 +351,39 @@ export function DataTable({
                       </div>
                     </div>
                   </div>
+
+                  {/* Gambar Kabin */}
+                  {cabin.assets && cabin.assets.length > 0 && (
+                    <div className="mt-4">
+                      <p className="text-gray-600 font-medium mb-2">Gambar Kabin:</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        {cabin.assets.map((asset, assetIndex) => {
+                          const imageUrl = getImageUrl(asset.file_url)
+                          return (
+                            <div 
+                              key={assetIndex} 
+                              className="relative aspect-[4/3] rounded-lg overflow-hidden border border-gray-200 cursor-pointer group"
+                              onClick={() => setSelectedImage(asset)}
+                            >
+                              <Image
+                                src={imageUrl}
+                                alt={asset.title || `Gambar Kabin ${assetIndex + 1}`}
+                                fill
+                                sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw"
+                                className="object-cover transition-transform duration-200 group-hover:scale-105"
+                                onError={(e) => {
+                                  console.error(`Error loading image ${assetIndex}:`, e)
+                                  const target = e.target as HTMLImageElement
+                                  target.src = '/placeholder-image.png'
+                                }}
+                              />
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200" />
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -395,6 +452,48 @@ export function DataTable({
 
   return (
     <div className="container mx-auto max-w-7xl">
+      <style jsx global>{`
+        .custom-scrollbar {
+          scrollbar-width: thin;
+          scrollbar-color: #888 #f1f1f1;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+          height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #f1f1f1;
+          border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #888;
+          border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #666;
+        }
+        .prose {
+          word-break: normal;
+          overflow-wrap: anywhere;
+        }
+        .prose {
+          -webkit-overflow-scrolling: touch;
+        }
+        .prose::-webkit-scrollbar {
+          height: 4px;
+        }
+        .prose::-webkit-scrollbar-track {
+          background: #f1f1f1;
+          border-radius: 2px;
+        }
+        .prose::-webkit-scrollbar-thumb {
+          background: #888;
+          border-radius: 2px;
+        }
+        .prose::-webkit-scrollbar-thumb:hover {
+          background: #666;
+        }
+      `}</style>
       {/* Toolbar */}
       <div className="flex items-center justify-between py-4">
         <div className="flex items-center space-x-2">
