@@ -10,7 +10,7 @@ export default function Testimoni() {
       judul: "Sunset Trip",
       nama: "Ambuja",
       tanggal: "10 Januari 2025",
-      komentar: "Seru Banget Karena Ada pacar aku namanya Krisna Yudha",
+      komentar: "Aku senang melakukan perjalanan ini aku harap aku dapat melaksanakan trip ini kembali di tahun ini",
       gambar: "/img/pic-testi.jpg",
       rating: 5,
     },
@@ -18,7 +18,7 @@ export default function Testimoni() {
       judul: "Open Trip",
       nama: "Ambuja",
       tanggal: "10 Feb 2025",
-      komentar: "Seru Banget Karena Ada pacar aku namanya Krisna Yudha",
+      komentar: "Aku senang melakukan perjalanan ini aku harap aku dapat melaksanakan trip ini kembali di tahun ini",
       gambar: "/img/pic-testi.jpg",
       rating: 5,
     },
@@ -26,7 +26,7 @@ export default function Testimoni() {
       judul: "Expllore Waerebo",
       nama: "Ambuja",
       tanggal: "10 Maret 2025",
-      komentar: "Seru Banget Karena Ada pacar aku namanya Krisna Yudha",
+      komentar: "Aku senang melakukan perjalanan ini aku harap aku dapat melaksanakan trip ini kembali di tahun ini",
       gambar: "/img/pic-testi.jpg",
       rating: 4,
     },
@@ -34,7 +34,7 @@ export default function Testimoni() {
       judul: "Private Trip",
       nama: "Ambuja",
       tanggal: "10 Feb 2025",
-      komentar: "Seru Banget Karena Ada pacar aku namanya Krisna Yudha",
+      komentar: "Aku senang melakukan perjalanan ini aku harap aku dapat melaksanakan trip ini kembali di tahun ini",
       gambar: "/img/pic-testi.jpg",
       rating: 5,
     },
@@ -42,7 +42,7 @@ export default function Testimoni() {
       judul: "Open Trip",
       nama: "Ambuja",
       tanggal: "10 Feb 2025",
-      komentar: "Seru Banget Karena Ada pacar aku namanya Krisna Yudha",
+      komentar: "Aku senang melakukan perjalanan ini aku harap aku dapat melaksanakan trip ini kembali di tahun ini",
       gambar: "/img/pic-testi.jpg",
       rating: 5,
     },
@@ -50,7 +50,7 @@ export default function Testimoni() {
       judul: "Expllore Waerebo",
       nama: "Ambuja",
       tanggal: "10 Maret 2025",
-      komentar: "Seru Banget Karena Ada pacar aku namanya Krisna Yudha",
+      komentar: "Aku senang melakukan perjalanan ini aku harap aku dapat melaksanakan trip ini kembali di tahun ini",
       gambar: "/img/pic-testi.jpg",
       rating: 4,
     },
@@ -132,7 +132,7 @@ export default function Testimoni() {
                 ))}
               </div>
               <h3 className="text-lg font-semibold text-gray-800">{testimoni.judul}</h3>
-              <p className="text-gray-600 mt-2">{testimoni.komentar}</p>
+              <p className="text-gray-600 mt-2 break-words">{testimoni.komentar}</p>
               <div className="flex items-center mt-4">
                 <Image
                   src={testimoni.gambar}

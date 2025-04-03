@@ -1,10 +1,12 @@
-import React from 'react';
+import React from "react";
+import BlogContent from "@/components/ui-blog/BlogContent";
 
-export default function BlogPage() {
+const BlogPage = () => {
   return (
     <div>
-      <h1>Blog Page</h1>
-      {/* Add your blog content here */}
+      <BlogContent />
     </div>
   );
-}
+};
+
+export default BlogPage;
