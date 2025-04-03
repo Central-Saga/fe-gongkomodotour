@@ -53,10 +53,18 @@ import Image from "next/image"
 import { ImageModal } from "@/components/ui/image-modal"
 import { toast } from "sonner"
 import { apiRequest } from "@/lib/api"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 
 interface DataTableProps<TData> {
   columns: ColumnDef<TData, string>[]
   data: TData[]
+  setData: (data: TData[]) => void
+}
+
+interface BoatResponse {
+  data: Boat[]
+  message?: string
+  status?: string
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
@@ -171,6 +179,7 @@ const exportToPDF = (data: Boat[]) => {
 export function DataTable({
   columns,
   data,
+  setData,
 }: DataTableProps<Boat>) {
   const router = useRouter()
   const [sorting, setSorting] = useState<SortingState>([])
@@ -183,22 +192,54 @@ export function DataTable({
     pageIndex: 0,
     pageSize: 10,
   })
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const handleEdit = (boat: Boat) => {
     router.push(`/dashboard/boats/${boat.id}/edit`)
   }
 
   const handleDelete = async (boat: Boat) => {
-    if (!confirm("Apakah Anda yakin ingin menghapus kapal ini?")) return
-
     try {
+      setIsDeleting(true)
       await apiRequest('DELETE', `/api/boats/${boat.id}`)
       toast.success("Kapal berhasil dihapus")
-      router.refresh()
+      // Refresh data dengan memanggil ulang API
+      const response = await apiRequest<BoatResponse>('GET', '/api/boats')
+      setData(response.data || [])
     } catch (error) {
       console.error("Error deleting boat:", error)
       toast.error("Gagal menghapus kapal")
+    } finally {
+      setIsDeleting(false)
     }
+  }
+
+  const DeleteConfirmationDialog = ({ boat, children }: { boat: Boat, children: React.ReactNode }) => {
+    return (
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          {children}
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Konfirmasi Hapus</AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin ingin menghapus kapal {boat.boat_name}? Tindakan ini tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => handleDelete(boat)}
+              disabled={isDeleting}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              {isDeleting ? "Menghapus..." : "Hapus"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    )
   }
 
   const table = useReactTable({
@@ -224,10 +265,12 @@ export function DataTable({
                     <Pencil className="mr-2 h-4 w-4" />
                     Edit
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleDelete(boat)}>
-                    <Trash className="mr-2 h-4 w-4" />
-                    Hapus
-                  </DropdownMenuItem>
+                  <DeleteConfirmationDialog boat={boat}>
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                      <Trash className="mr-2 h-4 w-4" />
+                      Hapus
+                    </DropdownMenuItem>
+                  </DeleteConfirmationDialog>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>

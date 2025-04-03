@@ -72,6 +72,7 @@ export default function BoatPage() {
         <DataTable 
           columns={columns({ onDelete: handleDelete })} 
           data={data}
+          setData={setData}
         />
       </div>
     </div>
