@@ -12,6 +12,35 @@ interface ColumnsProps {
   onDelete: (boat: Boat) => void;
 }
 
+const ActionsCell = ({ boat, onDelete }: { boat: Boat, onDelete: (boat: Boat) => void }) => {
+  const router = useRouter();
+
+  const handleEdit = () => {
+    router.push(`/dashboard/boats/${boat.id}/edit`);
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="h-8 w-8 p-0">
+          <span className="sr-only">Buka menu</span>
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={handleEdit}>
+          <Pencil className="mr-2 h-4 w-4" />
+          Edit
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onDelete(boat)}>
+          <Trash className="mr-2 h-4 w-4" />
+          Hapus
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
 export const columns = ({ onDelete }: ColumnsProps): ColumnDef<Boat>[] => [
   {
     id: "expander",
@@ -119,32 +148,7 @@ export const columns = ({ onDelete }: ColumnsProps): ColumnDef<Boat>[] => [
     header: () => null,
     cell: ({ row }) => {
       const boat = row.original;
-      const router = useRouter();
-
-      const handleEdit = () => {
-        router.push(`/dashboard/boats/${boat.id}/edit`);
-      };
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Buka menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={handleEdit}>
-              <Pencil className="mr-2 h-4 w-4" />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onDelete(boat)}>
-              <Trash className="mr-2 h-4 w-4" />
-              Hapus
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
+      return <ActionsCell boat={boat} onDelete={onDelete} />;
     },
     enableHiding: false,
   },
