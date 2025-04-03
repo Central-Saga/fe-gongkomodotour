@@ -1,18 +1,18 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
-import { Trip } from "@/types/trips"
+import { Boat } from "@/types/boats"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ArrowUpDown, ChevronDown, ChevronRight, MoreHorizontal, Trash, Pencil } from "lucide-react"
+import { ArrowUpDown, ChevronDown, ChevronRight, MoreHorizontal, Pencil, Trash } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { useRouter } from "next/navigation"
 
 interface ColumnsProps {
-  onDelete: (trip: Trip) => void;
-  onEdit: (trip: Trip) => void;
+  onDelete: (boat: Boat) => void;
 }
 
-export const columns = ({ onDelete, onEdit }: ColumnsProps): ColumnDef<Trip>[] => [
+export const columns = ({ onDelete }: ColumnsProps): ColumnDef<Boat>[] => [
   {
     id: "expander",
     header: () => null,
@@ -68,38 +68,20 @@ export const columns = ({ onDelete, onEdit }: ColumnsProps): ColumnDef<Trip>[] =
     enableHiding: false,
   },
   {
-    accessorKey: "name",
+    accessorKey: "boat_name",
     header: ({ column }) => (
       <Button
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         className="px-0"
       >
-        Nama Trip
+        Nama Kapal
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
-  },
-  {
-    accessorKey: "type",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="px-0"
-      >
-        Tipe Trip
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
+    cell: ({ row }) => (
+      <div className="min-w-[180px]">{row.getValue("boat_name")}</div>
     ),
-    cell: ({ row }) => {
-      const type = row.getValue("type") as string
-      return (
-        <Badge className={`${type === "Open Trip" ? "bg-yellow-500" : "bg-blue-500"} text-white`}>
-          {type}
-        </Badge>
-      )
-    },
   },
   {
     accessorKey: "status",
@@ -116,17 +98,33 @@ export const columns = ({ onDelete, onEdit }: ColumnsProps): ColumnDef<Trip>[] =
     cell: ({ row }) => {
       const status = row.getValue("status") as string
       return (
-        <Badge className={`${status === "Aktif" ? "bg-emerald-500" : "bg-red-500"} text-white`}>
-          {status}
-        </Badge>
+        <div className="min-w-[100px]">
+          <Badge className={`${status === "Aktif" ? "bg-emerald-500" : "bg-red-500"} text-white`}>
+            {status}
+          </Badge>
+        </div>
       )
+    },
+  },
+  {
+    accessorKey: "cabin",
+    header: "Jumlah Kabin",
+    cell: ({ row }) => {
+      const cabins = row.original.cabin
+      return <div className="min-w-[120px]">{cabins.length} kabin</div>
     },
   },
   {
     id: "actions",
     header: () => null,
     cell: ({ row }) => {
-      const trip = row.original;
+      const boat = row.original;
+      const router = useRouter();
+
+      const handleEdit = () => {
+        router.push(`/dashboard/boats/${boat.id}/edit`);
+      };
+
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -136,11 +134,11 @@ export const columns = ({ onDelete, onEdit }: ColumnsProps): ColumnDef<Trip>[] =
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onEdit(trip)}>
+            <DropdownMenuItem onClick={handleEdit}>
               <Pencil className="mr-2 h-4 w-4" />
               Edit
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onDelete(trip)}>
+            <DropdownMenuItem onClick={() => onDelete(boat)}>
               <Trash className="mr-2 h-4 w-4" />
               Hapus
             </DropdownMenuItem>
@@ -150,4 +148,4 @@ export const columns = ({ onDelete, onEdit }: ColumnsProps): ColumnDef<Trip>[] =
     },
     enableHiding: false,
   },
-] 
+]

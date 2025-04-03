@@ -6,6 +6,17 @@ import { Trip } from "@/types/trips"
 import { apiRequest } from "@/lib/api"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
+import { useRouter } from "next/navigation"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 interface TripResponse {
   data: Trip[]
@@ -17,6 +28,8 @@ export default function TripPage() {
   const [data, setData] = useState<Trip[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
+  const [tripToDelete, setTripToDelete] = useState<Trip | null>(null)
 
   const fetchTrips = async () => {
     try {
@@ -28,7 +41,6 @@ export default function TripPage() {
       )
       console.log('Raw API Response:', response)
       console.log('Response data:', response.data)
-      
       
       setData(response.data || [])
       setError(null)
@@ -46,16 +58,25 @@ export default function TripPage() {
   }, [])
 
   const handleDelete = async (trip: Trip) => {
-    if (!confirm("Apakah Anda yakin ingin menghapus trip ini?")) return
+    setTripToDelete(trip)
+  }
+
+  const confirmDelete = async () => {
+    if (!tripToDelete) return
 
     try {
-      await apiRequest('DELETE', `/api/trips/${trip.id}`)
+      await apiRequest('DELETE', `/api/trips/${tripToDelete.id}`)
       toast.success("Trip berhasil dihapus")
       fetchTrips()
+      setTripToDelete(null)
     } catch (err) {
       toast.error("Gagal menghapus trip")
       console.error("Error deleting trip:", err)
     }
+  }
+
+  const handleEdit = (trip: Trip) => {
+    router.push(`/dashboard/trips/${trip.id}/edit`)
   }
 
   if (loading) return <div className="container mx-auto p-4">Loading...</div>
@@ -71,10 +92,27 @@ export default function TripPage() {
       </div>
       <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
         <DataTable 
-          columns={columns({ onDelete: handleDelete })} 
+          columns={columns({ onDelete: handleDelete, onEdit: handleEdit })} 
           data={data}
         />
       </div>
+
+      <AlertDialog open={!!tripToDelete} onOpenChange={() => setTripToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Apakah Anda yakin?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tindakan ini tidak dapat dibatalkan. Trip &quot;{tripToDelete?.name}&quot; akan dihapus secara permanen.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-red-500 hover:bg-red-600">
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 } 

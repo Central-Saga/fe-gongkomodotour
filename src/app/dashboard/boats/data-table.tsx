@@ -33,6 +33,7 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
+  DropdownMenuItem,
 } from "@/components/ui/dropdown-menu"
 import {
   Select,
@@ -41,25 +42,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { ChevronDown, FileDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Plus } from 'lucide-react'
+import { ChevronDown, FileDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Plus, MoreHorizontal, Pencil, Trash } from 'lucide-react'
 import { useState } from "react"
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
-import { Trip, TripAsset } from "@/types/trips"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
+import { Boat, BoatAsset } from "@/types/boats"
 import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
 import { ImageModal } from "@/components/ui/image-modal"
+import { toast } from "sonner"
+import { apiRequest } from "@/lib/api"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 
 interface DataTableProps<TData> {
   columns: ColumnDef<TData, string>[]
   data: TData[]
+  setData: (data: TData[]) => void
+}
+
+interface BoatResponse {
+  data: Boat[]
+  message?: string
+  status?: string
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
@@ -72,7 +77,7 @@ const getImageUrl = (fileUrl: string) => {
   return `${API_URL}${fileUrl}`
 }
 
-const exportToPDF = (data: Trip[]) => {
+const exportToPDF = (data: Boat[]) => {
   const doc = new jsPDF()
   const pageWidth = doc.internal.pageSize.getWidth()
   
@@ -110,7 +115,7 @@ const exportToPDF = (data: Trip[]) => {
   // Add report title (centered)
   doc.setFontSize(14)
   doc.setFont("helvetica", "bold")
-  const reportTitle = "Trip Report"
+  const reportTitle = "Boat Report"
   const reportTitleWidth = doc.getTextWidth(reportTitle)
   const reportTitleX = (pageWidth - reportTitleWidth) / 2
   doc.text(reportTitle, reportTitleX, yPos + 20)
@@ -124,9 +129,9 @@ const exportToPDF = (data: Trip[]) => {
   // Define the columns for the table
   const tableColumn = [
     "No",
-    "Nama Trip",
-    "Tipe Trip",
+    "Nama Kapal",
     "Status",
+    "Jumlah Kabin",
     "Created At",
     "Updated At"
   ]
@@ -134,9 +139,9 @@ const exportToPDF = (data: Trip[]) => {
   // Map the data to match the columns
   const tableRows = data.map((item, index) => [
     index + 1,
-    item.name,
-    item.type,
+    item.boat_name,
     item.status,
+    item.cabin.length,
     new Date(item.created_at).toLocaleString(),
     new Date(item.updated_at).toLocaleString(),
   ])
@@ -159,41 +164,121 @@ const exportToPDF = (data: Trip[]) => {
     },
     columnStyles: {
       0: { halign: 'center' }, // No
-      1: { halign: 'left' },   // Nama Trip
-      2: { halign: 'center' }, // Tipe Trip
-      3: { halign: 'center' }, // Status
+      1: { halign: 'left' },   // Nama Kapal
+      2: { halign: 'center' }, // Status
+      3: { halign: 'center' }, // Jumlah Kabin
       4: { halign: 'center' }, // Created At
       5: { halign: 'center' }, // Updated At
     },
   })
 
   // Save the PDF
-  doc.save("trip-report.pdf")
-}
-
-function HtmlContent({ html }: { html: string }) {
-  return <div dangerouslySetInnerHTML={{ __html: html }} className="prose max-w-none" />
+  doc.save("boat-report.pdf")
 }
 
 export function DataTable({
   columns,
   data,
-}: DataTableProps<Trip>) {
+  setData,
+}: DataTableProps<Boat>) {
   const router = useRouter()
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
   const [expanded, setExpanded] = useState<ExpandedState>({})
-  const [selectedImage, setSelectedImage] = useState<TripAsset | null>(null)
+  const [selectedImage, setSelectedImage] = useState<BoatAsset | null>(null)
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
   })
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  const handleEdit = (boat: Boat) => {
+    router.push(`/dashboard/boats/${boat.id}/edit`)
+  }
+
+  const handleDelete = async (boat: Boat) => {
+    try {
+      setIsDeleting(true)
+      await apiRequest('DELETE', `/api/boats/${boat.id}`)
+      toast.success("Kapal berhasil dihapus")
+      // Refresh data dengan memanggil ulang API
+      const response = await apiRequest<BoatResponse>('GET', '/api/boats')
+      setData(response.data || [])
+    } catch (error) {
+      console.error("Error deleting boat:", error)
+      toast.error("Gagal menghapus kapal")
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const DeleteConfirmationDialog = ({ boat, children }: { boat: Boat, children: React.ReactNode }) => {
+    return (
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          {children}
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Konfirmasi Hapus</AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin ingin menghapus kapal {boat.boat_name}? Tindakan ini tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => handleDelete(boat)}
+              disabled={isDeleting}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              {isDeleting ? "Menghapus..." : "Hapus"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    )
+  }
 
   const table = useReactTable({
     data,
-    columns,
+    columns: [
+      ...columns.filter(col => col.id !== "actions"),
+      {
+        id: "actions",
+        header: () => null,
+        cell: ({ row }) => {
+          const boat = row.original
+          return (
+            <div className="text-right">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-8 w-8 p-0">
+                    <span className="sr-only">Buka menu</span>
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleEdit(boat)}>
+                    <Pencil className="mr-2 h-4 w-4" />
+                    Edit
+                  </DropdownMenuItem>
+                  <DeleteConfirmationDialog boat={boat}>
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                      <Trash className="mr-2 h-4 w-4" />
+                      Hapus
+                    </DropdownMenuItem>
+                  </DeleteConfirmationDialog>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )
+        },
+        enableHiding: false,
+      }
+    ],
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -215,203 +300,141 @@ export function DataTable({
     },
   })
 
-  const renderSubComponent = ({ row }: { row: Row<Trip> }) => {
-    const trip = row.original as Trip
+  const renderSubComponent = ({ row }: { row: Row<Boat> }) => {
+    const boat = row.original as Boat
     
     return (
       <div className="p-4 bg-muted/50 rounded-lg">
-        {/* Informasi Trip */}
+        {/* Informasi Kapal */}
         <div className="space-y-4 max-w-5xl mx-auto">
           <div className="bg-white p-4 rounded-lg shadow-sm">
-            <h4 className="font-semibold text-lg mb-4 text-gray-800 border-b pb-2">Informasi Trip</h4>
-            <div className="grid gap-4 lg:grid-cols-2">
+            <h4 className="font-semibold text-lg mb-4 text-gray-800 border-b pb-2">Informasi Kapal</h4>
+            <div className="grid gap-4">
               <div className="space-y-4">
                 <div>
-                  <p className="text-gray-600 font-medium mb-2">Include:</p>
-                  <div className="bg-gray-50 p-3 rounded-md overflow-auto">
-                    <div className="prose prose-sm max-w-none">
-                      <HtmlContent html={trip.include} />
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-gray-600 font-medium mb-2">Exclude:</p>
-                  <div className="bg-gray-50 p-3 rounded-md overflow-auto">
-                    <div className="prose prose-sm max-w-none">
-                      <HtmlContent html={trip.exclude} />
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-gray-600 font-medium mb-2">Catatan:</p>
+                  <p className="text-gray-600 font-medium mb-2">Spesifikasi:</p>
                   <div className="bg-gray-50 p-3 rounded-md">
-                    <p className="text-gray-800 whitespace-pre-wrap break-words">{trip.note}</p>
+                    <div 
+                      className="prose prose-sm max-w-none"
+                      style={{ 
+                        maxWidth: '100%',
+                        overflowX: 'auto',
+                        whiteSpace: 'nowrap'
+                      }}
+                      dangerouslySetInnerHTML={{ __html: boat.spesification }}
+                    />
                   </div>
                 </div>
-              </div>
-              <div className="space-y-4">
                 <div>
-                  <p className="text-gray-600 font-medium mb-2">Meeting Point:</p>
+                  <p className="text-gray-600 font-medium mb-2">Informasi Kabin:</p>
                   <div className="bg-gray-50 p-3 rounded-md">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <p className="text-gray-800 break-words">{trip.meeting_point}</p>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p className="max-w-xs break-words">{trip.meeting_point}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    <div 
+                      className="prose prose-sm max-w-none"
+                      style={{ 
+                        maxWidth: '100%',
+                        overflowX: 'auto',
+                        whiteSpace: 'nowrap'
+                      }}
+                      dangerouslySetInnerHTML={{ __html: boat.cabin_information }}
+                    />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-gray-600 font-medium mb-2">Waktu Mulai:</p>
-                    <div className="bg-gray-50 p-3 rounded-md">
-                      <p className="text-gray-800">{trip.start_time}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-gray-600 font-medium mb-2">Waktu Selesai:</p>
-                    <div className="bg-gray-50 p-3 rounded-md">
-                      <p className="text-gray-800">{trip.end_time}</p>
-                    </div>
+                <div>
+                  <p className="text-gray-600 font-medium mb-2">Fasilitas:</p>
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <div 
+                      className="prose prose-sm max-w-none"
+                      style={{ 
+                        maxWidth: '100%',
+                        overflowX: 'auto',
+                        whiteSpace: 'nowrap'
+                      }}
+                      dangerouslySetInnerHTML={{ __html: boat.facilities }}
+                    />
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Itinerary */}
-          <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm">
-            <h4 className="font-semibold text-lg mb-4 text-gray-800 border-b pb-2">Itinerary</h4>
+          {/* Kabin */}
+          <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm min-w-[800px]">
+            <h4 className="font-semibold text-lg mb-4 text-gray-800 border-b pb-2">Daftar Kabin</h4>
             <div className="space-y-6">
-              {trip.itineraries.sort((a, b) => a.day_number - b.day_number).map((itinerary, index) => (
+              {boat.cabin.map((cabin, index) => (
                 <div key={index} className="bg-gray-50 p-3 sm:p-4 rounded-md">
-                  <div className="flex flex-col">
-                    <p className="font-medium text-gray-800 mb-2 text-base inline-flex items-center">
-                      <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-md mr-2">
-                        Hari {itinerary.day_number}
-                      </span>
-                    </p>
-                    <div className="bg-white p-3 rounded-md border border-gray-100">
-                      <div className="bg-gray-50 p-3 rounded-md overflow-auto">
-                        <div className="prose prose-sm max-w-none prose-headings:mt-2 prose-p:my-1 prose-ul:my-1 prose-li:my-0.5">
-                          <HtmlContent html={itinerary.activities} />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Flight Schedules */}
-          <div className="bg-white p-6 rounded-lg shadow-sm">
-            <h4 className="font-semibold text-lg mb-4 text-gray-800 border-b pb-2">Jadwal Penerbangan</h4>
-            <div className="grid gap-4 md:grid-cols-2">
-              {trip.flight_schedules.map((schedule, index) => (
-                <div key={index} className="bg-gray-50 p-4 rounded-md">
-                  <p className="font-medium text-gray-800 mb-3 text-base break-words">{schedule.route}</p>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <div>
-                        <p className="text-gray-600 font-medium">ETD Time:</p>
-                        <div className="bg-white p-2 rounded border border-gray-100">
-                          <p className="text-gray-800">{schedule.etd_time}</p>
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-gray-600 font-medium">ETD Text:</p>
-                        <div className="bg-white p-2 rounded border border-gray-100">
-                          <p className="text-gray-800">{schedule.etd_text}</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <div>
-                        <p className="text-gray-600 font-medium">ETA Time:</p>
-                        <div className="bg-white p-2 rounded border border-gray-100">
-                          <p className="text-gray-800">{schedule.eta_time}</p>
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-gray-600 font-medium">ETA Text:</p>
-                        <div className="bg-white p-2 rounded border border-gray-100">
-                          <p className="text-gray-800">{schedule.eta_text}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Trip Durations & Prices */}
-          <div className="bg-white p-6 rounded-lg shadow-sm">
-            <h4 className="font-semibold text-lg mb-4 text-gray-800 border-b pb-2">Durasi & Harga</h4>
-            <div className="space-y-6">
-              {trip.trip_durations.map((duration, index) => (
-                <div key={index} className="bg-gray-50 p-4 rounded-md">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div>
-                      <p className="text-gray-600 font-medium mb-1">Label Durasi:</p>
+                      <p className="text-gray-600 font-medium mb-1">Nama Kabin:</p>
                       <div className="bg-white p-2 rounded border border-gray-100">
-                        <p className="text-gray-800">{duration.duration_label}</p>
+                        <p className="text-gray-800">{cabin.cabin_name}</p>
                       </div>
                     </div>
                     <div>
-                      <p className="text-gray-600 font-medium mb-1">Jumlah Hari:</p>
+                      <p className="text-gray-600 font-medium mb-1">Tipe Bed:</p>
                       <div className="bg-white p-2 rounded border border-gray-100">
-                        <p className="text-gray-800">{duration.duration_days}</p>
+                        <p className="text-gray-800 capitalize">{cabin.bed_type}</p>
                       </div>
                     </div>
                     <div>
-                      <p className="text-gray-600 font-medium mb-1">Jumlah Malam:</p>
+                      <p className="text-gray-600 font-medium mb-1">Kapasitas:</p>
                       <div className="bg-white p-2 rounded border border-gray-100">
-                        <p className="text-gray-800">{duration.duration_nights}</p>
+                        <p className="text-gray-800">{cabin.min_pax} - {cabin.max_pax} orang</p>
                       </div>
                     </div>
                     <div>
                       <p className="text-gray-600 font-medium mb-1">Status:</p>
                       <div className="bg-white p-2 rounded border border-gray-100">
-                        <Badge className={`${duration.status === "Aktif" ? "bg-emerald-500" : "bg-red-500"} text-white`}>
-                          {duration.status}
+                        <Badge className={`${cabin.status === "Aktif" ? "bg-emerald-500" : "bg-red-500"} text-white`}>
+                          {cabin.status}
                         </Badge>
                       </div>
                     </div>
                   </div>
-                  {duration.trip_prices.length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-2 gap-4 mt-4">
                     <div>
-                      <p className="font-medium text-gray-800 mb-3">Harga per Pax:</p>
-                      <div className="space-y-3">
-                        {duration.trip_prices.map((price, priceIndex) => (
-                          <div key={priceIndex} className="bg-white p-3 rounded-md border border-gray-100">
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                              <div>
-                                <p className="text-gray-600 text-sm">Min Pax:</p>
-                                <p className="font-medium">{price.pax_min}</p>
-                              </div>
-                              <div>
-                                <p className="text-gray-600 text-sm">Max Pax:</p>
-                                <p className="font-medium">{price.pax_max}</p>
-                              </div>
-                              <div>
-                                <p className="text-gray-600 text-sm">Harga per Pax:</p>
-                                <p className="font-medium">{price.price_per_pax}</p>
-                              </div>
-                              <div>
-                                <p className="text-gray-600 text-sm">Status:</p>
-                                <Badge className={`${price.status === "Aktif" ? "bg-emerald-500" : "bg-red-500"} text-white`}>
-                                  {price.status}
-                                </Badge>
-                              </div>
+                      <p className="text-gray-600 font-medium mb-1">Harga Dasar:</p>
+                      <div className="bg-white p-2 rounded border border-gray-100">
+                        <p className="text-gray-800">Rp {cabin.base_price}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-gray-600 font-medium mb-1">Harga Tambahan:</p>
+                      <div className="bg-white p-2 rounded border border-gray-100">
+                        <p className="text-gray-800">Rp {cabin.additional_price}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Gambar Kabin */}
+                  {cabin.assets && cabin.assets.length > 0 && (
+                    <div className="mt-4">
+                      <p className="text-gray-600 font-medium mb-2">Gambar Kabin:</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        {cabin.assets.map((asset, assetIndex) => {
+                          const imageUrl = getImageUrl(asset.file_url)
+                          return (
+                            <div 
+                              key={assetIndex} 
+                              className="relative aspect-[4/3] rounded-lg overflow-hidden border border-gray-200 cursor-pointer group"
+                              onClick={() => setSelectedImage(asset)}
+                            >
+                              <Image
+                                src={imageUrl}
+                                alt={asset.title || `Gambar Kabin ${assetIndex + 1}`}
+                                fill
+                                sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw"
+                                className="object-cover transition-transform duration-200 group-hover:scale-105"
+                                onError={(e) => {
+                                  console.error(`Error loading image ${assetIndex}:`, e)
+                                  const target = e.target as HTMLImageElement
+                                  target.src = '/placeholder-image.png'
+                                }}
+                              />
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200" />
                             </div>
-                          </div>
-                        ))}
+                          )
+                        })}
                       </div>
                     </div>
                   )}
@@ -419,124 +442,14 @@ export function DataTable({
               ))}
             </div>
           </div>
-
-          {/* Additional Fees */}
-          <div className="bg-white p-6 rounded-lg shadow-sm">
-            <h4 className="font-semibold text-lg mb-4 text-gray-800 border-b pb-2">Biaya Tambahan</h4>
-            <div className="space-y-4">
-              {trip.additional_fees.map((fee, index) => (
-                <div key={index} className="bg-gray-50 p-4 rounded-md">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                    <div>
-                      <p className="text-gray-600 font-medium mb-1">Kategori:</p>
-                      <div className="bg-white p-2 rounded border border-gray-100">
-                        <p className="text-gray-800">{fee.fee_category}</p>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 font-medium mb-1">Harga:</p>
-                      <div className="bg-white p-2 rounded border border-gray-100">
-                        <p className="text-gray-800">{fee.price}</p>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 font-medium mb-1">Wilayah:</p>
-                      <div className="bg-white p-2 rounded border border-gray-100">
-                        <p className="text-gray-800">{fee.region}</p>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 font-medium mb-1">Satuan:</p>
-                      <div className="bg-white p-2 rounded border border-gray-100">
-                        <p className="text-gray-800">{fee.unit}</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div>
-                      <p className="text-gray-600 font-medium mb-1">Min Pax:</p>
-                      <div className="bg-white p-2 rounded border border-gray-100">
-                        <p className="text-gray-800">{fee.pax_min}</p>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 font-medium mb-1">Max Pax:</p>
-                      <div className="bg-white p-2 rounded border border-gray-100">
-                        <p className="text-gray-800">{fee.pax_max}</p>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 font-medium mb-1">Tipe Hari:</p>
-                      <div className="bg-white p-2 rounded border border-gray-100">
-                        <p className="text-gray-800">{fee.day_type}</p>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 font-medium mb-1">Status:</p>
-                      <div className="bg-white p-2 rounded border border-gray-100">
-                        <Badge className={`${fee.status === "Aktif" ? "bg-emerald-500" : "bg-red-500"} text-white`}>
-                          {fee.status}
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Surcharges */}
-          <div className="bg-white p-6 rounded-lg shadow-sm">
-            <h4 className="font-semibold text-lg mb-4 text-gray-800 border-b pb-2">Surcharge</h4>
-            <div className="space-y-4">
-              {trip.surcharges.map((surcharge, index) => (
-                <div key={index} className="bg-gray-50 p-4 rounded-md">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                    <div>
-                      <p className="text-gray-600 font-medium mb-1">Musim:</p>
-                      <div className="bg-white p-2 rounded border border-gray-100">
-                        <p className="text-gray-800">{surcharge.season}</p>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 font-medium mb-1">Tanggal Mulai:</p>
-                      <div className="bg-white p-2 rounded border border-gray-100">
-                        <p className="text-gray-800">{surcharge.start_date}</p>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 font-medium mb-1">Tanggal Selesai:</p>
-                      <div className="bg-white p-2 rounded border border-gray-100">
-                        <p className="text-gray-800">{surcharge.end_date}</p>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 font-medium mb-1">Harga:</p>
-                      <div className="bg-white p-2 rounded border border-gray-100">
-                        <p className="text-gray-800">{surcharge.surcharge_price}</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-gray-600 font-medium mb-1">Status:</p>
-                    <div className="bg-white p-2 rounded border border-gray-100">
-                      <Badge className={`${surcharge.status === "Aktif" ? "bg-emerald-500" : "bg-red-500"} text-white`}>
-                        {surcharge.status}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
 
-        {/* Gambar Trip - Dipindahkan ke bawah */}
-        {trip.assets && trip.assets.length > 0 && (
+        {/* Gambar Kapal */}
+        {boat.assets && boat.assets.length > 0 && (
           <div className="bg-white p-6 rounded-lg shadow-sm mt-6">
-            <h4 className="font-semibold text-lg mb-4 text-gray-800 border-b pb-2">Gambar Trip</h4>
+            <h4 className="font-semibold text-lg mb-4 text-gray-800 border-b pb-2">Gambar Kapal</h4>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {trip.assets.map((asset, index) => {
+              {boat.assets.map((asset, index) => {
                 const imageUrl = getImageUrl(asset.file_url)
                 return (
                   <div 
@@ -593,14 +506,56 @@ export function DataTable({
 
   return (
     <div className="container mx-auto max-w-7xl">
+      <style jsx global>{`
+        .custom-scrollbar {
+          scrollbar-width: thin;
+          scrollbar-color: #888 #f1f1f1;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+          height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #f1f1f1;
+          border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #888;
+          border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #666;
+        }
+        .prose {
+          word-break: normal;
+          overflow-wrap: anywhere;
+        }
+        .prose {
+          -webkit-overflow-scrolling: touch;
+        }
+        .prose::-webkit-scrollbar {
+          height: 4px;
+        }
+        .prose::-webkit-scrollbar-track {
+          background: #f1f1f1;
+          border-radius: 2px;
+        }
+        .prose::-webkit-scrollbar-thumb {
+          background: #888;
+          border-radius: 2px;
+        }
+        .prose::-webkit-scrollbar-thumb:hover {
+          background: #666;
+        }
+      `}</style>
       {/* Toolbar */}
       <div className="flex items-center justify-between py-4">
         <div className="flex items-center space-x-2">
           <Input
             placeholder="Filter berdasarkan nama..."
-            value={(table.getColumn("name")?.getFilterValue() as string) || ""}
+            value={(table.getColumn("boat_name")?.getFilterValue() as string) || ""}
             onChange={(event) =>
-              table.getColumn("name")?.setFilterValue(event.target.value)
+              table.getColumn("boat_name")?.setFilterValue(event.target.value)
             }
             className="max-w-sm"
           />
@@ -616,8 +571,7 @@ export function DataTable({
                 .filter((column) => column.getCanHide())
                 .map((column) => {
                   const columnLabels: Record<string, string> = {
-                    name: "Nama Trip",
-                    type: "Tipe Trip",
+                    boat_name: "Nama Kapal",
                     status: "Status"
                   }
                   return (
@@ -641,7 +595,7 @@ export function DataTable({
                 onClick={() =>
                   console.log(
                     "Delete selected rows:",
-                    table.getSelectedRowModel().rows.map((row) => (row.original as Trip).id)
+                    table.getSelectedRowModel().rows.map((row) => (row.original as Boat).id)
                   )
                 }
               >
@@ -649,7 +603,7 @@ export function DataTable({
               </Button>
               <Button 
                 variant="outline"
-                onClick={() => exportToPDF(table.getSelectedRowModel().rows.map(row => row.original as Trip))}
+                onClick={() => exportToPDF(table.getSelectedRowModel().rows.map(row => row.original as Boat))}
               >
                 <FileDown className="mr-2 h-4 w-4" />
                 Export Terpilih ({table.getSelectedRowModel().rows.length})
@@ -657,16 +611,16 @@ export function DataTable({
             </>
           )}
           <Button 
-            onClick={() => router.push('/dashboard/trips/create')}
+            onClick={() => router.push('/dashboard/boats/create')}
             className="bg-yellow-500 hover:bg-yellow-600 text-white transition-colors duration-200"
           >
             <Plus className="mr-2 h-4 w-4" />
-            Tambah Trip
+            Tambah Kapal
           </Button>
           <Button 
             className="bg-red-500 hover:bg-red-600 text-white transition-colors duration-200"
             variant="outline"
-            onClick={() => exportToPDF(table.getFilteredRowModel().rows.map(row => row.original as Trip))}
+            onClick={() => exportToPDF(table.getFilteredRowModel().rows.map(row => row.original as Boat))}
           >
             <FileDown className="mr-2 h-4 w-4" />
             Export All
@@ -805,4 +759,4 @@ export function DataTable({
       </div>
     </div>
   )
-} 
+}
