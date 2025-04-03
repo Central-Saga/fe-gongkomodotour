@@ -45,8 +45,6 @@ export default function HotelPage() {
   }, [])
 
   const handleDelete = async (hotel: Hotel) => {
-    if (!confirm("Apakah Anda yakin ingin menghapus hotel ini?")) return
-
     try {
       await apiRequest('DELETE', `/api/hotels/${hotel.id}`)
       toast.success("Hotel berhasil dihapus")
