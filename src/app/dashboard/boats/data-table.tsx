@@ -51,6 +51,8 @@ import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
 import { ImageModal } from "@/components/ui/image-modal"
+import { toast } from "sonner"
+import { apiRequest } from "@/lib/api"
 
 interface DataTableProps<TData> {
   columns: ColumnDef<TData, string>[]
@@ -186,8 +188,17 @@ export function DataTable({
     router.push(`/dashboard/boats/${boat.id}/edit`)
   }
 
-  const handleDelete = (boat: Boat) => {
-    console.log("Delete boat:", boat.id)
+  const handleDelete = async (boat: Boat) => {
+    if (!confirm("Apakah Anda yakin ingin menghapus kapal ini?")) return
+
+    try {
+      await apiRequest('DELETE', `/api/boats/${boat.id}`)
+      toast.success("Kapal berhasil dihapus")
+      router.refresh()
+    } catch (error) {
+      console.error("Error deleting boat:", error)
+      toast.error("Gagal menghapus kapal")
+    }
   }
 
   const table = useReactTable({

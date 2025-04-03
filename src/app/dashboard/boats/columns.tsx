@@ -4,8 +4,9 @@ import { ColumnDef } from "@tanstack/react-table"
 import { Boat } from "@/types/boats"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ArrowUpDown, ChevronDown, ChevronRight, MoreHorizontal, Trash } from "lucide-react"
+import { ArrowUpDown, ChevronDown, ChevronRight, MoreHorizontal, Pencil, Trash } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { useRouter } from "next/navigation"
 
 interface ColumnsProps {
   onDelete: (boat: Boat) => void;
@@ -118,6 +119,12 @@ export const columns = ({ onDelete }: ColumnsProps): ColumnDef<Boat>[] => [
     header: () => null,
     cell: ({ row }) => {
       const boat = row.original;
+      const router = useRouter();
+
+      const handleEdit = () => {
+        router.push(`/dashboard/boats/${boat.id}/edit`);
+      };
+
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -127,6 +134,10 @@ export const columns = ({ onDelete }: ColumnsProps): ColumnDef<Boat>[] => [
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={handleEdit}>
+              <Pencil className="mr-2 h-4 w-4" />
+              Edit
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onDelete(boat)}>
               <Trash className="mr-2 h-4 w-4" />
               Hapus
