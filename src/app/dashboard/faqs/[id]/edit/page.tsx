@@ -31,7 +31,7 @@ import { use } from "react"
 const faqSchema = z.object({
   question: z.string().min(1, "Pertanyaan harus diisi"),
   answer: z.string().min(1, "Jawaban harus diisi"),
-  category: z.string().nullable(),
+  category: z.string().min(1, "Kategori harus dipilih"),
   display_order: z.string()
     .min(1, "Urutan tampilan harus diisi")
     .refine((val) => !isNaN(Number(val)), {
@@ -58,11 +58,20 @@ export default function EditFAQPage({ params }: { params: Promise<{ id: string }
     defaultValues: {
       question: "",
       answer: "",
-      category: null,
+      category: "",
       display_order: "",
       status: "Aktif",
     }
   })
+
+  // Daftar kategori yang tersedia
+  const categories = [
+    "Umum",
+    "Pembayaran",
+    "Pemesanan",
+    "Pembatalan",
+    "Lainnya"
+  ]
 
   useEffect(() => {
     const fetchData = async () => {
@@ -77,7 +86,7 @@ export default function EditFAQPage({ params }: { params: Promise<{ id: string }
           const formValues = {
             question: response.data.question,
             answer: response.data.answer,
-            category: response.data.category,
+            category: response.data.category || "",
             display_order: response.data.display_order.toString(),
             status: response.data.status as "Aktif" | "Non Aktif",
           }
@@ -193,13 +202,20 @@ export default function EditFAQPage({ params }: { params: Promise<{ id: string }
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Kategori</FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="Masukkan kategori (opsional)" 
-                              {...field}
-                              value={field.value || ''}
-                            />
-                          </FormControl>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Pilih kategori" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {categories.map((category) => (
+                                <SelectItem key={category} value={category}>
+                                  {category}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}
