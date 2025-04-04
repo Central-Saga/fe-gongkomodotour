@@ -21,7 +21,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { useRouter } from "next/navigation"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { apiRequest } from "@/lib/api"
@@ -48,7 +48,6 @@ const faqSchema = z.object({
 export default function CreateFAQPage() {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [existingFAQs, setExistingFAQs] = useState<FAQ[]>([])
 
   // Daftar kategori yang tersedia
   const categories = [
@@ -58,20 +57,6 @@ export default function CreateFAQPage() {
     "Pembatalan",
     "Lainnya"
   ]
-
-  useEffect(() => {
-    const fetchFAQs = async () => {
-      try {
-        const response = await apiRequest<FAQ[]>('GET', '/api/faqs')
-        if (response) {
-          setExistingFAQs(response)
-        }
-      } catch (error) {
-        console.error('Error fetching FAQs:', error)
-      }
-    }
-    fetchFAQs()
-  }, [])
 
   const defaultValues: z.infer<typeof faqSchema> = {
     question: "",
@@ -90,32 +75,6 @@ export default function CreateFAQPage() {
     try {
       setIsSubmitting(true)
       
-      const newDisplayOrder = Number(values.display_order)
-      
-      // Cek apakah nomor urut sudah digunakan
-      const existingFAQ = existingFAQs.find(faq => 
-        Number(faq.display_order) === newDisplayOrder
-      )
-
-      if (existingFAQ) {
-        // Geser semua FAQ yang memiliki display_order >= newDisplayOrder
-        const faqsToUpdate = existingFAQs
-          .filter(faq => Number(faq.display_order) >= newDisplayOrder)
-          .sort((a, b) => Number(b.display_order) - Number(a.display_order))
-
-        // Update display_order untuk FAQ yang perlu digeser
-        for (const faq of faqsToUpdate) {
-          const newOrder = Number(faq.display_order) + 1
-          if (newOrder <= 6) {
-            await apiRequest<FAQ>(
-              'PUT',
-              `/api/faqs/${faq.id}`,
-              { ...faq, display_order: newOrder.toString() }
-            )
-          }
-        }
-      }
-
       const response = await apiRequest<FAQ>(
         'POST',
         '/api/faqs',
