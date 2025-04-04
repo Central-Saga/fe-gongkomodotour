@@ -71,6 +71,29 @@ const data = {
       ],
     },
     {
+      title: "Content",
+      url: "#",
+      icon: GalleryVerticalEnd,
+      items: [
+        {
+          title: "FAQ",
+          url: "/dashboard/faq",
+        },
+        {
+          title: "Testimonials",
+          url: "/dashboard/testimonials",
+        },
+        {
+          title: "Gallery",
+          url: "/dashboard/gallery",
+        },
+        {
+          title: "Blog",
+          url: "/dashboard/blog",
+        },
+      ],
+    },
+    {
       title: "Transaction",
       url: "#",
       icon: BookOpen,
