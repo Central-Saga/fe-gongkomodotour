@@ -85,7 +85,7 @@ const data = {
         },
         {
           title: "Gallery",
-          url: "/dashboard/gallery",
+          url: "/dashboard/galleries",
         },
         {
           title: "Blog",

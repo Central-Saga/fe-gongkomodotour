@@ -1,19 +1,19 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
-import { Boat } from "@/types/boats"
+import { Gallery } from "@/types/galleries"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ArrowUpDown, ChevronDown, ChevronRight, MoreHorizontal, Pencil, Trash } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useRouter } from "next/navigation"
 
-const ActionsCell = ({ row }: { row: { original: Boat } }) => {
+const ActionsCell = ({ row }: { row: { original: Gallery } }) => {
   const router = useRouter()
-  const boat = row.original
+  const gallery = row.original
 
   const handleEdit = () => {
-    router.push(`/dashboard/boats/${boat.id}/edit`)
+    router.push(`/dashboard/galleries/${gallery.id}/edit`)
   }
 
   return (
@@ -38,7 +38,7 @@ const ActionsCell = ({ row }: { row: { original: Boat } }) => {
   )
 }
 
-export const columns = (): ColumnDef<Boat>[] => [
+export const columns = (): ColumnDef<Gallery>[] => [
   {
     id: "expander",
     header: () => null,
@@ -94,19 +94,35 @@ export const columns = (): ColumnDef<Boat>[] => [
     enableHiding: false,
   },
   {
-    accessorKey: "boat_name",
+    accessorKey: "title",
     header: ({ column }) => (
       <Button
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         className="px-0"
       >
-        Nama Kapal
+        Judul
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
     cell: ({ row }) => (
-      <div className="min-w-[180px]">{row.getValue("boat_name")}</div>
+      <div className="min-w-[180px]">{row.getValue("title")}</div>
+    ),
+  },
+  {
+    accessorKey: "category",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        className="px-0"
+      >
+        Kategori
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
+    cell: ({ row }) => (
+      <div className="min-w-[120px]">{row.getValue("category")}</div>
     ),
   },
   {
@@ -133,19 +149,36 @@ export const columns = (): ColumnDef<Boat>[] => [
     },
   },
   {
-    accessorKey: "cabin",
-    header: "Jumlah Kabin",
+    accessorKey: "created_at",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        className="px-0"
+      >
+        Tanggal Dibuat
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
     cell: ({ row }) => {
-      const cabins = row.original.cabin
-      return <div className="min-w-[120px]">{cabins.length} kabin</div>
+      const date = new Date(row.getValue("created_at"))
+      return (
+        <div className="min-w-[120px]">
+          {date.toLocaleDateString('id-ID', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+          })}
+        </div>
+      )
     },
   },
   {
     id: "actions",
     header: () => null,
     cell: ({ row }) => {
-      return <ActionsCell row={row} />;
+      return <ActionsCell row={row} />
     },
     enableHiding: false,
   },
-]
+] 

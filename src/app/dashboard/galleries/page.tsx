@@ -1,46 +1,36 @@
 "use client"
 
-import { columns } from "./columns"
+import { useState, useEffect } from "react"
 import { DataTable } from "./data-table"
+import { columns } from "./columns"
+import { Gallery } from "@/types/galleries"
 import { apiRequest } from "@/lib/api"
-import { Boat } from "@/types/boats"
-import { useEffect, useState } from "react"
 
-interface BoatResponse {
-  data: Boat[]
-  message?: string
-  status?: string
-}
-
-export default function BoatPage() {
-  const [data, setData] = useState<Boat[]>([])
+export default function GalleryPage() {
+  const [data, setData] = useState<Gallery[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchBoats = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true)
-      console.log('Fetching boats...')
-      const response: BoatResponse = await apiRequest<BoatResponse>(
+      const response = await apiRequest<{ data: Gallery[] }>(
         'GET',
-        '/api/boats'
+        '/api/galleries'
       )
-      console.log('Raw API Response:', response)
-      console.log('Response data:', response.data)
-      
       setData(response.data || [])
       setError(null)
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : "Gagal mengambil data kapal"
+      const errorMessage = err instanceof Error ? err.message : "Gagal mengambil data gallery"
       setError(errorMessage)
-      console.error("Error fetching boats:", err)
+      console.error("Error fetching galleries:", err)
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchBoats()
+    fetchData()
   }, [])
 
   if (loading) return <div className="container mx-auto p-4">Loading...</div>
@@ -50,13 +40,13 @@ export default function BoatPage() {
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Kapal Management</h1>
-          <p className="text-gray-500 mt-1">Manage data dan informasi kapal</p>
+          <h1 className="text-3xl font-bold text-gray-900">Gallery Management</h1>
+          <p className="text-gray-500 mt-1">Manage data dan informasi gallery</p>
         </div>
       </div>
       <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
-        <DataTable 
-          columns={columns()} 
+        <DataTable
+          columns={columns()}
           data={data}
           setData={setData}
         />
