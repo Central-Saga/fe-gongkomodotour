@@ -12,6 +12,9 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
+  ExpandedState,
+  getExpandedRowModel,
+  Row,
 } from "@tanstack/react-table"
 
 import {
@@ -43,7 +46,7 @@ import { ChevronDown, FileDown, ChevronLeft, ChevronRight, ChevronsLeft, Chevron
 import { useState } from "react"
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
-import { Hotel } from "@/types/hotels"
+import { FAQ } from "@/types/faqs"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { apiRequest } from "@/lib/api"
@@ -55,13 +58,13 @@ interface DataTableProps<TData> {
   setData: (data: TData[]) => void
 }
 
-interface HotelResponse {
-  data: Hotel[]
+interface FAQResponse {
+  data: FAQ[]
   message?: string
   status?: string
 }
 
-const exportToPDF = (data: Hotel[]) => {
+const exportToPDF = (data: FAQ[]) => {
   const doc = new jsPDF()
   const pageWidth = doc.internal.pageSize.getWidth()
   
@@ -99,7 +102,7 @@ const exportToPDF = (data: Hotel[]) => {
   // Add report title (centered)
   doc.setFontSize(14)
   doc.setFont("helvetica", "bold")
-  const reportTitle = "Hotel Report"
+  const reportTitle = "FAQ Report"
   const reportTitleWidth = doc.getTextWidth(reportTitle)
   const reportTitleX = (pageWidth - reportTitleWidth) / 2
   doc.text(reportTitle, reportTitleX, yPos + 20)
@@ -113,10 +116,10 @@ const exportToPDF = (data: Hotel[]) => {
   // Define the columns for the table
   const tableColumn = [
     "No",
-    "Nama Hotel",
-    "Tipe Hotel",
-    "Tipe Kamar",
-    "Harga",
+    "Pertanyaan",
+    "Jawaban",
+    "Kategori",
+    "Urutan",
     "Status",
     "Created At",
     "Updated At"
@@ -125,10 +128,10 @@ const exportToPDF = (data: Hotel[]) => {
   // Map the data to match the columns
   const tableRows = data.map((item, index) => [
     index + 1,
-    item.hotel_name,
-    item.hotel_type,
-    item.occupancy,
-    new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(Number(item.price)),
+    item.question,
+    item.answer,
+    item.category || "-",
+    item.display_order,
     item.status,
     new Date(item.created_at).toLocaleString(),
     new Date(item.updated_at).toLocaleString(),
@@ -152,10 +155,10 @@ const exportToPDF = (data: Hotel[]) => {
     },
     columnStyles: {
       0: { halign: 'center' }, // No
-      1: { halign: 'left' },   // Nama Hotel
-      2: { halign: 'left' },   // Tipe Hotel
-      3: { halign: 'left' },   // Tipe Kamar
-      4: { halign: 'right' },  // Harga
+      1: { halign: 'left' },   // Pertanyaan
+      2: { halign: 'left' },   // Jawaban
+      3: { halign: 'left' },   // Kategori
+      4: { halign: 'center' }, // Urutan
       5: { halign: 'center' }, // Status
       6: { halign: 'center' }, // Created At
       7: { halign: 'center' }, // Updated At
@@ -163,46 +166,47 @@ const exportToPDF = (data: Hotel[]) => {
   })
 
   // Save the PDF
-  doc.save("hotel-report.pdf")
+  doc.save("faq-report.pdf")
 }
 
 export function DataTable({
   columns,
   data,
   setData,
-}: DataTableProps<Hotel>) {
+}: DataTableProps<FAQ>) {
   const router = useRouter()
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
+  const [expanded, setExpanded] = useState<ExpandedState>({})
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
   })
   const [isDeleting, setIsDeleting] = useState(false)
 
-  const handleEdit = (hotel: Hotel) => {
-    router.push(`/dashboard/hotels/${hotel.id}/edit`)
+  const handleEdit = (faq: FAQ) => {
+    router.push(`/dashboard/faqs/${faq.id}/edit`)
   }
 
-  const handleDelete = async (hotel: Hotel) => {
+  const handleDelete = async (faq: FAQ) => {
     try {
       setIsDeleting(true)
-      await apiRequest('DELETE', `/api/hotels/${hotel.id}`)
-      toast.success("Hotel berhasil dihapus")
+      await apiRequest('DELETE', `/api/faqs/${faq.id}`)
+      toast.success("FAQ berhasil dihapus")
       // Refresh data dengan memanggil ulang API
-      const response = await apiRequest<HotelResponse>('GET', '/api/hotels')
+      const response = await apiRequest<FAQResponse>('GET', '/api/faqs')
       setData(response.data || [])
     } catch (error) {
-      console.error("Error deleting hotel:", error)
-      toast.error("Gagal menghapus hotel")
+      console.error("Error deleting FAQ:", error)
+      toast.error("Gagal menghapus FAQ")
     } finally {
       setIsDeleting(false)
     }
   }
 
-  const DeleteConfirmationDialog = ({ hotel, children }: { hotel: Hotel, children: React.ReactNode }) => {
+  const DeleteConfirmationDialog = ({ faq, children }: { faq: FAQ, children: React.ReactNode }) => {
     return (
       <AlertDialog>
         <AlertDialogTrigger asChild>
@@ -212,13 +216,13 @@ export function DataTable({
           <AlertDialogHeader>
             <AlertDialogTitle>Konfirmasi Hapus</AlertDialogTitle>
             <AlertDialogDescription>
-              Apakah Anda yakin ingin menghapus hotel {hotel.hotel_name}? Tindakan ini tidak dapat dibatalkan.
+              Apakah Anda yakin ingin menghapus FAQ ini? Tindakan ini tidak dapat dibatalkan.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Batal</AlertDialogCancel>
             <AlertDialogAction 
-              onClick={() => handleDelete(hotel)}
+              onClick={() => handleDelete(faq)}
               disabled={isDeleting}
               className="bg-red-500 hover:bg-red-600"
             >
@@ -230,6 +234,46 @@ export function DataTable({
     )
   }
 
+  const renderSubComponent = ({ row }: { row: Row<FAQ> }) => {
+    const faq = row.original
+    
+    return (
+      <div className="p-4 bg-muted/50 rounded-lg">
+        <div className="space-y-4 max-w-5xl mx-auto">
+          <div className="bg-white p-4 rounded-lg shadow-sm">
+            <h4 className="font-semibold text-lg mb-4 text-gray-800 border-b pb-2">Detail FAQ</h4>
+            <div className="grid gap-4">
+              <div className="space-y-4">
+                <div>
+                  <p className="text-gray-600 font-medium mb-2">Jawaban:</p>
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <div className="prose prose-sm max-w-none whitespace-normal break-words">
+                      {faq.answer}
+                    </div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-gray-600 font-medium mb-2">Urutan Tampilan:</p>
+                    <div className="bg-gray-50 p-3 rounded-md">
+                      <p className="text-gray-800">{faq.display_order}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-gray-600 font-medium mb-2">Tanggal Dibuat:</p>
+                    <div className="bg-gray-50 p-3 rounded-md">
+                      <p className="text-gray-800">{new Date(faq.created_at).toLocaleString()}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   const table = useReactTable({
     data,
     columns: [
@@ -238,7 +282,7 @@ export function DataTable({
         id: "actions",
         header: () => null,
         cell: ({ row }) => {
-          const hotel = row.original
+          const faq = row.original
           return (
             <div className="text-right">
               <DropdownMenu>
@@ -249,11 +293,11 @@ export function DataTable({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => handleEdit(hotel)}>
+                  <DropdownMenuItem onClick={() => handleEdit(faq)}>
                     <Pencil className="mr-2 h-4 w-4" />
                     Edit
                   </DropdownMenuItem>
-                  <DeleteConfirmationDialog hotel={hotel}>
+                  <DeleteConfirmationDialog faq={faq}>
                     <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                       <Trash className="mr-2 h-4 w-4" />
                       Hapus
@@ -275,12 +319,15 @@ export function DataTable({
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    onExpandedChange: setExpanded,
+    getExpandedRowModel: getExpandedRowModel(),
     onPaginationChange: setPagination,
     state: {
       sorting,
       columnFilters,
       columnVisibility,
       rowSelection,
+      expanded,
       pagination,
     },
   })
@@ -312,10 +359,10 @@ export function DataTable({
       <div className="flex items-center justify-between py-4">
         <div className="flex items-center space-x-2">
           <Input
-            placeholder="Filter berdasarkan nama..."
-            value={(table.getColumn("hotel_name")?.getFilterValue() as string) || ""}
+            placeholder="Filter berdasarkan pertanyaan..."
+            value={(table.getColumn("question")?.getFilterValue() as string) || ""}
             onChange={(event) =>
-              table.getColumn("hotel_name")?.setFilterValue(event.target.value)
+              table.getColumn("question")?.setFilterValue(event.target.value)
             }
             className="max-w-sm"
           />
@@ -331,10 +378,8 @@ export function DataTable({
                 .filter((column) => column.getCanHide())
                 .map((column) => {
                   const columnLabels: Record<string, string> = {
-                    hotel_name: "Nama Hotel",
-                    hotel_type: "Tipe Hotel",
-                    occupancy: "Tipe Kamar",
-                    price: "Harga",
+                    question: "Pertanyaan",
+                    category: "Kategori",
                     status: "Status"
                   }
                   return (
@@ -358,7 +403,7 @@ export function DataTable({
                 onClick={() =>
                   console.log(
                     "Delete selected rows:",
-                    table.getSelectedRowModel().rows.map((row) => (row.original as Hotel).id)
+                    table.getSelectedRowModel().rows.map((row) => (row.original as FAQ).id)
                   )
                 }
               >
@@ -366,7 +411,7 @@ export function DataTable({
               </Button>
               <Button 
                 variant="outline"
-                onClick={() => exportToPDF(table.getSelectedRowModel().rows.map(row => row.original as Hotel))}
+                onClick={() => exportToPDF(table.getSelectedRowModel().rows.map(row => row.original as FAQ))}
               >
                 <FileDown className="mr-2 h-4 w-4" />
                 Export Terpilih ({table.getSelectedRowModel().rows.length})
@@ -374,16 +419,16 @@ export function DataTable({
             </>
           )}
           <Button 
-            onClick={() => router.push('/dashboard/hotels/create')}
+            onClick={() => router.push('/dashboard/faqs/create')}
             className="bg-yellow-500 hover:bg-yellow-600 text-white transition-colors duration-200"
           >
             <Plus className="mr-2 h-4 w-4" />
-            Tambah Hotel
+            Tambah FAQ
           </Button>
           <Button 
             className="bg-red-500 hover:bg-red-600 text-white transition-colors duration-200"
             variant="outline"
-            onClick={() => exportToPDF(table.getFilteredRowModel().rows.map(row => row.original as Hotel))}
+            onClick={() => exportToPDF(table.getFilteredRowModel().rows.map(row => row.original as FAQ))}
           >
             <FileDown className="mr-2 h-4 w-4" />
             Export All
@@ -413,19 +458,27 @@ export function DataTable({
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
+                <React.Fragment key={row.id}>
+                  <TableRow
+                    data-state={row.getIsSelected() && "selected"}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                  {row.getIsExpanded() && (
+                    <TableRow key={`${row.id}-expanded`}>
+                      <TableCell colSpan={row.getVisibleCells().length}>
+                        {renderSubComponent({ row })}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </React.Fragment>
               ))
             ) : (
               <TableRow>
