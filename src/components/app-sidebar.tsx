@@ -77,7 +77,7 @@ const data = {
       items: [
         {
           title: "FAQ",
-          url: "/dashboard/faq",
+          url: "/dashboard/faqs",
         },
         {
           title: "Testimonials",
