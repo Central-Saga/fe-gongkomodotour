@@ -5,6 +5,7 @@ import Image from "next/image";
 import { FaUpload, FaCopy, FaCalendarAlt } from "react-icons/fa";
 import { MdOutlineDescription } from "react-icons/md"; // Import icon untuk deskripsi
 import { useState } from "react";
+import { useRouter } from "next/navigation"; // Import useRouter
 
 interface PaymentProps {
   packageId: string | null;
@@ -20,6 +21,7 @@ export default function Payment({
   tripCount,
 }: PaymentProps) {
   const [isUploaded, setIsUploaded] = useState(false);
+  const router = useRouter(); // Initialize useRouter
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -148,6 +150,11 @@ export default function Payment({
               : "bg-gray-300 text-gray-500 cursor-not-allowed"
           }`}
           disabled={!isUploaded}
+          onClick={() => {
+            if (isUploaded) {
+              router.push("/booking/book-history"); // Redirect to Book History page
+            }
+          }}
         >
           Next
         </button>
