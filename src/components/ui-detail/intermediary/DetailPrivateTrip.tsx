@@ -72,7 +72,8 @@ const privateTripData: PackageData[] = [
     ],
     session: {
       highSeason: {
-        period: "1 June ~ 31 August 2025; 1-10 October 2025; 14–20 February 2026; 17–24 March 2026",
+        period:
+          "1 June ~ 31 August 2025; 1-10 October 2025; 14–20 February 2026; 17–24 March 2026",
         price: "IDR 300.000/pax",
       },
       peakSeason: {
@@ -81,14 +82,17 @@ const privateTripData: PackageData[] = [
       },
     },
     flightInfo: {
-      guideFee1: "ENGLISH SPEAKING GUIDE FEE (1 - 5 Pax): IDR 650.000 / Day / Guide",
-      guideFee2: "ENGLISH SPEAKING GUIDE FEE (6 - 10 Pax): IDR 850.000 / Day / Guide",
+      guideFee1:
+        "ENGLISH SPEAKING GUIDE FEE (1 - 5 Pax): IDR 650.000 / Day / Guide",
+      guideFee2:
+        "ENGLISH SPEAKING GUIDE FEE (6 - 10 Pax): IDR 850.000 / Day / Guide",
     },
     boat: "No boat used",
     groupSize: "8-12 people",
-    information: "This package includes guided tours, transportation, and meals throughout the trip.",
+    information:
+      "This package includes guided tours, transportation, and meals throughout the trip.",
     images: [
-      "/img/imgsmall-1.png",
+      "/img/benavillage.png",
       "/img/gallery2.jpg",
       "/img/gallery4.jpg",
       "/img/gallery5.jpg",
@@ -109,7 +113,6 @@ const privateTripData: PackageData[] = [
       { image: "/img/boat/boat-zn-phinisi.jpg", title: "Luxury Boat 4" },
       { image: "/img/boat/boat-alf.jpg", title: "Luxury Boat 5" },
       { image: "/img/boat/bg-luxury.jpg", title: "Luxury Boat 6" },
-      
     ],
   },
   {
@@ -136,11 +139,7 @@ const privateTripData: PackageData[] = [
       "Entrance fees to Komodo National Park",
       "Tour guide",
     ],
-    exclude: [
-      "Personal expenses",
-      "Travel insurance",
-      "Tips for the crew",
-    ],
+    exclude: ["Personal expenses", "Travel insurance", "Tips for the crew"],
     session: {
       highSeason: {
         period: "1 June ~ 31 August 2025",
@@ -152,12 +151,15 @@ const privateTripData: PackageData[] = [
       },
     },
     flightInfo: {
-      guideFee1: "ENGLISH SPEAKING GUIDE FEE (1 - 5 Pax): IDR 650.000 / Day / Guide",
-      guideFee2: "ENGLISH SPEAKING GUIDE FEE (6 - 10 Pax): IDR 850.000 / Day / Guide",
+      guideFee1:
+        "ENGLISH SPEAKING GUIDE FEE (1 - 5 Pax): IDR 650.000 / Day / Guide",
+      guideFee2:
+        "ENGLISH SPEAKING GUIDE FEE (6 - 10 Pax): IDR 850.000 / Day / Guide",
     },
     boat: "Speed Boat",
     groupSize: "10-15 people",
-    information: "This package includes a full-day guided tour with speed boat transportation.",
+    information:
+      "This package includes a full-day guided tour with speed boat transportation.",
     images: [
       "/img/imgsmall-1.png",
       "/img/gallery2.jpg",
@@ -203,11 +205,7 @@ const privateTripData: PackageData[] = [
       "Entrance fees to Komodo National Park",
       "Tour guide",
     ],
-    exclude: [
-      "Personal expenses",
-      "Travel insurance",
-      "Tips for the crew",
-    ],
+    exclude: ["Personal expenses", "Travel insurance", "Tips for the crew"],
     session: {
       highSeason: {
         period: "1 June ~ 31 August 2025",
@@ -219,15 +217,18 @@ const privateTripData: PackageData[] = [
       },
     },
     flightInfo: {
-      guideFee1: "ENGLISH SPEAKING GUIDE FEE (1 - 5 Pax): IDR 650.000 / Day / Guide",
-      guideFee2: "ENGLISH SPEAKING GUIDE FEE (6 - 10 Pax): IDR 850.000 / Day / Guide",
+      guideFee1:
+        "ENGLISH SPEAKING GUIDE FEE (1 - 5 Pax): IDR 650.000 / Day / Guide",
+      guideFee2:
+        "ENGLISH SPEAKING GUIDE FEE (6 - 10 Pax): IDR 850.000 / Day / Guide",
     },
     boat: "Sailing Boat",
     groupSize: "8-12 people",
-    information: "This package includes a 3-day sailing adventure with full board meals.",
+    information:
+      "This package includes a 3-day sailing adventure with full board meals.",
     images: [
       "/img/komodoisland.png",
-      "/img/imgsmall-1.png",
+      "/img/komodoprivate.png",
       "/img/gallery2.jpg",
       "/img/gallery4.jpg",
       "/img/gallery5.jpg",
@@ -270,11 +271,7 @@ const privateTripData: PackageData[] = [
       "Local guide",
       "Entrance fees",
     ],
-    exclude: [
-      "Personal expenses",
-      "Travel insurance",
-      "Tips for the guide",
-    ],
+    exclude: ["Personal expenses", "Travel insurance", "Tips for the guide"],
     session: {
       highSeason: {
         period: "1 June ~ 31 August 2025",
@@ -286,12 +283,15 @@ const privateTripData: PackageData[] = [
       },
     },
     flightInfo: {
-      guideFee1: "ENGLISH SPEAKING GUIDE FEE (1 - 5 Pax): IDR 650.000 / Day / Guide",
-      guideFee2: "ENGLISH SPEAKING GUIDE FEE (6 - 10 Pax): IDR 850.000 / Day / Guide",
+      guideFee1:
+        "ENGLISH SPEAKING GUIDE FEE (1 - 5 Pax): IDR 650.000 / Day / Guide",
+      guideFee2:
+        "ENGLISH SPEAKING GUIDE FEE (6 - 10 Pax): IDR 850.000 / Day / Guide",
     },
     boat: "No boat used",
     groupSize: "5-10 people",
-    information: "This package includes a guided trek to Waerebo Village with meals and accommodation.",
+    information:
+      "This package includes a guided trek to Waerebo Village with meals and accommodation.",
     images: [
       "/img/waerebovillage.png",
       "/img/imgsmall-1.png",
@@ -427,9 +427,10 @@ const blogPosts = [
 export default function DetailPrivateTrip() {
   const searchParams = useSearchParams();
   const packageId = searchParams.get("id") || "explore-waerebo"; // Default ke "explore-waerebo" jika id tidak ada
+  console.log("Package ID:", packageId); // Log untuk memeriksa packageId
 
-  // Cari data paket berdasarkan packageId
   const selectedPackage = privateTripData.find((pkg) => pkg.id === packageId);
+  console.log("Selected Package Data:", selectedPackage); // Log untuk memeriksa data paket yang dipilih
 
   // Jika paket tidak ditemukan, tampilkan pesan error atau redirect
   if (!selectedPackage) {
@@ -464,8 +465,8 @@ export default function DetailPrivateTrip() {
         tripType="private-trip"
       />
 
-     {/* Section Latest Post dan FAQ */}
-     <div className="px-4 py-12 md:flex md:space-x-6">
+      {/* Section Latest Post dan FAQ */}
+      <div className="px-4 py-12 md:flex md:space-x-6">
         {/* Latest Post */}
         <div className="md:w-1/2 mb-6 md:mb-0">
           <DetailBlog posts={blogPosts} />

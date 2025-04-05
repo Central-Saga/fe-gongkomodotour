@@ -1,13 +1,20 @@
 "use client";
 
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import Image from 'next/image';
-import Link from 'next/link';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import Image from "next/image";
+import Link from "next/link";
 
 // Data untuk tur Private Trip
 const privateTrips = [
   {
     image: "/img/komodoprivate.png",
+    mainImage: "/img/komodoprivate-main.png",
     label: "Private Trip",
     name: "Sailing Komodo Tour",
     duration: "2D/1N",
@@ -17,6 +24,7 @@ const privateTrips = [
   },
   {
     image: "/img/benavillage.png",
+    mainImage: "/img/benavillage-main.png",
     label: "Private Trip",
     name: "Stunning Flores Overland",
     duration: "3D/2N",
@@ -26,6 +34,7 @@ const privateTrips = [
   },
   {
     image: "/img/benavillage.png",
+    mainImage: "/img/benavillage-main.png",
     label: "Private Trip",
     name: "Combination Stunning Flores Overland & Sailing Komodo Tour",
     duration: "6D/5N",
@@ -35,6 +44,7 @@ const privateTrips = [
   },
   {
     image: "/img/priavetperajin.png",
+    mainImage: "/img/priavetperajin-main.png",
     label: "Private Trip",
     name: "Magnificent Sumba",
     duration: "3D/2N",
@@ -58,7 +68,9 @@ export default function PrivateTrip() {
           priority
         />
         <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-          <h1 className="text-6xl font-bold text-white tracking-wide">PRIVATE TRIP</h1>
+          <h1 className="text-6xl font-bold text-white tracking-wide">
+            PRIVATE TRIP
+          </h1>
         </div>
       </section>
 
@@ -67,15 +79,22 @@ export default function PrivateTrip() {
         <div className="container mx-auto px-4 flex flex-col md:flex-row gap-8">
           {/* Tentang Private Trip */}
           <div className="md:w-2/3 bg-white p-8 rounded-lg shadow-lg">
-            <h2 className="text-2xl font-semibold mb-4 text-gray-800">Tentang Private Trip</h2>
+            <h2 className="text-2xl font-semibold mb-4 text-gray-800">
+              Tentang Private Trip
+            </h2>
             <p className="text-gray-600 leading-relaxed">
-              Close Trip adalah paket perjalanan yang dirancang khusus untuk grup atau individu yang ingin mengatur itinerary sendiri. Paket ini sebenarnya lebih eksklusif dan dapat disesuaikan dengan kebutuhan peserta.
+              Close Trip adalah paket perjalanan yang dirancang khusus untuk
+              grup atau individu yang ingin mengatur itinerary sendiri. Paket
+              ini sebenarnya lebih eksklusif dan dapat disesuaikan dengan
+              kebutuhan peserta.
             </p>
           </div>
 
           {/* Formulir Pencarian */}
           <div className="md:w-1/3 bg-white p-8 rounded-lg shadow-lg">
-            <h3 className="text-xl font-semibold mb-6 text-gray-800">Cari Trip</h3>
+            <h3 className="text-xl font-semibold mb-6 text-gray-800">
+              Cari Trip
+            </h3>
             <div className="space-y-6">
               <Select>
                 <SelectTrigger className="w-full border-gray-300 focus:ring-2 focus:ring-yellow-500">
@@ -109,9 +128,14 @@ export default function PrivateTrip() {
       {/* Bagian Tur */}
       <section className="py-12 bg-white">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold mb-4 text-gray-800">Tur Private Trip</h2>
+          <h2 className="text-3xl font-bold mb-4 text-gray-800">
+            Tur Private Trip
+          </h2>
           <p className="text-gray-600 mb-8 leading-relaxed">
-            Private Trip adalah paket perjalanan eksklusif yang dirancang khusus untuk grup atau individu, di mana peserta dapat mengatur itinerary sesuai kebutuhan. Paket ini menawarkan pengalaman yang lebih personal dan fleksibel.
+            Private Trip adalah paket perjalanan eksklusif yang dirancang khusus
+            untuk grup atau individu, di mana peserta dapat mengatur itinerary
+            sesuai kebutuhan. Paket ini menawarkan pengalaman yang lebih
+            personal dan fleksibel.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {privateTrips.map((trip, index) => (
@@ -134,7 +158,9 @@ export default function PrivateTrip() {
                 <div className="p-5 flex-1 flex flex-col justify-center items-center">
                   {/* Konten judul, durasi, dan harga yang akan disembunyikan saat hover */}
                   <div className="text-center group-hover:hidden">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2">{trip.name}</h3>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                      {trip.name}
+                    </h3>
                     <div className="flex items-center justify-center space-x-4">
                       <div className="flex items-center space-x-1">
                         <Image
@@ -160,7 +186,11 @@ export default function PrivateTrip() {
                   </div>
                   {/* Tombol More Detail yang muncul saat hover */}
                   <div className="hidden group-hover:flex items-center justify-center flex-1">
-                    <Link href={`/tours/${trip.slug}`}>
+                    <Link
+                      href={`/detail-paket/private-trip?id=${
+                        trip.slug
+                      }&mainImage=${encodeURIComponent(trip.mainImage)}`} // Kirim mainImage dengan encodeURIComponent
+                    >
                       <button className="bg-yellow-500 text-white px-6 py-2 rounded-lg hover:bg-yellow-600 transition-colors duration-300">
                         More Detail
                       </button>

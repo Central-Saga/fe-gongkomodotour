@@ -35,59 +35,20 @@ interface PackageData {
     guideFee2: string;
   };
   boatImages?: { image: string; title: string }[]; // Tambahkan properti ini
+  mainImage?: string; // Tambahkan properti ini
 }
 
 const openTripData: PackageData[] = [
   {
-    id: "stunning-flores-overland",
-    title: "Stunning Flores Overland",
-    price: "IDR 3.000.000/pax",
-    meetingPoint: "Ende",
-    destination: "Flores",
-    daysTrip: "5 Days 4 Nights",
-    description:
-      "Explore the stunning landscapes of Flores with visits to traditional villages and volcanic lakes. Enjoy guided tours throughout your trip.",
-    itinerary: [
-      { day: "Day 1", activities: ["Arrival in Ende and hotel check-in"] },
-      { day: "Day 2", activities: ["Visit Kelimutu National Park"] },
-      { day: "Day 3", activities: ["Explore traditional villages"] },
-      { day: "Day 4", activities: ["Scenic drive to Bajawa"] },
-      { day: "Day 5", activities: ["Return to Ende and departure"] },
-    ],
-    include: [
-      "Transportasi dengan mobil Innova",
-      "Pemandu lokal",
-      "1 malam menginap di Waretbo Village",
-      "Makan selama perjalanan (makan siang, makan malam, sarapan)",
-      "Kopi & teh",
-      "Biaya masuk dan donasi ke desa",
-    ],
-    exclude: [
-      "Tiket pesawat",
-      "Akomodasi hotel di Labuan Bajo",
-      "Biaya pribadi",
-      "Trip insurance",
-      "Porter dan tips",
-    ],
-    session: {
-      highSeason: {
-        period: "1 June ~ 31 August 2025; 1-10 October 2025; 14–20 February 2026; 17–24 March 2026",
-        price: "IDR 300.000/pax",
-      },
-      peakSeason: {
-        period: "25 March ~ 5 April 2025 & 20 December 2025 ~ 5 January 2026",
-        price: "IDR 300.000/pax",
-      },
-    },
-    flightInfo: {
-      guideFee1: "ENGLISH SPEAKING GUIDE FEE (1 - 5 Pax): IDR 650.000 / Day / Guide",
-      guideFee2: "ENGLISH SPEAKING GUIDE FEE (6 - 10 Pax): IDR 850.000 / Day / Guide",
-    },
-    boat: "No boat used",
-    groupSize: "8-12 people",
-    information: "This package includes guided tours, transportation, and meals throughout the trip.",
+    id: "explore-waerebo",
+    title: "Explore Waerebo",
+    price: "IDR 2.500.000/pax",
+    meetingPoint: "Ruteng",
+    destination: "Waerebo Village",
+    daysTrip: "3D/2N",
+    description: "Discover the traditional Waerebo Village.",
+    mainImage: "/img/waerebovillage.png", // Sesuaikan mainImage
     images: [
-      "/img/imgsmall-1.png",
       "/img/gallery2.jpg",
       "/img/gallery4.jpg",
       "/img/gallery5.jpg",
@@ -100,7 +61,42 @@ const openTripData: PackageData[] = [
       "/img/gallery2.jpg",
       "/img/gallery4.jpg",
     ],
-    destinations: 5,
+    itinerary: [
+      { day: "Day 1", activities: ["Arrival in Ende and hotel check-in"] },
+      { day: "Day 2", activities: ["Visit Kelimutu National Park"] },
+      { day: "Day 3", activities: ["Explore traditional villages"] },
+      { day: "Day 4", activities: ["Scenic drive to Bajawa"] },
+      { day: "Day 5", activities: ["Return to Ende and departure"] },
+    ],
+    include: [
+      "Transportation from Ruteng",
+      "1-night accommodation in Waerebo Village",
+      "Meals during the trip",
+      "Local guide",
+      "Entrance fees",
+    ],
+    exclude: ["Personal expenses", "Travel insurance", "Tips for the guide"],
+    session: {
+      highSeason: {
+        period: "1 June ~ 31 August 2025",
+        price: "IDR 200.000/pax",
+      },
+      peakSeason: {
+        period: "25 December 2025 ~ 5 January 2026",
+        price: "IDR 300.000/pax",
+      },
+    },
+    flightInfo: {
+      guideFee1:
+        "ENGLISH SPEAKING GUIDE FEE (1 - 5 Pax): IDR 650.000 / Day / Guide",
+      guideFee2:
+        "ENGLISH SPEAKING GUIDE FEE (6 - 10 Pax): IDR 850.000 / Day / Guide",
+    },
+    boat: "No boat used",
+    groupSize: "5-10 people",
+    information:
+      "This package includes a guided trek to Waerebo Village with meals and accommodation.",
+    destinations: 1,
     boatImages: [
       { image: "/img/boat/boat-alf.jpg", title: "Luxury Boat 1" },
       { image: "/img/boat/boat-alf.jpg", title: "Luxury Boat 2" },
@@ -111,14 +107,95 @@ const openTripData: PackageData[] = [
     ],
   },
   {
-    id: "full-day-trip-speed-boat",
-    title: "Full Day Trip by Speed Boat",
-    price: "IDR 2.500.000/pax",
+    id: "sailing-komodo-tour",
+    title: "Sailing Komodo Tour",
+    price: "IDR 14.500.000/pax",
     meetingPoint: "Labuan Bajo",
     destination: "Komodo National Park",
-    daysTrip: "1 Day",
-    description:
-      "Experience a full day of adventure exploring the Komodo National Park by speed boat. Visit iconic islands and enjoy snorkeling in crystal-clear waters.",
+    daysTrip: "3D/2N",
+    description: "Sail through the Komodo National Park.",
+    mainImage: "/img/opentripkomodo.png", // Sesuaikan mainImage
+    images: [
+      "/img/opentripkomodo.png",
+      "/img/gallery2.jpg",
+      "/img/gallery4.jpg",
+      "/img/gallery5.jpg",
+      "/img/gallery6.jpg",
+      "/img/gallery7.jpg",
+      "/img/gallery8.jpg",
+      "/img/gallery9.jpg",
+      "/img/gallery2.jpg",
+      "/img/gallery1.jpg",
+      "/img/gallery2.jpg",
+      "/img/gallery4.jpg",
+    ],
+    itinerary: [
+      { day: "Day 1", activities: ["Arrival in Ende and hotel check-in"] },
+      { day: "Day 2", activities: ["Visit Kelimutu National Park"] },
+      { day: "Day 3", activities: ["Explore traditional villages"] },
+      { day: "Day 4", activities: ["Scenic drive to Bajawa"] },
+      { day: "Day 5", activities: ["Return to Ende and departure"] },
+    ],
+    include: [
+      "Sailing boat accommodation",
+      "Meals and drinks",
+      "Snorkeling equipment",
+      "Entrance fees to Komodo National Park",
+      "Tour guide",
+    ],
+    exclude: ["Personal expenses", "Travel insurance", "Tips for the crew"],
+    session: {
+      highSeason: {
+        period: "1 June ~ 31 August 2025",
+        price: "IDR 500.000/pax",
+      },
+      peakSeason: {
+        period: "25 December 2025 ~ 5 January 2026",
+        price: "IDR 700.000/pax",
+      },
+    },
+    flightInfo: {
+      guideFee1:
+        "ENGLISH SPEAKING GUIDE FEE (1 - 5 Pax): IDR 650.000 / Day / Guide",
+      guideFee2:
+        "ENGLISH SPEAKING GUIDE FEE (6 - 10 Pax): IDR 850.000 / Day / Guide",
+    },
+    boat: "Sailing Boat",
+    groupSize: "8-12 people",
+    information:
+      "This package includes a 3-day sailing adventure with full board meals.",
+    destinations: 4,
+    boatImages: [
+      { image: "/img/boat/boat-alf.jpg", title: "Luxury Boat 1" },
+      { image: "/img/boat/boat-alf.jpg", title: "Luxury Boat 2" },
+      { image: "/img/boat/boat-alf.jpg", title: "Luxury Boat 3" },
+      { image: "/img/boat/boat-alf.jpg", title: "Luxury Boat 4" },
+      { image: "/img/boat/boat-alf.jpg", title: "Luxury Boat 5" },
+      { image: "/img/boat/boat-alf.jpg", title: "Luxury Boat 6" },
+    ],
+  },
+  {
+    id: "full-day-trip-by-speed-boat", // Pastikan id ini sesuai dengan data di TripHighlight
+    title: "Full Day Trip - By Speed Boat",
+    price: "IDR 14.500.000/pax",
+    meetingPoint: "Labuan Bajo",
+    destination: "Komodo National Park",
+    daysTrip: "1D",
+    description: "Experience a full day of adventure by speed boat.",
+    mainImage: "/img/kelorisland.png", // Sesuaikan mainImage
+    images: [
+      "/img/gallery2.jpg",
+      "/img/gallery4.jpg",
+      "/img/gallery5.jpg",
+      "/img/gallery6.jpg",
+      "/img/gallery7.jpg",
+      "/img/gallery8.jpg",
+      "/img/gallery9.jpg",
+      "/img/gallery2.jpg",
+      "/img/gallery1.jpg",
+      "/img/gallery2.jpg",
+      "/img/gallery4.jpg",
+    ],
     itinerary: [
       {
         day: "3D2N",
@@ -159,11 +236,7 @@ const openTripData: PackageData[] = [
       "Entrance fees to Komodo National Park",
       "Tour guide",
     ],
-    exclude: [
-      "Personal expenses",
-      "Travel insurance",
-      "Tips for the crew",
-    ],
+    exclude: ["Personal expenses", "Travel insurance", "Tips for the crew"],
     session: {
       highSeason: {
         period: "1 June ~ 31 August 2025",
@@ -175,26 +248,15 @@ const openTripData: PackageData[] = [
       },
     },
     flightInfo: {
-      guideFee1: "ENGLISH SPEAKING GUIDE FEE (1 - 5 Pax): IDR 650.000 / Day / Guide",
-      guideFee2: "ENGLISH SPEAKING GUIDE FEE (6 - 10 Pax): IDR 850.000 / Day / Guide",
+      guideFee1:
+        "ENGLISH SPEAKING GUIDE FEE (1 - 5 Pax): IDR 650.000 / Day / Guide",
+      guideFee2:
+        "ENGLISH SPEAKING GUIDE FEE (6 - 10 Pax): IDR 850.000 / Day / Guide",
     },
     boat: "Speed Boat",
     groupSize: "10-15 people",
-    information: "This package includes a full-day guided tour with speed boat transportation.",
-    images: [
-      "/img/imgsmall-1.png",
-      "/img/gallery2.jpg",
-      "/img/gallery4.jpg",
-      "/img/gallery5.jpg",
-      "/img/gallery6.jpg",
-      "/img/gallery7.jpg",
-      "/img/gallery8.jpg",
-      "/img/gallery9.jpg",
-      "/img/gallery2.jpg",
-      "/img/gallery1.jpg",
-      "/img/gallery2.jpg",
-      "/img/gallery4.jpg",
-    ],
+    information:
+      "This package includes a full-day guided tour with speed boat transportation.",
     destinations: 3,
     boatImages: [
       { image: "/img/boat/boat-alf.jpg", title: "Luxury Boat 1" },
@@ -206,134 +268,64 @@ const openTripData: PackageData[] = [
     ],
   },
   {
-    id: "sailing-komodo-tour",
-    title: "Sailing Komodo Tour",
-    price: "IDR 14.500.000/pax",
+    id: "sunset-trip-by-speed-boat",
+    title: "Sunset Trip - By Speed Boat",
+    price: "IDR 12.000.000/pax",
     meetingPoint: "Labuan Bajo",
     destination: "Komodo National Park",
-    daysTrip: "3 Days 2 Nights",
-    description:
-      "Sail through the beautiful Komodo National Park, visiting pristine beaches, snorkeling spots, and the famous Komodo dragons.",
-      itinerary: [
-        { day: "Day 1", activities: ["Arrival in Ende and hotel check-in"] },
-        { day: "Day 2", activities: ["Visit Kelimutu National Park"] },
-        { day: "Day 3", activities: ["Explore traditional villages"] },
-        { day: "Day 4", activities: ["Scenic drive to Bajawa"] },
-        { day: "Day 5", activities: ["Return to Ende and departure"] },
-      ],
+    daysTrip: "1D",
+    description: "Enjoy a sunset trip by speed boat.",
+    mainImage: "/img/kelelawarisland.png", // Sesuaikan mainImage
+    images: [
+      "/img/kelelawarisland.png",
+      "/img/gallery2.jpg",
+      "/img/gallery4.jpg",
+      "/img/gallery5.jpg",
+      "/img/gallery6.jpg",
+      "/img/gallery7.jpg",
+      "/img/gallery8.jpg",
+      "/img/gallery9.jpg",
+      "/img/gallery2.jpg",
+      "/img/gallery1.jpg",
+      "/img/gallery2.jpg",
+      "/img/gallery4.jpg",
+    ],
+    itinerary: [
+      { day: "Day 1", activities: ["Arrival in Ende and hotel check-in"] },
+      { day: "Day 2", activities: ["Visit Kelimutu National Park"] },
+      { day: "Day 3", activities: ["Explore traditional villages"] },
+      { day: "Day 4", activities: ["Scenic drive to Bajawa"] },
+      { day: "Day 5", activities: ["Return to Ende and departure"] },
+    ],
     include: [
-      "Sailing boat accommodation",
-      "Meals and drinks",
+      "Speed boat transportation",
+      "Lunch and snacks",
       "Snorkeling equipment",
       "Entrance fees to Komodo National Park",
       "Tour guide",
     ],
-    exclude: [
-      "Personal expenses",
-      "Travel insurance",
-      "Tips for the crew",
-    ],
+    exclude: ["Personal expenses", "Travel insurance", "Tips for the crew"],
     session: {
       highSeason: {
         period: "1 June ~ 31 August 2025",
-        price: "IDR 500.000/pax",
-      },
-      peakSeason: {
-        period: "25 December 2025 ~ 5 January 2026",
-        price: "IDR 700.000/pax",
-      },
-    },
-    flightInfo: {
-      guideFee1: "ENGLISH SPEAKING GUIDE FEE (1 - 5 Pax): IDR 650.000 / Day / Guide",
-      guideFee2: "ENGLISH SPEAKING GUIDE FEE (6 - 10 Pax): IDR 850.000 / Day / Guide",
-    },
-    boat: "Sailing Boat",
-    groupSize: "8-12 people",
-    information: "This package includes a 3-day sailing adventure with full board meals.",
-    images: [
-      "/img/komodoisland.png",
-      "/img/gallery2.jpg",
-      "/img/gallery4.jpg",
-      "/img/gallery5.jpg",
-      "/img/gallery6.jpg",
-      "/img/gallery7.jpg",
-      "/img/gallery8.jpg",
-      "/img/gallery9.jpg",
-      "/img/gallery2.jpg",
-      "/img/gallery1.jpg",
-      "/img/gallery2.jpg",
-      "/img/gallery4.jpg",
-    ],
-    destinations: 4,
-    boatImages: [
-      { image: "/img/boat/boat-alf.jpg", title: "Luxury Boat 1" },
-      { image: "/img/boat/boat-alf.jpg", title: "Luxury Boat 2" },
-      { image: "/img/boat/boat-alf.jpg", title: "Luxury Boat 3" },
-      { image: "/img/boat/boat-alf.jpg", title: "Luxury Boat 4" },
-      { image: "/img/boat/boat-alf.jpg", title: "Luxury Boat 5" },
-      { image: "/img/boat/boat-alf.jpg", title: "Luxury Boat 6" },
-    ],
-  },
-  {
-    id: "explore-waerebo",
-    title: "Explore Waerebo",
-    price: "IDR 2.500.000/pax",
-    meetingPoint: "Ruteng",
-    destination: "Waerebo Village",
-    daysTrip: "2 Days 1 Night",
-    description:
-      "Discover the traditional Waerebo Village, nestled in the mountains of Flores. Experience the unique culture and hospitality of the locals.",
-      itinerary: [
-        { day: "Day 1", activities: ["Arrival in Ende and hotel check-in"] },
-        { day: "Day 2", activities: ["Visit Kelimutu National Park"] },
-        { day: "Day 3", activities: ["Explore traditional villages"] },
-        { day: "Day 4", activities: ["Scenic drive to Bajawa"] },
-        { day: "Day 5", activities: ["Return to Ende and departure"] },
-      ],
-    include: [
-      "Transportation from Ruteng",
-      "1-night accommodation in Waerebo Village",
-      "Meals during the trip",
-      "Local guide",
-      "Entrance fees",
-    ],
-    exclude: [
-      "Personal expenses",
-      "Travel insurance",
-      "Tips for the guide",
-    ],
-    session: {
-      highSeason: {
-        period: "1 June ~ 31 August 2025",
-        price: "IDR 200.000/pax",
-      },
-      peakSeason: {
-        period: "25 December 2025 ~ 5 January 2026",
         price: "IDR 300.000/pax",
       },
+      peakSeason: {
+        period: "25 December 2025 ~ 5 January 2026",
+        price: "IDR 500.000/pax",
+      },
     },
     flightInfo: {
-      guideFee1: "ENGLISH SPEAKING GUIDE FEE (1 - 5 Pax): IDR 650.000 / Day / Guide",
-      guideFee2: "ENGLISH SPEAKING GUIDE FEE (6 - 10 Pax): IDR 850.000 / Day / Guide",
+      guideFee1:
+        "ENGLISH SPEAKING GUIDE FEE (1 - 5 Pax): IDR 650.000 / Day / Guide",
+      guideFee2:
+        "ENGLISH SPEAKING GUIDE FEE (6 - 10 Pax): IDR 850.000 / Day / Guide",
     },
-    boat: "No boat used",
-    groupSize: "5-10 people",
-    information: "This package includes a guided trek to Waerebo Village with meals and accommodation.",
-    images: [
-      "/img/waerebovillage.png",
-      "/img/gallery2.jpg",
-      "/img/gallery4.jpg",
-      "/img/gallery5.jpg",
-      "/img/gallery6.jpg",
-      "/img/gallery7.jpg",
-      "/img/gallery8.jpg",
-      "/img/gallery9.jpg",
-      "/img/gallery2.jpg",
-      "/img/gallery1.jpg",
-      "/img/gallery2.jpg",
-      "/img/gallery4.jpg",
-    ],
-    destinations: 1,
+    boat: "Speed Boat",
+    groupSize: "10-15 people",
+    information:
+      "This package includes a full-day guided tour with speed boat transportation.",
+    destinations: 3,
     boatImages: [
       { image: "/img/boat/boat-alf.jpg", title: "Luxury Boat 1" },
       { image: "/img/boat/boat-alf.jpg", title: "Luxury Boat 2" },
@@ -468,10 +460,10 @@ const blogPosts = [
 export default function DetailOpenTrip() {
   const searchParams = useSearchParams();
   const packageId = searchParams.get("id");
-  console.log("Package ID:", packageId);
+  console.log("Package ID:", packageId); // Log untuk memeriksa packageId
 
-  // Cari data paket berdasarkan packageId
   const selectedPackage = openTripData.find((pkg) => pkg.id === packageId);
+  console.log("Selected Package Data:", selectedPackage); // Log untuk memeriksa data paket yang dipilih
 
   // Jika paket tidak ditemukan, tampilkan pesan error atau redirect
   if (!selectedPackage) {

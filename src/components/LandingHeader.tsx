@@ -12,7 +12,7 @@ export default function LandingHeader() {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
-    <header className="bg-gray-100 border-b shadow-sm">
+    <header className="bg-[#ffffff] border-b shadow-sm">
       <div className="container mx-auto flex justify-between items-center p-4">
         {/* Logo */}
         <div className="flex items-center">

@@ -1,13 +1,20 @@
 "use client";
 
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import Image from 'next/image';
-import Link from 'next/link';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import Image from "next/image";
+import Link from "next/link";
 
 // Data untuk tur Open Trip
 const openTrips = [
   {
     image: "/img/waerebovillage.png",
+    mainImage: "/img/waerebovillage-main.png",
     label: "Open Trip",
     name: "Explore Waerebo",
     duration: "3D/2N",
@@ -17,6 +24,7 @@ const openTrips = [
   },
   {
     image: "/img/opentripkomodo.png",
+    mainImage: "/img/opentripkomodo-main.png",
     label: "Open Trip",
     name: "Sailing Komodo Tour",
     duration: "3D/2N",
@@ -26,15 +34,17 @@ const openTrips = [
   },
   {
     image: "/img/kelorisland.png",
+    mainImage: "/img/kelorisland-main.png",
     label: "Open Trip",
     name: "Full Day Trip - By Speed Boat",
     duration: "1D",
     priceUSD: "$1450.000/pax",
     priceIDR: "IDR 14.500.000/pax",
-    slug: "full-day-trip-by-speed-boat",
+    slug: "full-day-trip-by-speed-boat", // Pastikan slug ini sesuai dengan id di TripHighlight dan DetailOpenTrip
   },
   {
     image: "/img/kelelawarisland.png",
+    mainImage: "/img/kelelawarisland-main.png",
     label: "Open Trip",
     name: "Sunset Trip - By Speed Boat",
     duration: "1D",
@@ -58,7 +68,9 @@ export default function OpenTrip() {
           priority
         />
         <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-          <h1 className="text-6xl font-bold text-white tracking-wide">OPEN TRIP</h1>
+          <h1 className="text-6xl font-bold text-white tracking-wide">
+            OPEN TRIP
+          </h1>
         </div>
       </section>
 
@@ -67,15 +79,22 @@ export default function OpenTrip() {
         <div className="container mx-auto px-4 flex flex-col md:flex-row gap-8">
           {/* Tentang Open Trip */}
           <div className="md:w-2/3 bg-white p-8 rounded-lg shadow-lg">
-            <h2 className="text-2xl font-semibold mb-4 text-gray-800">Tentang Open Trip</h2>
+            <h2 className="text-2xl font-semibold mb-4 text-gray-800">
+              Tentang Open Trip
+            </h2>
             <p className="text-gray-600 leading-relaxed">
-              Open Trip adalah paket perjalanan grup yang terbuka untuk umum, di mana peserta dapat bergabung dengan orang lain yang juga memesan trip yang sama. Open Trip memiliki jadwal tetap dan harga yang lebih terjangkau.
+              Open Trip adalah paket perjalanan grup yang terbuka untuk umum, di
+              mana peserta dapat bergabung dengan orang lain yang juga memesan
+              trip yang sama. Open Trip memiliki jadwal tetap dan harga yang
+              lebih terjangkau.
             </p>
           </div>
 
           {/* Formulir Pencarian */}
           <div className="md:w-1/3 bg-white p-8 rounded-lg shadow-lg">
-            <h3 className="text-xl font-semibold mb-6 text-gray-800">Cari Trip</h3>
+            <h3 className="text-xl font-semibold mb-6 text-gray-800">
+              Cari Trip
+            </h3>
             <div className="space-y-6">
               <Select>
                 <SelectTrigger className="w-full border-gray-300 focus:ring-2 focus:ring-yellow-500">
@@ -107,15 +126,20 @@ export default function OpenTrip() {
       {/* Bagian Tur */}
       <section className="py-12 bg-white">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold mb-4 text-gray-800">Tur Open Trip</h2>
+          <h2 className="text-3xl font-bold mb-4 text-gray-800">
+            Tur Open Trip
+          </h2>
           <p className="text-gray-600 mb-8 leading-relaxed">
-            Open Trip adalah paket perjalanan grup yang terbuka untuk umum, di mana peserta dapat bergabung dengan orang lain yang juga memesan trip yang sama. Open Trip memiliki jadwal tetap dan harga yang lebih terjangkau.
+            Open Trip adalah paket perjalanan grup yang terbuka untuk umum, di
+            mana peserta dapat bergabung dengan orang lain yang juga memesan
+            trip yang sama. Open Trip memiliki jadwal tetap dan harga yang lebih
+            terjangkau.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {openTrips.map((trip, index) => (
               <div
                 key={index}
-                className="bg-white rounded-lg shadow-md overflow-hidden group w-[370] h-[320] flex flex-col"
+                className="bg-white rounded-lg shadow-md overflow-hidden group w-[370px] h-[320] flex flex-col"
               >
                 <div className="relative">
                   <Image
@@ -132,7 +156,9 @@ export default function OpenTrip() {
                 <div className="p-5 flex-1 flex flex-col justify-center items-center">
                   {/* Konten judul, durasi, dan harga yang akan disembunyikan saat hover */}
                   <div className="text-center group-hover:hidden">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2">{trip.name}</h3>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                      {trip.name}
+                    </h3>
                     <div className="flex items-center justify-center space-x-4">
                       <div className="flex items-center space-x-1">
                         <Image
@@ -158,7 +184,11 @@ export default function OpenTrip() {
                   </div>
                   {/* Tombol More Detail yang muncul saat hover */}
                   <div className="hidden group-hover:flex items-center justify-center flex-1">
-                    <Link href={`/tours/${trip.slug}`}>
+                    <Link
+                      href={`/detail-paket/open-trip?id=${
+                        trip.slug
+                      }&mainImage=${encodeURIComponent(trip.mainImage)}`} // Kirim mainImage dengan encodeURIComponent
+                    >
                       <button className="bg-yellow-500 text-white px-6 py-2 rounded-lg hover:bg-yellow-600 transition-colors duration-300">
                         More Detail
                       </button>

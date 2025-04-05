@@ -10,12 +10,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Dialog,
-  DialogContent,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { format } from "date-fns";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface PackageData {
   id: string;
@@ -43,15 +40,33 @@ interface PackageData {
     guideFee2: string;
   };
   boatImages?: { image: string; title: string }[];
+  mainImage?: string; // Tambahkan properti mainImage
 }
 
 interface DetailPaketPrivateTripProps {
   data: PackageData;
 }
 
-const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({ data }) => {
+const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
+  data,
+}) => {
+  const searchParams = useSearchParams();
+  const mainImage =
+    searchParams.get("mainImage") || data.mainImage || "/img/default-image.png"; // Ambil mainImage dari query string
+
   const [activeTab, setActiveTab] = useState("description");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const router = useRouter();
+
+  const handleBookNow = (packageId: string) => {
+    if (selectedDate) {
+      router.push(
+        `/booking?type=private&packageId=${packageId}&date=${selectedDate.toISOString()}`
+      );
+    } else {
+      alert("Please select a date before booking.");
+    }
+  };
 
   return (
     <div className="py-4 px-4">
@@ -61,8 +76,8 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({ data })
           {/* Gambar Utama */}
           <div className="relative h-[400px] md:h-[458px] md:col-span-7">
             <Image
-              src={data.images[0]}
-              alt={data.title}
+              src={mainImage} // Gunakan mainImage
+              alt={data.title || "Default Image"}
               layout="fill"
               objectFit="cover"
               className="rounded-sm"
@@ -150,7 +165,9 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({ data })
                 className="mr-2"
               />
               <div className="flex flex-col">
-                <span className="text-gray-600 font-semibold">Meeting Point</span>
+                <span className="text-gray-600 font-semibold">
+                  Meeting Point
+                </span>
                 <span className="text-gray-600">{data.meetingPoint}</span>
               </div>
             </div>
@@ -164,7 +181,9 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({ data })
               />
               <div className="flex flex-col">
                 <span className="text-gray-600 font-semibold">Destinasi</span>
-                <span className="text-gray-600">{data.destinations} Destinasi</span>
+                <span className="text-gray-600">
+                  {data.destinations} Destinasi
+                </span>
               </div>
             </div>
             <div className="flex items-start">
@@ -201,11 +220,12 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({ data })
               </PopoverContent>
             </Popover>
             {selectedDate && (
-              <Link href="/">
-                <Button className="bg-[#CFB53B] text-white px-6 py-2 rounded-lg font-semibold text-sm hover:bg-[#7F6D1F] hover:scale-95 transition-all duration-300">
-                  Book Now
-                </Button>
-              </Link>
+              <Button
+                onClick={() => handleBookNow(data.id)}
+                className="bg-[#CFB53B] text-white px-6 py-2 rounded-lg font-semibold text-sm hover:bg-[#7F6D1F] hover:scale-95 transition-all duration-300"
+              >
+                Book Now
+              </Button>
             )}
           </div>
         </div>
@@ -263,14 +283,18 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({ data })
         <div>
           {activeTab === "description" && (
             <div>
-              <h1 className="text-3xl font-bold text-gray-800 mb-2">Description</h1>
+              <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                Description
+              </h1>
               <div className="w-[150px] h-[3px] bg-[#CFB53B] mb-6"></div>
               <p className="text-gray-600">{data.description}</p>
             </div>
           )}
           {activeTab === "itinerary" && (
             <div>
-              <h1 className="text-3xl font-bold text-gray-800 mb-2">Itinerary</h1>
+              <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                Itinerary
+              </h1>
               <div className="w-[120px] h-[3px] bg-[#CFB53B] mb-6"></div>
               <ul className="list-disc list-inside text-gray-600 space-y-2">
                 {data.itinerary.map((item, index) => (
@@ -281,34 +305,54 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({ data })
           )}
           {activeTab === "information" && (
             <div>
-              <h1 className="text-3xl font-bold text-gray-800 mb-2">Information</h1>
+              <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                Information
+              </h1>
               <div className="w-[140px] h-[3px] bg-[#CFB53B] mb-6"></div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Kolom Kiri */}
                 <div className="space-y-6">
                   {/* Include Section */}
                   <div className="bg-[#f5f5f5] p-6 rounded-lg shadow-sm min-h-[250px] flex flex-col">
-                    <h2 className="text-xl font-bold text-gray-800 mb-4">Include</h2>
+                    <h2 className="text-xl font-bold text-gray-800 mb-4">
+                      Include
+                    </h2>
                     <ul className="list-disc list-inside space-y-2">
                       {data.include?.map((item, index) => (
-                        <li key={index} className="text-gray-600 text-sm">{item}</li>
+                        <li key={index} className="text-gray-600 text-sm">
+                          {item}
+                        </li>
                       ))}
                     </ul>
                   </div>
 
                   {/* Session Section */}
                   <div className="bg-[#f5f5f5] p-6 rounded-lg shadow-sm min-h-[250px] flex flex-col">
-                    <h2 className="text-xl font-bold text-gray-800 mb-4">Season</h2>
+                    <h2 className="text-xl font-bold text-gray-800 mb-4">
+                      Season
+                    </h2>
                     <div className="space-y-4">
                       <div>
-                        <h4 className="font-semibold text-gray-700">High Season Period:</h4>
-                        <p className="text-gray-600 text-sm">{data.session?.highSeason.period}</p>
-                        <p className="text-[#CFB53B] font-bold mt-1 text-sm">{data.session?.highSeason.price}</p>
+                        <h4 className="font-semibold text-gray-700">
+                          High Season Period:
+                        </h4>
+                        <p className="text-gray-600 text-sm">
+                          {data.session?.highSeason.period}
+                        </p>
+                        <p className="text-[#CFB53B] font-bold mt-1 text-sm">
+                          {data.session?.highSeason.price}
+                        </p>
                       </div>
                       <div>
-                        <h4 className="font-semibold text-gray-700">Peak Season Period:</h4>
-                        <p className="text-gray-600 text-sm">{data.session?.peakSeason.period}</p>
-                        <p className="text-[#CFB53B] font-bold mt-1 text-sm">{data.session?.peakSeason.price}</p>
+                        <h4 className="font-semibold text-gray-700">
+                          Peak Season Period:
+                        </h4>
+                        <p className="text-gray-600 text-sm">
+                          {data.session?.peakSeason.period}
+                        </p>
+                        <p className="text-[#CFB53B] font-bold mt-1 text-sm">
+                          {data.session?.peakSeason.price}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -318,20 +362,30 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({ data })
                 <div className="space-y-6">
                   {/* Exclude Section */}
                   <div className="bg-[#f5f5f5] p-6 rounded-lg shadow-sm min-h-[250px] flex flex-col">
-                    <h2 className="text-xl font-bold text-gray-800 mb-4">Exclude</h2>
+                    <h2 className="text-xl font-bold text-gray-800 mb-4">
+                      Exclude
+                    </h2>
                     <ul className="list-disc list-inside space-y-2">
                       {data.exclude?.map((item, index) => (
-                        <li key={index} className="text-gray-600 text-sm">{item}</li>
+                        <li key={index} className="text-gray-600 text-sm">
+                          {item}
+                        </li>
                       ))}
                     </ul>
                   </div>
 
                   {/* Flight Information */}
                   <div className="bg-[#f5f5f5] p-6 rounded-lg shadow-sm min-h-[250px] flex flex-col">
-                    <h2 className="text-xl font-bold text-gray-800 mb-4">Flight Information</h2>
+                    <h2 className="text-xl font-bold text-gray-800 mb-4">
+                      Flight Information
+                    </h2>
                     <div className="space-y-2">
-                      <p className="text-gray-600 text-sm">{data.flightInfo?.guideFee1}</p>
-                      <p className="text-gray-600 text-sm">{data.flightInfo?.guideFee2}</p>
+                      <p className="text-gray-600 text-sm">
+                        {data.flightInfo?.guideFee1}
+                      </p>
+                      <p className="text-gray-600 text-sm">
+                        {data.flightInfo?.guideFee2}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -360,7 +414,9 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({ data })
                     </div>
                     {/* Overlay dengan Judul */}
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                      <p className="text-white font-semibold text-lg">{boat.title}</p>
+                      <p className="text-white font-semibold text-lg">
+                        {boat.title}
+                      </p>
                     </div>
                   </div>
                 ))}

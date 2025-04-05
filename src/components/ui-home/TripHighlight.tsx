@@ -38,40 +38,51 @@ export default function TripHighlight() {
   const highlights = [
     {
       id: "stunning-flores-overland",
-      image: "/img/benavillage.png",
+      image: "/img/benavillage.png", // Ganti dengan nama file yang benar
+      mainImage: "/img/benavillage.png", // Ganti dengan nama file yang benar
       title: "Stunning Flores Overland",
       type: "Private Trip",
       tripType: "private-trip",
     },
     {
-      id: "full-day-trip-speed-boat",
-      image: "/img/kelorisland.png",
+      id: "full-day-trip-by-speed-boat",
+      image: "/img/kelorisland.png", // Ganti dengan nama file yang benar
+      mainImage: "/img/kelorisland.png", // Ganti dengan nama file yang benar
       title: "Full Day Trip by Speed Boat",
       type: "Open Trip",
       tripType: "open-trip",
     },
     {
       id: "sailing-komodo-tour",
-      image: "/img/komodoisland.png",
+      image: "/img/komodoisland.png", // Ganti dengan nama file yang benar
+      mainImage: "/img/komodoisland.png", // Ganti dengan nama file yang benar
       title: "Sailing Komodo Tour",
       type: "Private Trip",
       tripType: "private-trip",
     },
     {
       id: "explore-waerebo",
-      image: "/img/waerebovillage.png",
+      image: "/img/waerebovillage.png", // Ganti dengan nama file yang benar
+      mainImage: "/img/waerebovillage.png", // Ganti dengan nama file yang benar
       title: "Explore Waerebo",
       type: "Open Trip",
       tripType: "open-trip",
     },
   ];
 
+  // Tambahkan log di luar JSX
+  highlights.forEach((highlight) => {
+    console.log("Highlight Main Image:", highlight.mainImage);
+  });
+
   return (
     <section className="p-4 py-10 bg-gray-50">
       <style>{customStyles}</style>
       <div className="container mx-auto">
         <div className="text-center mb-6">
-          <h2 className="text-3xl font-bold text-gray-800">Our Trip Highlights</h2>
+          <h2 className="text-3xl font-bold text-gray-800">
+            Our Trip Highlights
+          </h2>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
@@ -81,7 +92,13 @@ export default function TripHighlight() {
             return (
               <Link
                 key={index}
-                href={`/detail-paket/${highlight.tripType === "open-trip" ? "open-trip" : "private-trip"}?id=${highlight.id}`}
+                href={`/detail-paket/${
+                  highlight.tripType === "open-trip"
+                    ? "open-trip"
+                    : "private-trip"
+                }?id=${highlight.id}&mainImage=${encodeURIComponent(
+                  highlight.mainImage
+                )}`} // Kirim mainImage dengan encodeURIComponent
               >
                 <Card
                   className="custom-card rounded-tr-sm overflow-hidden cursor-pointer"
@@ -101,7 +118,9 @@ export default function TripHighlight() {
                     />
                     <div
                       className={`absolute top-5 left-5 ${
-                        highlight.type === "Open Trip" ? "bg-[#19BC4F]" : "bg-[#E16238]"
+                        highlight.type === "Open Trip"
+                          ? "bg-[#19BC4F]"
+                          : "bg-[#E16238]"
                       } text-white text-xs font-semibold px-3 py-2 rounded`}
                     >
                       {highlight.type}
@@ -110,7 +129,9 @@ export default function TripHighlight() {
                     {/* Teks Bagian Atas (Judul) */}
                     <div
                       className={`absolute left-0 right-0 text-center transition-all duration-800 hover-text hover-text-top ${
-                        isHovered ? "hovered top-[45%] -translate-y-1/2 opacity-100" : "top-0 opacity-0"
+                        isHovered
+                          ? "hovered top-[45%] -translate-y-1/2 opacity-100"
+                          : "top-0 opacity-0"
                       }`}
                     >
                       <p className="m-0 text-lg font-bold text-shadow-nike">
@@ -121,7 +142,9 @@ export default function TripHighlight() {
                     {/* Teks Bagian Bawah */}
                     <div
                       className={`absolute left-0 right-0 text-center transition-all duration-800 hover-text hover-text-bottom ${
-                        isHovered ? "hovered bottom-[45%] translate-y-1/2 opacity-100" : "bottom-0 opacity-0"
+                        isHovered
+                          ? "hovered bottom-[45%] translate-y-1/2 opacity-100"
+                          : "bottom-0 opacity-0"
                       }`}
                     >
                       <p className="m-0 text-lg text-shadow-nike">
