@@ -6,11 +6,11 @@ import {
   BookOpen,
   Command,
   GalleryVerticalEnd,
-  Settings2,
   Users,
   Shield,
   SquareUserRound,
-  Compass
+  Compass,
+  Mail
 } from "lucide-react"
 import Image from 'next/image'
 import logo from '../../public/img/logo.png';
@@ -94,6 +94,25 @@ const data = {
       ],
     },
     {
+      title: "Email",
+      url: "#",
+      icon: Mail,
+      items: [
+        {
+          title: "Emails",
+          url: "/dashboard/emails",
+        },
+        {
+          title: "Subscribers",
+          url: "/dashboard/subscribers",
+        },
+        {
+          title: "Recipients",
+          url: "/dashboard/recipients",
+        },
+      ],
+    },
+    {
       title: "Transaction",
       url: "#",
       icon: BookOpen,
@@ -112,52 +131,6 @@ const data = {
         },
         {
           title: "Changelog",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Hotels",
-      url: "#",
-      icon: Settings2,
-      items: [
-        {
-          title: "General",
-          url: "#",
-        },
-        {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Gallery",
-      url: "#",
-      icon: Settings2,
-      items: [
-        {
-          title: "General",
-          url: "#",
-        },
-        {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
           url: "#",
         },
       ],
