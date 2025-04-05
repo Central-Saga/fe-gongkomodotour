@@ -445,7 +445,7 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
                     className="relative group overflow-hidden rounded-lg shadow-lg"
                   >
                     {/* Gambar Boat */}
-                    <div className="relative h-[330px] w-full">
+                    <div className="relative h-[300px] w-full">
                       <Image
                         src={boat.image}
                         alt={boat.title}

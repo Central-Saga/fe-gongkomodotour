@@ -103,8 +103,8 @@ export default function Footer({ children }: FooterProps) {
             </ul>
           </div>
         </div>
-        <div className="mt-4 border-t border-gray-100"></div>
-        <p className="mt-4 text-white text-center">
+        <div className="mt-30 border-t border-gray-100"></div>
+        <p className="mt-7 text-white text-start ml-25">
           &copy; {new Date().getFullYear()} Central Saga. All rights reserved.
         </p>
       </footer>
