@@ -89,7 +89,7 @@ const data = {
         },
         {
           title: "Blog",
-          url: "/dashboard/blog",
+          url: "/dashboard/blogs",
         },
       ],
     },
