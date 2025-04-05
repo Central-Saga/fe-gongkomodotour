@@ -12,6 +12,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 // Definisikan tipe untuk data perjalanan
 interface PackageData {
@@ -101,6 +102,7 @@ const allPackages: PackageData[] = [...openTripData, ...privateTripData];
 // Update the BookingPage component to ensure the correct image is displayed based on the selected package
 
 export default function BookingPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const packageId = searchParams.get("packageId");
   const dateParam = searchParams.get("date"); // Retrieve the date from query parameters
@@ -164,6 +166,9 @@ export default function BookingPage() {
       setSelectedPackage(foundPackage || null);
     }
   }, [packageId, packageType]);
+
+  // Check if all required fields are filled
+  const isFormComplete = selectedPackage && selectedDate && tripCount > 0;
 
   // If packageId is not found, display a message
   if (!packageId || !selectedPackage) {
@@ -244,7 +249,20 @@ export default function BookingPage() {
                   : selectedPackage.price}
               </p>
             </div>
-            <button className="mt-4 w-full bg-yellow-200 text-[#f5f5f5] py-4 rounded-lg font-bold text-xl">
+            <button
+              className={`mt-4 w-full py-4 rounded-lg font-bold text-2xl ${
+                isFormComplete
+                  ? "bg-yellow-400 text-white cursor-pointer"
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              }`}
+              disabled={!isFormComplete}
+              onClick={() =>
+                isFormComplete &&
+                router.push(
+                  `/payment?packageId=${packageId}&type=${packageType}&date=${selectedDate?.toISOString()}&tripCount=${tripCount}`
+                )
+              }
+            >
               BOOK NOW
             </button>
           </div>
@@ -252,7 +270,7 @@ export default function BookingPage() {
           {/* Right Section: Booking Form */}
           <div className="w-2/3">
             <div className="flex justify-between mb-4">
-              <button className="px-4 py-2 bg-gray-200 rounded">
+              <button className="px-4 py-2 bg-[#efe6e6] rounded font-medium shadow-md">
                 DOMESTIC
               </button>
             </div>
