@@ -79,6 +79,7 @@ export default function LoginPage() {
         
         // Simpan data user ke localStorage
         localStorage.setItem('user', JSON.stringify({
+          id: response.user.id,
           name: response.user.name,
           email: response.user.email
         }));
