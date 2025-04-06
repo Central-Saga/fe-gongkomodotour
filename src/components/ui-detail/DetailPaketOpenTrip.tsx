@@ -453,9 +453,9 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
                         className="rounded-lg object-cover transition-transform duration-300 group-hover:scale-110"
                       />
                     </div>
-                    {/* Overlay dengan Judul */}
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                      <p className="text-white font-semibold text-lg">
+                    {/* Overlay with Shadow Effect */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center rounded-lg">
+                      <p className="text-white font-semibold text-lg m-4 mb-10">
                         {boat.title}
                       </p>
                     </div>
