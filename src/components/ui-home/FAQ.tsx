@@ -19,9 +19,7 @@ const faqs: FAQItem[] = [
 ];
 
 // Definisikan tipe untuk props komponen (opsional, karena ini default export)
-interface FAQProps {}
-
-const FAQ: React.FC<FAQProps> = () => {
+const FAQ = () => {
   const faqsKiri: FAQItem[] = faqs.slice(0, 3);
   const faqsKanan: FAQItem[] = faqs.slice(3, 6);
 

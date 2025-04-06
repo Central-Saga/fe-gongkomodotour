@@ -41,7 +41,7 @@
     "i18n-iso-countries": "^7.14.0",
     "jspdf": "^3.0.1",
     "jspdf-autotable": "^5.0.2",
-    "lucide-react": "^0.482.0", // Menggunakan versi terbaru dari branch dev
+    "lucide-react": "^0.482.0",
     "next": "15.2.1",
     "prisma": "^6.5.0",
     "react": "^19.0.0",
