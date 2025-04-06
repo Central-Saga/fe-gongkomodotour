@@ -78,13 +78,14 @@ export default function TripHighlight() {
   return (
     <section className="p-4 py-10 bg-gray-50">
       <style>{customStyles}</style>
-      <div className="container mx-auto">
+      <div className="container max-w-screen-xl mx-auto">
+        {" "}
+        {/* Added max-w-screen-xl */}
         <div className="text-center mb-6">
-          <h2 className="text-3xl font-bold text-gray-800">
+          <h2 className="text-2xl font-bold text-gray-800">
             Our Trip Highlights
           </h2>
         </div>
-
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
           {highlights.map((highlight, index) => {
             const [isHovered, setIsHovered] = useState(false);
@@ -105,7 +106,9 @@ export default function TripHighlight() {
                   onMouseEnter={() => setIsHovered(true)}
                   onMouseLeave={() => setIsHovered(false)}
                 >
-                  <CardContent className="p-0 relative h-90">
+                  <CardContent className="p-0 relative w-full h-[300px]">
+                    {" "}
+                    {/* Set height to match width for a square */}
                     <img
                       src={highlight.image}
                       alt={highlight.title}
@@ -121,11 +124,10 @@ export default function TripHighlight() {
                         highlight.type === "Open Trip"
                           ? "bg-[#19BC4F]"
                           : "bg-[#E16238]"
-                      } text-white text-xs font-semibold px-3 py-2 rounded`}
+                      } text-white text-[10px] px-2 py-2 rounded  `} // Changed text-xs to text-[10px]
                     >
                       {highlight.type}
                     </div>
-
                     {/* Teks Bagian Atas (Judul) */}
                     <div
                       className={`absolute left-0 right-0 text-center transition-all duration-800 hover-text hover-text-top ${
@@ -138,7 +140,6 @@ export default function TripHighlight() {
                         {highlight.type}
                       </p>
                     </div>
-
                     {/* Teks Bagian Bawah */}
                     <div
                       className={`absolute left-0 right-0 text-center transition-all duration-800 hover-text hover-text-bottom ${
@@ -147,7 +148,7 @@ export default function TripHighlight() {
                           : "bottom-0 opacity-0"
                       }`}
                     >
-                      <p className="m-0 text-lg text-shadow-nike">
+                      <p className="m-0 text-lg font-bold text-shadow-nike">
                         {highlight.title}
                       </p>
                     </div>
@@ -159,7 +160,7 @@ export default function TripHighlight() {
         </div>
         <div className="text-center mt-8">
           <Link href="/paket/open-trip">
-            <button className="bg-[#CFB53B] text-white px-6 py-3 rounded-lg font-semibold text-sm hover:bg-[#7F6D1F] hover:scale-95 transition-all duration-300">
+            <button className="bg-[#CFB53B] text-white px-3 py-2 rounded-lg font-semibold text-xs hover:bg-[#7F6D1F] hover:scale-95 transition-all duration-300">
               See more
             </button>
           </Link>

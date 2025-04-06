@@ -64,7 +64,7 @@ export default function LandingHero() {
                 <h1
                   className="text-white uppercase font-bold text-center"
                   style={{
-                    fontSize: "clamp(5rem, 5vw, 3.5rem)",
+                    fontSize: "clamp(3rem, 4vw, 2.5rem)",
                     lineHeight: "1",
                   }}
                 >
@@ -75,7 +75,7 @@ export default function LandingHero() {
                   <h1
                     className="text-white uppercase font-bold text-center"
                     style={{
-                      fontSize: "clamp(5rem, 5vw, 3.5rem)",
+                      fontSize: "clamp(3rem, 4vw, 2.5rem)", // Reduced font size
                       lineHeight: "1",
                     }}
                   >
@@ -85,8 +85,9 @@ export default function LandingHero() {
                     <Button
                       className="bg-yellow-500 text-white hover:bg-[#f59e0b] rounded-full"
                       style={{
-                        fontSize: "clamp(2rem, 2.75vw, 1.75rem)",
-                        padding: "clamp(2rem, 2.75vw, 1.5rem) clamp(2rem, 4.5vw, 2.75rem)",
+                        fontSize: "clamp(1rem, 2vw, 1.25rem)", // Reduced font size
+                        padding:
+                          "clamp(1rem, 2vw, 1rem) clamp(1.5rem, 3vw, 1.5rem)", // Reduced padding
                       }}
                     >
                       Check Trip

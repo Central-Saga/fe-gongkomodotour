@@ -117,7 +117,7 @@ export default function Testimoni() {
         </h2>
         <div
           ref={scrollContainerRef}
-          className="flex overflow-x-auto space-x-6 py-4 scrollbar-hide select-none"
+          className="flex overflow-x-auto space-x-4 py-3 scrollbar-hide select-none" // Reduced spacing
           style={{ scrollBehavior: "smooth", cursor: "grab" }}
           onMouseDown={handleMouseDown}
           onMouseLeave={handleMouseLeave}
@@ -127,40 +127,50 @@ export default function Testimoni() {
           {daftarTestimoni.map((testimoni, indeks) => (
             <div
               key={indeks}
-              className="min-w-[300px] bg-white p-6 rounded-lg shadow-md flex-shrink-0"
+              className="min-w-[250px] bg-white p-4 rounded-md shadow-md flex-shrink-0" // Reduced width, padding, and border radius
             >
               <div className="flex items-center mb-2">
                 {[...Array(5)].map((_, i) => (
                   <Star
                     key={i}
-                    className={`w-5 h-5 ${
+                    className={`w-4 h-4 ${
                       i < testimoni.rating
                         ? "text-yellow-400 fill-yellow-400"
                         : "text-gray-300"
-                    }`}
+                    }`} // Reduced star size
                   />
                 ))}
               </div>
-              <h3 className="text-lg font-semibold text-gray-800 max-w-[250px] truncate">
+              <h3 className="text-sm font-semibold text-gray-800 max-w-[200px] truncate">
+                {" "}
+                {/* Reduced font size */}
                 {testimoni.judul}
               </h3>
-              <p className="text-gray-600 mt-2 break-words max-w-[500px]">
+              <p className="text-gray-600 mt-1 text-xs break-words max-w-[400px]">
+                {" "}
+                {/* Reduced font size */}
                 {testimoni.komentar}
               </p>
-              <div className="flex items-center mt-4">
+              <div className="flex items-center mt-3">
                 <Image
                   src={testimoni.gambar}
                   alt={testimoni.nama}
-                  width={40}
-                  height={40}
-                  className="w-10 h-10 rounded-full mr-3 "
+                  width={30} // Reduced size
+                  height={30}
+                  className="w-8 h-8 rounded-full mr-2"
                   onDragStart={handleImageDragStart} // Mencegah drag default pada gambar
                 />
                 <div>
-                  <p className="text-sm font-medium text-gray-800">
+                  <p className="text-xs font-medium text-gray-800">
+                    {" "}
+                    {/* Reduced font size */}
                     {testimoni.nama}
                   </p>
-                  <p className="text-sm text-gray-500">{testimoni.tanggal}</p>
+                  <p className="text-xs text-gray-500">
+                    {" "}
+                    {/* Reduced font size */}
+                    {testimoni.tanggal}
+                  </p>
                 </div>
               </div>
             </div>
