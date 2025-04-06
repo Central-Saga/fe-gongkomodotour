@@ -1,6 +1,8 @@
-// src/app/(landing)/layout.tsx
-import { ReactNode } from 'react';
-import LandingHeader from '@/components/LandingHeader';
+"use client";
+
+import { ReactNode } from "react";
+import LandingHeader from "@/components/LandingHeader";
+import Footer from "@/components/ui-home/Footer"; // import Footer
 
 interface LandingLayoutProps {
   children: ReactNode;
@@ -8,12 +10,10 @@ interface LandingLayoutProps {
 
 export default function LandingLayout({ children }: LandingLayoutProps) {
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen flex flex-col bg-[#f5f5f5] overflow-x-hidden">
       <LandingHeader />
-      <main className="container mx-auto p-4">{children}</main>
-      <footer className="py-4 text-center text-gray-600">
-        © 2025 Gong Komodo Tour & Travel
-      </footer>
+      <main className="flex-grow">{children}</main>
+      <Footer />
     </div>
   );
 }

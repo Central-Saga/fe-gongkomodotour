@@ -79,6 +79,7 @@
   --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
   --sidebar-border: oklch(0.929 0.013 255.508);
   --sidebar-ring: oklch(0.704 0.04 256.788);
+  --faq-answer-bg: oklch(0.95 0.01 240); /* Warna biru muda untuk mode terang */
 }
 
 .dark {
@@ -114,6 +115,7 @@
   --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
   --sidebar-border: oklch(0.279 0.041 260.031);
   --sidebar-ring: oklch(0.446 0.043 257.281);
+  --faq-answer-bg: oklch(0.25 0.05 240); /* Warna biru tua untuk mode gelap */
 }
 
 @layer base {
@@ -122,5 +124,109 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none; /* IE dan Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+  .no-arrow {
+    position: relative;
+  }
+  .no-arrow::before,
+  .no-arrow::after {
+    display: none !important; /* Menghilangkan panah bawaan */
+  }
+
+  /* Animasi untuk FAQ */
+  @keyframes slideDown {
+    0% {
+      height: 0;
+      opacity: 0;
+      background-color: var(--card); /* Warna awal sama dengan card */
+    }
+    100% {
+      height: auto;
+      opacity: 1;
+      background-color: var(--faq-answer-bg); /* Warna saat muncul */
+    }
+  }
+
+  @keyframes slideUp {
+    0% {
+      height: auto;
+      opacity: 1;
+      background-color: var(--faq-answer-bg); /* Warna saat mulai menghilang */
+    }
+    100% {
+      height: 0;
+      opacity: 0;
+      background-color: var(--card); /* Kembali ke warna awal */
+    }
+  }
+
+  .animate-slideDown {
+    animation: slideDown 0.5s ease-in-out;
+  }
+
+  .animate-slideUp {
+    animation: slideUp 0.5s ease-in-out;
+  }
+  /* Menyembunyikan scrollbar untuk browser berbasis Webkit (Chrome, Edge, Safari) */
+  html::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Menyembunyikan scrollbar untuk Firefox */
+  html {
+    scrollbar-width: none;
+  }
+
+  /* Menyembunyikan scrollbar untuk Internet Explorer dan Edge (versi lama) */
+  html {
+    -ms-overflow-style: none;
+  }
+
+  /* Memastikan body tidak menampilkan scrollbar */
+  body {
+    overflow: -moz-scrollbars-none;
+  }
+  /* Mengatur scroll snapping pada body */
+  body {
+    overflow-y: scroll; /* Memastikan body dapat digulir */
+    scroll-snap-type: y mandatory; /* Mengatur scroll snap pada sumbu Y dengan mode mandatory */
+  }
+
+  /* Mengatur setiap section sebagai snap point */
+  section {
+    scroll-snap-align: start; /* Setiap section akan menempel di bagian atas layar */
+    scroll-snap-stop: always; /* Memastikan scroll berhenti di setiap section */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Untuk browser berbasis Webkit */
+  }
+  
+  .scrollbar-hide {
+    -ms-overflow-style: none; /* Untuk Internet Explorer dan Edge lama */
+    scrollbar-width: none; /* Untuk Firefox */
+  }
+  
+  
+  /* Animasi smooth scrolling */
+  .scroll-smooth {
+    scroll-behavior: smooth;
+  }
+  /* Tambahkan ini jika shadow masih tidak terlihat */
+  .shadow-md {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .shadow-lg {
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
   }
 }
