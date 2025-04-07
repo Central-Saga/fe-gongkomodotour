@@ -16,15 +16,24 @@ const customStyles = `
   .swiper-pagination-bullet {
     width: 18px;
     height: 18px;
-    background: #fbbf24;
+    background: var(--gold);
     opacity: 0.7;
     transition: all 0.3s ease;
   }
   .swiper-pagination-bullet-active {
     width: 25px;
     height: 25px;
-    background: #fbbf24;
+    background: var(--gold);
     opacity: 1;
+  }
+  .swiper-button-next,
+  .swiper-button-prev {
+    color: var(--gold) !important;
+    transition: all 0.3s ease;
+  }
+  .swiper-button-next:hover,
+  .swiper-button-prev:hover {
+    color: var(--gold-dark-10) !important;
   }
 `;
 
@@ -83,7 +92,7 @@ export default function LandingHero() {
                   </h1>
                   <Link href="/trip">
                     <Button
-                      className="bg-yellow-500 text-white hover:bg-[#f59e0b] rounded-full"
+                      className="bg-gold text-white hover:bg-gold-dark-10 rounded-full"
                       style={{
                         fontSize: "clamp(2rem, 2.75vw, 1.75rem)",
                         padding: "clamp(2rem, 2.75vw, 1.5rem) clamp(2rem, 4.5vw, 2.75rem)",
