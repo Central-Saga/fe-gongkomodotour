@@ -21,7 +21,7 @@ const FAQ = () => {
       try {
         const response: FAQResponse = await apiRequest<FAQResponse>(
           'GET',
-          '/api/landing-page-faq'
+          '/api/landing-page/faq'
         );
         setFaqs(response.data || []);
       } catch (error) {
