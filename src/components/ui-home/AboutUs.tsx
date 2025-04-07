@@ -1,4 +1,3 @@
-// components/ui/AboutUs.tsx
 import Image from "next/image";
 import Link from "next/link";
 
@@ -11,14 +10,10 @@ export default function AboutUs() {
           <div className="p-6">
             <h2 className="text-3xl font-bold text-gray-800 mb-4">About Us</h2>
             <p className="text-[#000000] mb-6 leading-relaxed text-xl">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Impedit enim sint veniam
-              ipsa. Dolor possimus dolores optio sed? Est beatae quam sapiente itaque voluptatem
-              repudiandae accusamus eum ex quidem ratione?
+              Since 2010, Gong Komodo Tour has been dedicated to providing exceptional travel experiences to Komodo National Park. Our private tours are crafted to showcase the region’s natural beauty and unique wildlife.
               <br />
               <br />
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Impedit enim sint veniam
-              ipsa. Dolor possimus dolores optio sed? Est beatae quam sapiente itaque voluptatem
-              repudiandae accusamus eum ex quidem ratione?
+              With private boats, expert guides, and a commitment to customer satisfaction, we ensure your journey is comfortable and unforgettable. Discover the wonders of Komodo with us.
             </p>
             <Link href="/about">
               <button className="bg-[#CFB53B] text-white px-6 py-3 rounded-xl hover:bg-[#7F6D1F] transition-colors">
@@ -38,7 +33,7 @@ export default function AboutUs() {
               }}
             >
               <Image
-                src="/img/hero-slide1.png"
+                src="/img/about.png"
                 alt="About Us Image 1"
                 width={370}
                 height={300}
@@ -52,12 +47,10 @@ export default function AboutUs() {
                 position: "absolute",
                 left: "10rem", // Atur posisi horizontal gambar kedua
                 top: "4rem",  // Atur posisi vertikal gambar kedua
-
-                
               }}
             >
               <Image
-                src="/img/hero-slide2.png"
+                src="/img/about.png"
                 alt="About Us Image 2"
                 width={370}
                 height={300}
