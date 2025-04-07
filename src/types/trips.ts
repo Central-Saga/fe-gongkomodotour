@@ -109,6 +109,7 @@ export interface Trip {
   meeting_point: string
   type: "Open Trip" | "Private Trip"
   status: "Aktif" | "Non Aktif"
+  is_highlight: "Yes" | "No"
   created_at: string
   updated_at: string
   itineraries: Itinerary[]

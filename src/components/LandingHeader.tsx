@@ -93,7 +93,24 @@ export default function LandingHeader() {
               </NavigationMenuList>
             </NavigationMenu>
             <div>
-              <GoPerson className="w-8 h-8 rounded-full" />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="hover:text-[#CFB53B]">
+                    <GoPerson className="w-8 h-8 rounded-full" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent 
+                  align="end" 
+                  className="w-48 p-2 bg-white shadow-md"
+                >
+                  <a href="/auth/login" className="block px-4 py-2 text-sm hover:text-[#CFB53B]">
+                    Login
+                  </a>
+                  <a href="/auth/register" className="block px-4 py-2 text-sm hover:text-[#CFB53B]">
+                    Register
+                  </a>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
         </div>
