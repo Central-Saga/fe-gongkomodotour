@@ -1,5 +1,8 @@
+"use client";
+
 import Head from "next/head";
 import Image from "next/image";
+import { motion } from "framer-motion";
 
 export default function WhyChooseUs() {
   const reasons = [
@@ -41,6 +44,29 @@ export default function WhyChooseUs() {
     },
   ];
 
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.2,
+        delayChildren: 0.3
+      }
+    }
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5,
+        ease: "easeOut"
+      }
+    }
+  };
+
   return (
     <>
       <Head>
@@ -52,13 +78,28 @@ export default function WhyChooseUs() {
       </Head>
       <section className="py-0 bg-white m-0 w-full" aria-label="Reasons to choose Gong Komodo Tour">
         <div className="flex flex-col md:flex-row">
-          <div className="flex-1 max-w-[1100px] mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-6 p-10 md:mr-20">
+          <motion.div 
+            variants={container}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true }}
+            className="flex-1 max-w-[1100px] mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-6 p-10 md:mr-20"
+          >
             {reasons.map((reason, index) => (
-              <article
+              <motion.article
                 key={index}
-                className="bg-white p-6 shadow-md rounded-lg border border-gray-100 flex flex-col items-center hover:shadow-xl transition-shadow duration-300"
+                variants={item}
+                whileHover={{ 
+                  scale: 1.05,
+                  transition: { duration: 0.2 }
+                }}
+                className="bg-white p-6 shadow-md rounded-lg border border-gray-100 flex flex-col items-center hover:shadow-xl transition-all duration-300"
               >
-                <div className="w-24 h-24 relative mb-4">
+                <motion.div 
+                  className="w-24 h-24 relative mb-4"
+                  whileHover={{ rotate: [0, -10, 10, -10, 0] }}
+                  transition={{ duration: 0.5 }}
+                >
                   <Image
                     src={reason.icon}
                     alt={`${reason.title} animation`}
@@ -66,20 +107,34 @@ export default function WhyChooseUs() {
                     className="object-contain"
                     unoptimized
                   />
-                </div>
-                <h3
+                </motion.div>
+                <motion.h3
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
                   className="text-lg font-semibold text-[#FFB000] mb-2 text-center"
                 >
                   {reason.title}
-                </h3>
-                <p className="text-gray-600 text-sm text-center">
+                </motion.h3>
+                <motion.p 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.5, delay: 0.3 }}
+                  className="text-gray-600 text-sm text-center"
+                >
                   {reason.description}
-                </p>
-              </article>
+                </motion.p>
+              </motion.article>
             ))}
-          </div>
+          </motion.div>
 
-          <div className="relative w-full md:w-1/3 m-0 p-0">
+          <motion.div 
+            initial={{ opacity: 0, x: 100 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            viewport={{ once: true }}
+            className="relative w-full md:w-1/3 m-0 p-0"
+          >
             <div className="relative w-full h-full min-h-[400px]">
               <Image
                 src="/img/whychooseus.png"
@@ -89,13 +144,25 @@ export default function WhyChooseUs() {
                 quality={100}
                 priority
               />
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-start rounded-r-none">
-                <h2 className="text-8xl font-bold text-white text-left tracking-wide max-w-sm ml-8 leading-tight">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+                viewport={{ once: true }}
+                className="absolute inset-0 bg-black/40 flex items-center justify-start rounded-r-none"
+              >
+                <motion.h2 
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.6 }}
+                  viewport={{ once: true }}
+                  className="text-8xl font-bold text-white text-left tracking-wide max-w-sm ml-8 leading-tight"
+                >
                   WHY CHOOSE US?
-                </h2>
-              </div>
+                </motion.h2>
+              </motion.div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
     </>

@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRef } from "react";
 import { Button } from "@/components/ui/button"; // Impor komponen Button dari ShadCN UI
+import { motion } from "framer-motion";
 
 // Komponen Utama Gallery
 export default function Gallery() {
@@ -15,9 +16,9 @@ export default function Gallery() {
     { src: "/img/gallery4.jpg", alt: "Gambar Galeri 4", id: "4" },
     { src: "/img/gallery5.jpg", alt: "Gambar Galeri 5", id: "5" },
     { src: "/img/gallery6.jpg", alt: "Gambar Galeri 6", id: "6" },
-    { src: "/img/gallery7.jpg", alt: "Gambar Galeri 7", id: "7" }, // Gambar tambahan
-    { src: "/img/gallery8.jpg", alt: "Gambar Galeri 8", id: "8" }, // Gambar tambahan
-    { src: "/img/gallery9.jpg", alt: "Gambar Galeri 9", id: "9" }, // Gambar tambahan
+    { src: "/img/gallery7.jpg", alt: "Gambar Galeri 7", id: "7" },
+    { src: "/img/gallery8.jpg", alt: "Gambar Galeri 8", id: "8" },
+    { src: "/img/gallery9.jpg", alt: "Gambar Galeri 9", id: "9" },
   ];
 
   // Menggunakan useRef untuk mengakses elemen video
@@ -44,72 +45,121 @@ export default function Gallery() {
     }
   };
 
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.3
+      }
+    }
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { 
+      opacity: 1, 
+      y: 0,
+      transition: {
+        duration: 0.5
+      }
+    }
+  };
+
   return (
-    <section className="py-18 bg-gray-100">
+    <section className="py-16 bg-gray-100">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Kolom Kiri: Video Canvas dengan Judul dan Deskripsi */}
-          <div className="flex flex-col">
-            <div className="mb-4">
-              <h2 className="text-4xl font-bold text-gray-900 text-center">Gallery</h2>
-              <p className="text-gray-600 mt-2 text-left py-4">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Impedit enim sint veniam ipsa. Dolor possimus dolores optio sed? Est beatae quam sapiente itaque voluptatem repudiandae accusamus eum ex quidem ratione?
-                <br />
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Impedit enim sint veniam ipsa. Dolor possimus dolores optio sed? Est beatae quam sapiente itaque voluptatem repudiandae accusamus eum ex quidem ratione?
-              </p>
-            </div>
-            <div className="w-full rounded-lg overflow-hidden relative">
-              {/* Elemen video */}
-              <video
-                ref={videoRef}
-                className="w-full rounded-lg"
-                style={{ height: "500px", objectFit: "cover" }}
-                onClick={handleVideoClick}
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true }}
+          className="text-center mb-12"
+        >
+          <h2 className="text-4xl font-bold text-gray-900">Galeri Perjalanan</h2>
+          <p className="text-gray-600 mt-4 max-w-3xl mx-auto">
+            Jelajahi momen-momen menakjubkan dari petualangan kami di Taman Nasional Komodo. 
+            Dari pemandangan bawah laut yang memukau hingga perjumpaan dengan naga purba, 
+            setiap gambar menceritakan kisah unik tentang keindahan alam Indonesia.
+          </p>
+        </motion.div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+          {/* Kolom Kiri: Video */}
+          <motion.div 
+            initial={{ opacity: 0, x: -50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="w-full rounded-lg overflow-hidden relative"
+          >
+            <video
+              ref={videoRef}
+              className="w-full rounded-lg"
+              style={{ height: "500px", objectFit: "cover" }}
+              onClick={handleVideoClick}
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+            >
+              <source src="/videos/landingvidio.mp4" type="video/mp4" />
+              <Image
+                src="/img/gallery1.jpg"
+                alt="Fallback Video Galeri"
+                width={600}
+                height={500}
+                className="w-full h-auto object-cover"
+                quality={100}
+                priority={true}
+              />
+            </video>
+          </motion.div>
+
+          {/* Kolom Kanan: Grid Gambar */}
+          <motion.div 
+            variants={container}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true }}
+            className="grid grid-cols-3 gap-4"
+          >
+            {galleryImages.slice(1, 7).map((image) => (
+              <motion.div
+                key={image.id}
+                variants={item}
+                className="aspect-square"
               >
-                <source src="/videos/landingvidio.mp4" type="video/mp4" />
-                Browser Anda tidak mendukung tag video. Silakan gunakan gambar sebagai fallback:
-                <Image
-                  src="/img/gallery1.jpg"
-                  alt="Fallback Video Galeri"
-                  width={600}
-                  height={500}
-                  className="w-full h-auto object-cover"
-                  quality={100}
-                  priority={true}
-                />
-              </video>
-            </div>
-          </div>
-          {/* Kolom Kanan: 9 Gambar Kecil dengan Tombol "See More" di Bawah */}
-          <div className="flex flex-col">
-            <div className="grid grid-cols-3 gap-4">
-              {galleryImages.slice(1).map((image) => (
-                <Link key={image.id} href={`/gallery/${image.id}`}>
-                  <div className="relative overflow-hidden rounded-lg aspect-square bg-white shadow-md transition-transform duration-300 hover:scale-105 cursor-pointer">
+                <Link href={`/gallery/${image.id}`}>
+                  <div className="relative h-full overflow-hidden rounded-lg bg-white shadow-md hover:shadow-xl transition-all duration-300">
                     <Image
                       src={image.src}
                       alt={image.alt}
-                      width={150}
-                      height={150}
-                      className="w-full h-full object-cover rounded-lg"
-                      quality={100}
+                      fill
+                      className="object-cover rounded-lg hover:scale-110 transition-transform duration-300"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     />
                   </div>
                 </Link>
-              ))}
-            </div>
-          </div>
+              </motion.div>
+            ))}
+          </motion.div>
         </div>
-        {/* Tombol "See More" dengan ShadCN UI Button */}
-        <div className="flex justify-center mt-8">
+
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          viewport={{ once: true }}
+          className="flex justify-center mt-12"
+        >
           <Link href="/gallery">
-          <Button
-          className="bg-[#CFB53B] text-white px-6 py-5 rounded-lg font-semibold text-sm hover:bg-[#7F6D1F] hover:scale-95 transition-all duration-300"
-          >See More</Button>
+            <Button
+              className="bg-[#CFB53B] text-white px-8 py-6 rounded-lg font-semibold text-base hover:bg-[#7F6D1F] hover:scale-95 transition-all duration-300"
+            >
+              Lihat Lebih Banyak
+            </Button>
           </Link>
-        </div>
+        </motion.div>
       </div>
     </section>
   );
