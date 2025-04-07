@@ -6,6 +6,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { apiRequest } from "@/lib/api";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
 
 interface Trip {
   id: number;
@@ -65,6 +68,29 @@ export default function TripHighlight() {
   const [loading, setLoading] = useState(true);
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
 
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.4,
+        duration: 1
+      }
+    }
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { 
+      opacity: 1, 
+      y: 0,
+      transition: {
+        duration: 0.8,
+        ease: "easeOut"
+      }
+    }
+  };
+
   useEffect(() => {
     const fetchHighlights = async () => {
       try {
@@ -100,90 +126,114 @@ export default function TripHighlight() {
     <section className="p-4 py-10 bg-gray-50">
       <style>{customStyles}</style>
       <div className="container mx-auto">
-        <div className="text-center mb-6">
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="text-center mb-6"
+        >
           <h2 className="text-3xl font-bold text-gray-800">Our Trip Highlights</h2>
-        </div>
+        </motion.div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <motion.div 
+          variants={container}
+          initial="hidden"
+          animate="show"
+          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4"
+        >
           {highlights.map((highlight) => {
             const imageUrl = highlight.assets?.[0]?.file_url 
               ? `${API_URL}${highlight.assets[0].file_url}`
               : '/images/placeholder.jpg';
 
             return (
-              <Link
+              <motion.div
                 key={highlight.id}
-                href={`/detail-paket/${
-                  highlight.type === "Open Trip" ? "open-trip" : "private-trip"
-                }?id=${highlight.id}`}
-                className="aspect-[3/2] block"
+                variants={item}
               >
-                <Card
-                  className="custom-card rounded-tr-sm overflow-hidden cursor-pointer h-full"
-                  onMouseEnter={() => setHoveredCard(highlight.id)}
-                  onMouseLeave={() => setHoveredCard(null)}
+                <Link
+                  href={`/detail-paket/${
+                    highlight.type === "Open Trip" ? "open-trip" : "private-trip"
+                  }?id=${highlight.id}`}
+                  className="aspect-[3/2] block"
                 >
-                  <CardContent className="p-0 relative h-full">
-                    <div className="relative w-full h-full">
-                      <Image
-                        src={imageUrl}
-                        alt={highlight.name}
-                        fill
-                        className="object-cover rounded-sm"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        quality={100}
-                        priority={true}
+                  <Card
+                    className="custom-card rounded-tr-sm overflow-hidden cursor-pointer h-full"
+                    onMouseEnter={() => setHoveredCard(highlight.id)}
+                    onMouseLeave={() => setHoveredCard(null)}
+                  >
+                    <CardContent className="p-0 relative h-full">
+                      <motion.div 
+                        className="relative w-full h-full"
+                        whileHover={{ scale: 1.05 }}
+                        transition={{ duration: 0.5, ease: "easeInOut" }}
+                      >
+                        <Image
+                          src={imageUrl}
+                          alt={highlight.name}
+                          fill
+                          className="object-cover rounded-sm"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          quality={100}
+                          priority={true}
+                        />
+                      </motion.div>
+                      <div
+                        className={`absolute inset-0 transition-opacity duration-800 ${
+                          hoveredCard === highlight.id ? "opacity-65 bg-black" : "opacity-0"
+                        }`}
                       />
-                    </div>
-                    <div
-                      className={`absolute inset-0 transition-opacity duration-800 ${
-                        hoveredCard === highlight.id ? "opacity-65 bg-black" : "opacity-0"
-                      }`}
-                    />
-                    <div
-                      className={`absolute top-5 left-5 ${
-                        highlight.type === "Open Trip" ? "bg-[#19BC4F]" : "bg-[#E16238]"
-                      } text-white text-xs font-semibold px-3 py-2 rounded`}
-                    >
-                      {highlight.type}
-                    </div>
-
-                    <div
-                      className={`absolute left-0 right-0 text-center transition-all duration-800 hover-text hover-text-top ${
-                        hoveredCard === highlight.id
-                          ? "hovered top-[40%] -translate-y-1/2 opacity-100"
-                          : "top-0 opacity-0"
-                      }`}
-                    >
-                      <p className="m-0 text-lg font-bold text-shadow-nike">
+                      <Badge
+                        variant="default"
+                        className={`absolute top-5 left-5 ${
+                          highlight.type === "Open Trip" ? "bg-emerald-500 hover:bg-emerald-600" : "bg-orange-500 hover:bg-orange-600"
+                        } text-white`}
+                      >
                         {highlight.type}
-                      </p>
-                    </div>
+                      </Badge>
 
-                    <div
-                      className={`absolute left-0 right-0 text-center transition-all duration-800 hover-text hover-text-bottom ${
-                        hoveredCard === highlight.id
-                          ? "hovered bottom-[40%] translate-y-1/2 opacity-100"
-                          : "bottom-0 opacity-0"
-                      }`}
-                    >
-                      <p className="m-0 text-lg text-shadow-nike">
-                        {highlight.name}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
+                      <div
+                        className={`absolute left-0 right-0 text-center transition-all duration-800 hover-text hover-text-top ${
+                          hoveredCard === highlight.id
+                            ? "hovered top-[40%] -translate-y-1/2 opacity-100"
+                            : "top-0 opacity-0"
+                        }`}
+                      >
+                        <p className="m-0 text-lg font-bold text-shadow-nike text-gold-light-30">
+                          {highlight.type}
+                        </p>
+                      </div>
+
+                      <div
+                        className={`absolute left-0 right-0 text-center transition-all duration-800 hover-text hover-text-bottom ${
+                          hoveredCard === highlight.id
+                            ? "hovered bottom-[40%] translate-y-1/2 opacity-100"
+                            : "bottom-0 opacity-0"
+                        }`}
+                      >
+                        <p className="m-0 text-lg text-shadow-nike text-gold-light-20">
+                          {highlight.name}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              </motion.div>
             );
           })}
-        </div>
-        <div className="text-center mt-8">
+        </motion.div>
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8, duration: 0.8, ease: "easeOut" }}
+          className="text-center mt-8"
+        >
           <Link href="/paket/open-trip">
-            <button className="bg-[#CFB53B] text-white px-6 py-3 rounded-lg font-semibold text-sm hover:bg-[#7F6D1F] hover:scale-95 transition-all duration-300">
+            <Button className="bg-gold text-white hover:bg-gold-dark-10 px-6 py-3 rounded-md">
               See more
-            </button>
+            </Button>
           </Link>
-        </div>
+        </motion.div>
       </div>
     </section>
   );
