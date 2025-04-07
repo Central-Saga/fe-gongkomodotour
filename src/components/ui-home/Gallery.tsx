@@ -9,16 +9,16 @@ import { motion } from "framer-motion";
 // Komponen Utama Gallery
 export default function Gallery() {
   const galleryImages = [
-    { src: "/videos/landingvidio.mp4", alt: "Video Galeri", id: "1" },
-    { src: "/img/gallery1.jpg", alt: "Gambar Galeri 1", id: "1" },
-    { src: "/img/gallery2.jpg", alt: "Gambar Galeri 2", id: "2" },
-    { src: "/img/gallery3.jpg", alt: "Gambar Galeri 3", id: "3" },
-    { src: "/img/gallery4.jpg", alt: "Gambar Galeri 4", id: "4" },
-    { src: "/img/gallery5.jpg", alt: "Gambar Galeri 5", id: "5" },
-    { src: "/img/gallery6.jpg", alt: "Gambar Galeri 6", id: "6" },
-    { src: "/img/gallery7.jpg", alt: "Gambar Galeri 7", id: "7" },
-    { src: "/img/gallery8.jpg", alt: "Gambar Galeri 8", id: "8" },
-    { src: "/img/gallery9.jpg", alt: "Gambar Galeri 9", id: "9" },
+    { src: "/videos/landingvidio.mp4", alt: "Gallery Video", id: "1" },
+    { src: "/img/gallery1.jpg", alt: "Gallery Image 1", id: "1" },
+    { src: "/img/gallery2.jpg", alt: "Gallery Image 2", id: "2" },
+    { src: "/img/gallery3.jpg", alt: "Gallery Image 3", id: "3" },
+    { src: "/img/gallery4.jpg", alt: "Gallery Image 4", id: "4" },
+    { src: "/img/gallery5.jpg", alt: "Gallery Image 5", id: "5" },
+    { src: "/img/gallery6.jpg", alt: "Gallery Image 6", id: "6" },
+    { src: "/img/gallery7.jpg", alt: "Gallery Image 7", id: "7" },
+    { src: "/img/gallery8.jpg", alt: "Gallery Image 8", id: "8" },
+    { src: "/img/gallery9.jpg", alt: "Gallery Image 9", id: "9" },
   ];
 
   // Menggunakan useRef untuk mengakses elemen video
@@ -77,11 +77,11 @@ export default function Gallery() {
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <h2 className="text-4xl font-bold text-gray-900">Galeri Perjalanan</h2>
+          <h2 className="text-4xl font-bold text-gray-900">Travel Gallery</h2>
           <p className="text-gray-600 mt-4 max-w-3xl mx-auto">
-            Jelajahi momen-momen menakjubkan dari petualangan kami di Taman Nasional Komodo. 
-            Dari pemandangan bawah laut yang memukau hingga perjumpaan dengan naga purba, 
-            setiap gambar menceritakan kisah unik tentang keindahan alam Indonesia.
+            Explore breathtaking moments from our adventures in Komodo National Park. 
+            From stunning underwater landscapes to encounters with ancient dragons, 
+            each image tells a unique story of Indonesia&apos;s natural beauty.
           </p>
         </motion.div>
 
@@ -146,17 +146,17 @@ export default function Gallery() {
         </div>
 
         <motion.div 
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
+          transition={{ duration: 0.6, delay: 0.6 }}
           viewport={{ once: true }}
           className="flex justify-center mt-12"
         >
           <Link href="/gallery">
             <Button
-              className="bg-[#CFB53B] text-white px-8 py-6 rounded-lg font-semibold text-base hover:bg-[#7F6D1F] hover:scale-95 transition-all duration-300"
+              className="bg-gold text-white px-6 py-3 rounded-md text-base hover:bg-gold-dark-10 hover:scale-105 transition-all duration-300"
             >
-              Lihat Lebih Banyak
+              See More
             </Button>
           </Link>
         </motion.div>

@@ -223,13 +223,13 @@ export default function TripHighlight() {
           })}
         </motion.div>
         <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8, duration: 0.8, ease: "easeOut" }}
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6, duration: 0.6 }}
           className="text-center mt-8"
         >
           <Link href="/paket/open-trip">
-            <Button className="bg-gold text-white hover:bg-gold-dark-10 px-6 py-3 rounded-md">
+            <Button className="bg-gold text-white hover:bg-gold-dark-10 px-6 py-3 rounded-md hover:scale-105 transition-all duration-300">
               See more
             </Button>
           </Link>
