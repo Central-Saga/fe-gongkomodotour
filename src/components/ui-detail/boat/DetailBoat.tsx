@@ -16,6 +16,16 @@ import {
 } from "@/components/ui/accordion";
 import { FaChevronDown, FaUsers, FaBed, FaBath } from "react-icons/fa";
 
+// Tambahkan tipe untuk properti boatImages
+interface BoatImage {
+  image: string;
+  title: string;
+}
+
+interface DetailBoatProps {
+  boatImages: BoatImage[];
+}
+
 const boatData = {
   title: "Luxury Phinisi Boat",
   mainImage: "/img/boat/boat-alf.jpg",
@@ -121,7 +131,7 @@ const boatData = {
   ],
 };
 
-export default function DetailBoat() {
+export default function DetailBoat({ boatImages }: DetailBoatProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
   const [isMoreInfoOpen, setIsMoreInfoOpen] = useState(false);
@@ -501,6 +511,27 @@ export default function DetailBoat() {
             </div>
           </div>
         </Accordion>
+      </div>
+
+      {/* Section 6: Boat Images */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {boatImages.map((boat, index) => (
+          <div
+            key={index}
+            className="relative group overflow-hidden rounded-lg shadow-lg cursor-pointer"
+          >
+            <Image
+              src={boat.image}
+              alt={boat.title}
+              layout="fill"
+              objectFit="cover"
+              className="rounded-lg transition-transform duration-300 group-hover:scale-110"
+            />
+            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+              <p className="text-white font-semibold text-lg">{boat.title}</p>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
