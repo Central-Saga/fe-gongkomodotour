@@ -55,6 +55,7 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
   const [activeTab, setActiveTab] = useState("description");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedDay, setSelectedDay] = useState(0); // Tambahkan state untuk hari yang dipilih
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const router = useRouter();
 
   // Tambahkan log untuk memeriksa nilai mainImage dan data.images
@@ -79,33 +80,69 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
       <div className="relative mb-8">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
           {/* Gambar Utama */}
-          <div className="relative h-[400px] md:h-[458px] md:col-span-7">
-            <Image
-              src={mainImage} // Gunakan mainImage
-              alt={data.title || "Default Image"}
-              fill
-              className="rounded-sm object-cover"
-            />
-          </div>
-
+          <Dialog
+            open={!!selectedImage}
+            onOpenChange={() => setSelectedImage(null)}
+          >
+            <DialogTrigger asChild>
+              <div
+                className="relative h-[400px] md:h-[458px] md:col-span-7 cursor-pointer"
+                onClick={() => setSelectedImage(mainImage)}
+              >
+                <Image
+                  src={mainImage}
+                  alt={data.title || "Default Image"}
+                  fill
+                  className="rounded-sm object-cover"
+                />
+              </div>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl">
+              {selectedImage && (
+                <Image
+                  src={selectedImage}
+                  alt="Selected Image"
+                  width={800}
+                  height={600}
+                  className="rounded-lg"
+                />
+              )}
+            </DialogContent>
+          </Dialog>
           {/* Gambar Kecil */}
           <div className="grid grid-cols-2 gap-4 md:col-span-5">
-            {data.images.slice(1, 4).map((image, index) => {
-              console.log(`Small Image ${index + 1} Path:`, image); // Log untuk gambar kecil
-              return (
-                <div
-                  key={index}
-                  className="relative h-[196px] md:h-[221px] w-full"
-                >
-                  <Image
-                    src={image || "/img/default-image.png"} // Tambahkan fallback default
-                    alt={`${data.title || "Default Image"} ${index + 1}`}
-                    fill
-                    className="rounded-sm object-cover"
-                  />
-                </div>
-              );
-            })}
+            {data.images.slice(1, 4).map((image, index) => (
+              <Dialog
+                key={index}
+                open={!!selectedImage}
+                onOpenChange={() => setSelectedImage(null)}
+              >
+                <DialogTrigger asChild>
+                  <div
+                    className="relative h-[196px] md:h-[221px] w-full cursor-pointer"
+                    onClick={() => setSelectedImage(image)}
+                  >
+                    <Image
+                      src={image}
+                      alt={`${data.title} ${index + 1}`}
+                      fill
+                      className="rounded-sm object-cover"
+                    />
+                  </div>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl">
+                  {selectedImage && (
+                    <Image
+                      src={selectedImage}
+                      alt="Selected Image"
+                      width={800}
+                      height={600}
+                      className="rounded-lg"
+                    />
+                  )}
+                </DialogContent>
+              </Dialog>
+            ))}
 
             {/* Gambar ke-4 dengan More Info */}
             <Dialog>
@@ -440,26 +477,29 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
               <div className="w-[80px] h-[3px] bg-[#CFB53B] mb-6"></div>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 max-w-8xl mx-auto items-center mb-6">
                 {data.boatImages?.map((boat, index) => (
-                  <div
+                  <Link
                     key={index}
-                    className="relative group overflow-hidden rounded-lg shadow-lg"
+                    href={`/detail-boat?type=${encodeURIComponent(boat.title)}`}
                   >
-                    {/* Gambar Boat */}
-                    <div className="relative h-[300px] w-full">
-                      <Image
-                        src={boat.image}
-                        alt={boat.title}
-                        fill
-                        className="rounded-lg object-cover transition-transform duration-300 group-hover:scale-110"
-                      />
+                    <div className="relative group overflow-hidden rounded-lg shadow-lg cursor-pointer">
+                      {/* Gambar Boat */}
+                      <div className="relative h-[300px] w-full">
+                        <Image
+                          src={boat.image}
+                          alt={boat.title}
+                          layout="fill"
+                          objectFit="cover"
+                          className="rounded-lg transition-transform duration-300 group-hover:scale-110"
+                        />
+                      </div>
+                      {/* Overlay dengan Judul */}
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                        <p className="text-white font-semibold text-lg">
+                          {boat.title}
+                        </p>
+                      </div>
                     </div>
-                    {/* Overlay with Shadow Effect */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center rounded-lg">
-                      <p className="text-white font-semibold text-lg m-4 mb-10">
-                        {boat.title}
-                      </p>
-                    </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>
