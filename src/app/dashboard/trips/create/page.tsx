@@ -34,6 +34,7 @@ const tripSchema = z.object({
   name: z.string().min(1, "Nama trip harus diisi"),
   type: z.enum(["Open Trip", "Private Trip"]),
   status: z.enum(["Aktif", "Non Aktif"]),
+  is_highlight: z.boolean().default(false),
   include: z.string().min(1, "Include harus diisi"),
   exclude: z.string().min(1, "Exclude harus diisi"),
   note: z.string().min(1, "Catatan harus diisi"),
@@ -107,6 +108,7 @@ export default function CreateTripPage() {
     name: "",
     type: "Open Trip",
     status: "Aktif",
+    is_highlight: false,
     include: "",
     exclude: "",
     note: "",
@@ -273,6 +275,31 @@ export default function CreateTripPage() {
                             <SelectContent>
                               <SelectItem value="Aktif">Aktif</SelectItem>
                               <SelectItem value="Non Aktif">Non Aktif</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="is_highlight"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Highlight</FormLabel>
+                          <Select 
+                            onValueChange={(value) => field.onChange(value === "Yes")} 
+                            value={field.value ? "Yes" : "No"}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Pilih highlight" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Yes">Yes</SelectItem>
+                              <SelectItem value="No">No</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />

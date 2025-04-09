@@ -37,6 +37,7 @@ const tripSchema = z.object({
   name: z.string().min(1, "Nama trip harus diisi"),
   type: z.enum(["Open Trip", "Private Trip"]),
   status: z.enum(["Aktif", "Non Aktif"]),
+  is_highlight: z.enum(["Yes", "No"]),
   include: z.string().min(1, "Include harus diisi"),
   exclude: z.string().min(1, "Exclude harus diisi"),
   note: z.string().min(1, "Catatan harus diisi"),
@@ -57,14 +58,7 @@ const tripSchema = z.object({
     eta_time: z.string().min(1, "ETA harus diisi"),
     etd_text: z.string().optional(),
     eta_text: z.string().optional()
-  })).refine((schedules) => {
-    return schedules.every((schedule) => {
-      return (schedule.etd_time || schedule.etd_text) && (schedule.eta_time || schedule.eta_text);
-    });
-  }, {
-    message: "Setiap jadwal penerbangan harus memiliki waktu atau teks untuk ETD dan ETA",
-    path: ["flight_schedules"]
-  }),
+  })),
   trip_durations: z.array(z.object({
     duration_label: z.string().min(1, "Label durasi harus diisi"),
     duration_days: z.number().min(1, "Jumlah hari harus diisi"),
@@ -73,26 +67,42 @@ const tripSchema = z.object({
     prices: z.array(z.object({
       pax_min: z.number().min(1, "Minimal pax harus diisi"),
       pax_max: z.number().min(1, "Maksimal pax harus diisi"),
-      price_per_pax: z.number().min(0, "Harga per pax harus diisi"),
+      price_per_pax: z.union([z.number(), z.string()])
+        .transform(val => {
+          if (typeof val === 'number') return val;
+          return Number(val);
+        }),
       status: z.enum(["Aktif", "Non Aktif"])
     }))
   })),
   additional_fees: z.array(z.object({
     fee_category: z.string().min(1, "Kategori fee harus diisi"),
-    price: z.number().min(0, "Harga harus diisi"),
+    price: z.union([z.number(), z.string()])
+      .transform(val => {
+        if (typeof val === 'number') return val;
+        return Number(val);
+      }),
     region: z.enum(["Domestic", "Overseas", "Domestic & Overseas"]),
     unit: z.enum(["per_pax", "per_5pax", "per_day", "per_day_guide"]),
     pax_min: z.number().min(1, "Minimal pax harus diisi"),
     pax_max: z.number().min(1, "Maksimal pax harus diisi"),
     day_type: z.enum(["Weekday", "Weekend"]).nullable(),
-    is_required: z.boolean(),
+    is_required: z.union([z.boolean(), z.number()])
+      .transform(val => {
+        if (typeof val === 'number') return val === 1;
+        return val;
+      }),
     status: z.enum(["Aktif", "Non Aktif"])
   })).optional(),
   surcharges: z.array(z.object({
     season: z.string().min(1, "Nama musim harus diisi"),
     start_date: z.string().min(1, "Tanggal mulai harus diisi"),
     end_date: z.string().min(1, "Tanggal selesai harus diisi"),
-    surcharge_price: z.number().min(0, "Harga surcharge harus diisi"),
+    surcharge_price: z.union([z.number(), z.string()])
+      .transform(val => {
+        if (typeof val === 'number') return val;
+        return Number(val);
+      }),
     status: z.enum(["Aktif", "Non Aktif"])
   })).optional()
 })
@@ -246,11 +256,21 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
       console.log('Updating trip with ID:', id)
       console.log('Update data:', values)
       
+      // Transform data before sending to API
+      const transformedValues = {
+        ...values,
+        is_highlight: values.is_highlight,
+        additional_fees: values.additional_fees?.map(fee => ({
+          ...fee,
+          is_required: fee.is_required ? 1 : 0
+        }))
+      }
+
       // 1. Update trip data
       await apiRequest(
         'PUT',
         `/api/trips/${id}`,
-        values
+        transformedValues
       )
 
       // 2. Delete files if any
@@ -378,6 +398,31 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
                             <SelectContent>
                               <SelectItem value="Aktif">Aktif</SelectItem>
                               <SelectItem value="Non Aktif">Non Aktif</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="is_highlight"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Highlight</FormLabel>
+                          <Select 
+                            onValueChange={field.onChange} 
+                            value={field.value || "No"}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Pilih highlight" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Yes">Yes</SelectItem>
+                              <SelectItem value="No">No</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />

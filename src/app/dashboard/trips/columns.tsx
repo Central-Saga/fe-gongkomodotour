@@ -123,6 +123,27 @@ export const columns = ({ onDelete, onEdit }: ColumnsProps): ColumnDef<Trip>[] =
     },
   },
   {
+    accessorKey: "is_highlight",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        className="px-0"
+      >
+        Highlight
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
+    cell: ({ row }) => {
+      const isHighlight = row.getValue("is_highlight") as "Yes" | "No"
+      return (
+        <Badge className={`${isHighlight === "Yes" ? "bg-yellow-500" : "bg-gray-500"} text-white`}>
+          {isHighlight}
+        </Badge>
+      )
+    },
+  },
+  {
     id: "actions",
     header: () => null,
     cell: ({ row }) => {
