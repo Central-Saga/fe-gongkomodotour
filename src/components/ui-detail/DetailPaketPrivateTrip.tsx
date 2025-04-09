@@ -56,6 +56,7 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
 
   const [activeTab, setActiveTab] = useState("description");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const router = useRouter();
 
   const handleBookNow = (packageId: string) => {
@@ -74,30 +75,70 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
       <div className="relative mb-8">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
           {/* Gambar Utama */}
-          <div className="relative h-[400px] md:h-[458px] md:col-span-7">
-            <Image
-              src={mainImage} // Gunakan mainImage
-              alt={data.title || "Default Image"}
-              layout="fill"
-              objectFit="cover"
-              className="rounded-sm"
-            />
-          </div>
-          {/* Gambar Kecil */}
-          <div className="grid grid-cols-2 gap-4 md:col-span-5">
-            {data.images.slice(1, 4).map((image, index) => (
+          <Dialog
+            open={!!selectedImage}
+            onOpenChange={() => setSelectedImage(null)}
+          >
+            <DialogTrigger asChild>
               <div
-                key={index}
-                className="relative h-[196px] md:h-[221px] w-full"
+                className="relative h-[400px] md:h-[458px] md:col-span-7 cursor-pointer"
+                onClick={() => setSelectedImage(mainImage)}
               >
                 <Image
-                  src={image}
-                  alt={`${data.title} ${index + 1}`}
+                  src={mainImage}
+                  alt={data.title || "Default Image"}
                   layout="fill"
                   objectFit="cover"
                   className="rounded-sm"
                 />
               </div>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl">
+              {selectedImage && (
+                <Image
+                  src={selectedImage}
+                  alt="Selected Image"
+                  width={800}
+                  height={600}
+                  className="rounded-lg"
+                />
+              )}
+            </DialogContent>
+          </Dialog>
+          {/* Gambar Kecil */}
+          <div className="grid grid-cols-2 gap-4 md:col-span-5">
+            {data.images.slice(1, 4).map((image, index) => (
+              <Dialog
+                key={index}
+                open={!!selectedImage}
+                onOpenChange={() => setSelectedImage(null)}
+              >
+                <DialogTrigger asChild>
+                  <div
+                    className="relative h-[196px] md:h-[221px] w-full cursor-pointer"
+                    onClick={() => setSelectedImage(image)}
+                  >
+                    <Image
+                      src={image}
+                      alt={`${data.title} ${index + 1}`}
+                      layout="fill"
+                      objectFit="cover"
+                      className="rounded-sm"
+                    />
+                  </div>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl">
+                  {selectedImage && (
+                    <Image
+                      src={selectedImage}
+                      alt="Selected Image"
+                      width={800}
+                      height={600}
+                      className="rounded-lg"
+                    />
+                  )}
+                </DialogContent>
+              </Dialog>
             ))}
             {/* Gambar ke-4 dengan More Info */}
             <Dialog>
@@ -398,27 +439,29 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
               <div className="w-[80px] h-[3px] bg-[#CFB53B] mb-6"></div>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 max-w-8xl mx-auto items-center mb-6">
                 {data.boatImages?.map((boat, index) => (
-                  <div
+                  <Link
                     key={index}
-                    className="relative group overflow-hidden rounded-lg shadow-lg"
+                    href={`/detail-boat?type=${encodeURIComponent(boat.title)}`}
                   >
-                    {/* Gambar Boat */}
-                    <div className="relative h-[330px] w-full">
-                      <Image
-                        src={boat.image}
-                        alt={boat.title}
-                        layout="fill"
-                        objectFit="cover"
-                        className="rounded-lg transition-transform duration-300 group-hover:scale-110"
-                      />
+                    <div className="relative group overflow-hidden rounded-lg shadow-lg cursor-pointer">
+                      {/* Gambar Boat */}
+                      <div className="relative h-[330px] w-full">
+                        <Image
+                          src={boat.image}
+                          alt={boat.title}
+                          layout="fill"
+                          objectFit="cover"
+                          className="rounded-lg transition-transform duration-300 group-hover:scale-110"
+                        />
+                      </div>
+                      {/* Overlay dengan Judul */}
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                        <p className="text-white font-semibold text-lg">
+                          {boat.title}
+                        </p>
+                      </div>
                     </div>
-                    {/* Overlay dengan Judul */}
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                      <p className="text-white font-semibold text-lg">
-                        {boat.title}
-                      </p>
-                    </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>
