@@ -41,7 +41,7 @@ const blogSchema = z.object({
   title: z.string().min(1, "Judul harus diisi"),
   content: z.string().min(1, "Konten harus diisi"),
   status: z.enum(["published", "draft"]),
-  slug: z.string().min(1, "Slug harus diisi")
+  category: z.enum(["trips", "travel"])
 })
 
 interface EditBlogPageProps {
@@ -82,7 +82,7 @@ export default function EditBlogPage({ params }: EditBlogPageProps) {
     title: "",
     content: "",
     status: "draft",
-    slug: ""
+    category: "trips"
   }
 
   const form = useForm<z.infer<typeof blogSchema>>({
@@ -110,7 +110,7 @@ export default function EditBlogPage({ params }: EditBlogPageProps) {
           title: blog.title,
           content: blog.content,
           status: blog.status as "published" | "draft",
-          slug: blog.slug
+          category: blog.category
         })
 
         // Set existing assets
@@ -157,7 +157,7 @@ export default function EditBlogPage({ params }: EditBlogPageProps) {
         title: values.title,
         content: values.content,
         status: values.status,
-        slug: values.slug,
+        category: values.category,
         author_id: userData.id
       }
 
@@ -261,20 +261,6 @@ export default function EditBlogPage({ params }: EditBlogPageProps) {
 
                     <FormField
                       control={form.control}
-                      name="slug"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Slug</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Masukkan slug blog" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
                       name="status"
                       render={({ field }) => (
                         <FormItem>
@@ -288,6 +274,28 @@ export default function EditBlogPage({ params }: EditBlogPageProps) {
                             <SelectContent>
                               <SelectItem value="published">Published</SelectItem>
                               <SelectItem value="draft">Draft</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="category"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Kategori</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Pilih kategori" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="trips">Trips</SelectItem>
+                              <SelectItem value="travel">Travel</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />

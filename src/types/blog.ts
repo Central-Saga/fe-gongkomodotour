@@ -21,9 +21,9 @@ export interface Blog {
   id: number
   author_id: number
   title: string
-  slug: string
   content: string
   status: string
+  category: 'trips' | 'travel'
   created_at: string
   updated_at: string
   author: Author
