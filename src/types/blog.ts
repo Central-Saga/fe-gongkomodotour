@@ -23,7 +23,7 @@ export interface Blog {
   title: string
   content: string
   status: string
-  category: 'trips' | 'travel'
+  category: 'tips' | 'travel'
   created_at: string
   updated_at: string
   author: Author
