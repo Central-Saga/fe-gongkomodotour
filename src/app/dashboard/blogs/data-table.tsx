@@ -43,7 +43,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { ChevronDown, FileDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Plus, MoreHorizontal, Pencil, Trash, X } from 'lucide-react'
+import { ChevronDown, FileDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Plus, MoreHorizontal, Pencil, Trash } from 'lucide-react'
 import { useState } from "react"
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
@@ -53,6 +53,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { toast } from "sonner"
 import { apiRequest } from "@/lib/api"
 import Image from "next/image"
+import { ImageModal } from "@/components/ui/image-modal"
 
 interface DataTableProps<TData> {
   columns: ColumnDef<TData, string>[]
@@ -541,28 +542,12 @@ export function DataTable({
 
       {/* Image Modal */}
       {selectedImage && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-4 rounded-lg shadow-lg max-w-4xl w-full mx-4">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">{selectedImage.title || 'Gambar Blog'}</h3>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setSelectedImage(null)}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="relative aspect-video">
-              <Image
-                src={getImageUrl(selectedImage.file_url)}
-                alt={selectedImage.title || 'Gambar Blog'}
-                fill
-                className="object-contain"
-              />
-            </div>
-          </div>
-        </div>
+        <ImageModal
+          isOpen={!!selectedImage}
+          onClose={() => setSelectedImage(null)}
+          imageUrl={getImageUrl(selectedImage.file_url)}
+          title={selectedImage.title}
+        />
       )}
     </div>
   )
