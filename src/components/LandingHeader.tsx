@@ -24,7 +24,7 @@ export default function LandingHeader() {
           <NavigationMenu>
             <NavigationMenuList className="flex space-x-5">
               <NavigationMenuItem>
-                <NavigationMenuLink href="/" className="text-sm hover:text-[#CFB53B] transition-colors duration-200">
+                <NavigationMenuLink href="/" className="text-sm hover:text-gold transition-colors duration-200">
                   Home
                 </NavigationMenuLink>
               </NavigationMenuItem>
@@ -38,8 +38,8 @@ export default function LandingHeader() {
                     onMouseLeave={() => setIsHovered(false)}
                   >
                     <span
-                      className={`text-sm hover:text-[#CFB53B] transition-colors duration-200 ${
-                        isOpen || isHovered ? 'text-[#CFB53B]' : 'text-black'
+                      className={`text-sm hover:text-gold transition-colors duration-200 ${
+                        isOpen || isHovered ? 'text-gold' : 'text-black'
                       }`}
                     >
                       Packages
@@ -49,27 +49,27 @@ export default function LandingHeader() {
                     align="start" 
                     className="w-48 p-2 bg-white shadow-md absolute left-0 top-full transform -translate-x-2"
                   >
-                    <a href="/paket/open-trip" className="px-4 py-2 text-sm hover:text-[#CFB53B] transition-colors duration-200">
+                    <a href="/paket/open-trip" className="px-4 py-2 text-sm hover:text-gold transition-colors duration-200">
                       Open Trip
                     </a>
-                    <a href="/paket/private-trip" className="px-4 py-2 text-sm hover:text-[#CFB53B] transition-colors duration-200">
+                    <a href="/paket/private-trip" className="px-4 py-2 text-sm hover:text-gold transition-colors duration-200">
                       Private Trip
                     </a>
                   </PopoverContent>
                 </Popover>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <NavigationMenuLink href="/gallery" className="text-sm hover:text-[#CFB53B] transition-colors duration-200">
+                <NavigationMenuLink href="/gallery" className="text-sm hover:text-gold transition-colors duration-200">
                   Gallery
                 </NavigationMenuLink>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <NavigationMenuLink href="/blog" className="text-sm hover:text-[#CFB53B] transition-colors duration-200">
+                <NavigationMenuLink href="/blog" className="text-sm hover:text-gold transition-colors duration-200">
                   Blog
                 </NavigationMenuLink>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <NavigationMenuLink href="/about-us" className="text-sm hover:text-[#CFB53B] transition-colors duration-200">
+                <NavigationMenuLink href="/about-us" className="text-sm hover:text-gold transition-colors duration-200">
                   About Us
                 </NavigationMenuLink>
               </NavigationMenuItem>
@@ -79,15 +79,15 @@ export default function LandingHeader() {
             <NavigationMenu>
               <NavigationMenuList>
                 <NavigationMenuItem>
-                  <NavigationMenuTrigger className="text-sm hover:text-[#CFB53B] data-[state=open]:text-[#CFB53B] transition-colors duration-200">
+                  <NavigationMenuTrigger className="text-sm hover:text-gold data-[state=open]:text-gold transition-colors duration-200">
                     <CountryFlag countryCode="GB" svg style={{ width: '20px', height: '15px' }} />
                   </NavigationMenuTrigger>
                   <NavigationMenuContent className="w-32 p-2 bg-white shadow-md">
-                    <NavigationMenuLink href="#" className="px-4 py-2 text-sm hover:text-[#CFB53B] transition-colors duration-200 flex items-center gap-2">
+                    <NavigationMenuLink href="#" className="px-4 py-2 text-sm hover:text-gold transition-colors duration-200 flex items-center gap-2">
                       <CountryFlag countryCode="GB" svg style={{ width: '16px', height: '12px' }} />
                       English
                     </NavigationMenuLink>
-                    <NavigationMenuLink href="#" className="px-4 py-2 text-sm hover:text-[#CFB53B] transition-colors duration-200 flex items-center gap-2">
+                    <NavigationMenuLink href="#" className="px-4 py-2 text-sm hover:text-gold transition-colors duration-200 flex items-center gap-2">
                       <CountryFlag countryCode="ID" svg style={{ width: '16px', height: '12px' }} />
                       Indonesia
                     </NavigationMenuLink>
@@ -98,7 +98,7 @@ export default function LandingHeader() {
             <div>
               <Popover>
                 <PopoverTrigger asChild>
-                  <button className="hover:text-[#CFB53B] transition-colors duration-200">
+                  <button className="hover:text-gold transition-colors duration-200">
                     <GoPerson className="w-8 h-8 rounded-full" />
                   </button>
                 </PopoverTrigger>
@@ -106,10 +106,10 @@ export default function LandingHeader() {
                   align="end" 
                   className="w-48 p-2 bg-white shadow-md"
                 >
-                  <a href="/auth/login" className="px-4 py-2 text-sm hover:text-[#CFB53B] transition-colors duration-200">
+                  <a href="/auth/login" className="px-4 py-2 text-sm hover:text-gold transition-colors duration-200">
                     Login
                   </a>
-                  <a href="/auth/register" className="px-4 py-2 text-sm hover:text-[#CFB53B] transition-colors duration-200">
+                  <a href="/auth/register" className="px-4 py-2 text-sm hover:text-gold transition-colors duration-200">
                     Register
                   </a>
                 </PopoverContent>
