@@ -18,13 +18,14 @@ export default function Footer({ children }: FooterProps) {
           {" "}
           {/* Adjusted container width and gap */}
           {/* Kolom 1: Logo dan Ikon Media Sosial */}
-          <div className="flex flex-col items-start">
+          <div className="flex flex-col items-start ">
             <Image
-              src="/img/logo.png"
+              src="/img/logo-gong.png"
               alt="Gong Komodo Tour Logo"
               width={200} // Reduced width
               height={250} // Reduced height
               className="mb-4" // Reduced margin
+              
             />
             <div className="flex gap-3">
               {" "}
