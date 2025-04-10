@@ -4,10 +4,48 @@ import Link from "next/link";
 import { Home, Eye, Target } from "lucide-react";
 import { FaInstagram, FaWhatsapp, FaTripadvisor } from "react-icons/fa";
 import { motion } from "framer-motion";
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { apiRequest } from '@/lib/api';
 
 const MotionDiv = motion.div;
 
 export default function AboutUsPage() {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    message: ''
+  });
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      await apiRequest('POST', '/api/contact', formData);
+      toast.success('Pesan berhasil dikirim!');
+      setFormData({
+        name: '',
+        email: '',
+        message: ''
+      });
+    } catch (error) {
+      toast.error('Gagal mengirim pesan. Silakan coba lagi.');
+      console.error('Error sending message:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
@@ -229,12 +267,16 @@ export default function AboutUsPage() {
                 className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 <h2 className="text-2xl font-semibold text-gray-800 mb-6">Get in Touch</h2>
-                <form className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="space-y-2">
                     <label htmlFor="name" className="text-sm font-medium text-gray-700">Your Name</label>
                     <input 
                       id="name"
+                      name="name"
                       type="text" 
+                      value={formData.name}
+                      onChange={handleChange}
+                      required
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold focus:border-transparent transition-all duration-300"
                     />
                   </div>
@@ -242,7 +284,11 @@ export default function AboutUsPage() {
                     <label htmlFor="email" className="text-sm font-medium text-gray-700">Your Email</label>
                     <input 
                       id="email"
+                      name="email"
                       type="email" 
+                      value={formData.email}
+                      onChange={handleChange}
+                      required
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold focus:border-transparent transition-all duration-300"
                     />
                   </div>
@@ -250,6 +296,10 @@ export default function AboutUsPage() {
                     <label htmlFor="message" className="text-sm font-medium text-gray-700">Your Message</label>
                     <textarea 
                       id="message"
+                      name="message"
+                      value={formData.message}
+                      onChange={handleChange}
+                      required
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold focus:border-transparent transition-all duration-300 h-32"
                     />
                   </div>
@@ -257,9 +307,12 @@ export default function AboutUsPage() {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     type="submit" 
-                    className="w-full bg-gold text-white py-3 rounded-lg hover:bg-gold-dark transition-colors duration-300 font-medium"
+                    disabled={isLoading}
+                    className={`w-full bg-gold text-white py-3 rounded-lg hover:bg-gold-dark transition-colors duration-300 font-medium ${
+                      isLoading ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
                   >
-                    Send Message
+                    {isLoading ? 'Mengirim...' : 'Send Message'}
                   </motion.button>
                 </form>
               </motion.div>
