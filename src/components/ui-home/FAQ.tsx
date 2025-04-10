@@ -30,6 +30,7 @@ const FAQ = () => {
           'GET',
           '/api/landing-page/faq'
         );
+        setFaqs(response.data);
       } finally {
         setLoading(false);
       }

@@ -46,6 +46,7 @@
     "next": "15.2.1",
     "prisma": "^6.5.0",
     "react": "^19.0.0",
+    "react-country-flag": "^3.1.0",
     "react-day-picker": "8.10.1",
     "react-dom": "^19.0.0",
     "react-dropzone": "^14.3.8",
