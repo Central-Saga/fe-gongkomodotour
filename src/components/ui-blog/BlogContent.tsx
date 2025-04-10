@@ -19,7 +19,7 @@ const BlogContent = () => {
       try {
         const response = await apiRequest<{ data: Blog[] }>("GET", "/api/landing-page/blogs?status=1");
         const posts = Array.isArray(response.data) ? response.data : [];
-        console.log('All posts:', posts); // Debug log
+        // Debug log removed to prevent leaking internal information
         setAllPosts(posts);
       } catch (error) {
         console.error("Error fetching posts:", error);
