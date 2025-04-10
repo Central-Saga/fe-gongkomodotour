@@ -105,7 +105,7 @@ export default function LandingHero() {
                   variants={fadeInUp}
                   className="text-white uppercase font-bold text-center"
                   style={{
-                    fontSize: "clamp(5rem, 5vw, 3.5rem)",
+                    fontSize: "clamp(3rem, 4vw, 2.5rem)",
                     lineHeight: "1",
                   }}
                 >
@@ -119,7 +119,7 @@ export default function LandingHero() {
                   <motion.h1
                     className="text-white uppercase font-bold text-center"
                     style={{
-                      fontSize: "clamp(5rem, 5vw, 3.5rem)",
+                      fontSize: "clamp(3rem, 4vw, 2.5rem)", // Reduced font size
                       lineHeight: "1",
                     }}
                   >
@@ -129,6 +129,7 @@ export default function LandingHero() {
                     <motion.div
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
+
                     >
                       <Button
                         className="bg-gold text-white hover:bg-gold-dark-10 rounded-full"

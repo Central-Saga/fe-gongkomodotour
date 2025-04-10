@@ -1,6 +1,11 @@
 "use client";
 
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { FaChevronDown } from "react-icons/fa";
 import type { FAQ } from "@/types/faqs";
 import { useEffect, useState } from "react";
@@ -25,9 +30,6 @@ const FAQ = () => {
           'GET',
           '/api/landing-page/faq'
         );
-        setFaqs(response.data || []);
-      } catch (error) {
-        console.error('Error fetching FAQs:', error);
       } finally {
         setLoading(false);
       }
@@ -92,7 +94,9 @@ const FAQ = () => {
       >
         <div className="container mx-auto px-4">
           <div className="text-center mb-6">
-            <h2 className="text-3xl font-bold text-foreground">Hight Light Question (FAQ)</h2>
+            <h2 className="text-3xl font-bold text-foreground">
+              Hight Light Question (FAQ)
+            </h2>
             <p className="text-muted-foreground mt-2">Loading...</p>
           </div>
         </div>

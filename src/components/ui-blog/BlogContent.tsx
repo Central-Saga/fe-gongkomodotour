@@ -7,7 +7,7 @@ import Link from "next/link";
 import { apiRequest } from "@/lib/api";
 import { Blog } from "@/types/blog";
 import { motion } from "framer-motion";
-
+        
 const BlogContent = () => {
   const [allPosts, setAllPosts] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -154,7 +154,6 @@ const BlogContent = () => {
           >
             <option value="all">All Categories</option>
             <option value="travel">Travel</option>
-            <option value="tips">Tips</option>
           </select>
           <button 
             className="p-3 bg-gold text-white rounded-md w-full md:w-auto md:px-6 focus:outline-none active:opacity-100 hover:bg-gold-dark-10 transition-colors duration-300"

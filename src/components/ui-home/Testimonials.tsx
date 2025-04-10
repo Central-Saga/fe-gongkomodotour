@@ -231,10 +231,16 @@ export default function Testimoni() {
                   />
                 </motion.div>
                 <div>
-                  <p className="text-sm font-medium text-gray-800">
+                  <p className="text-xs font-medium text-gray-800">
+                    {" "}
+                    {/* Reduced font size */}
                     {testimoni.nama}
                   </p>
-                  <p className="text-sm text-gray-500">{testimoni.tanggal}</p>
+                  <p className="text-xs text-gray-500">
+                    {" "}
+                    {/* Reduced font size */}
+                    {testimoni.tanggal}
+                  </p>
                 </div>
               </div>
             </motion.div>
