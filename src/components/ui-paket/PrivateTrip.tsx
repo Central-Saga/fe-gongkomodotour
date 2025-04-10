@@ -143,7 +143,7 @@ export default function PrivateTrip() {
               About Private Trip
             </h2>
             <p className="text-gray-600 leading-relaxed">
-              Private Trip adalah paket perjalanan eksklusif yang dirancang khusus untuk grup atau individu, di mana peserta dapat mengatur itinerary sesuai kebutuhan. Paket ini menawarkan pengalaman yang lebih personal dan fleksibel.
+              Private Trip is an exclusive travel package specially designed for groups or individuals, where participants can arrange the itinerary according to their needs. This package offers a more personal and flexible experience.
             </p>
           </motion.div>
 

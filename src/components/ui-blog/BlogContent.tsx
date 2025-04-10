@@ -135,11 +135,11 @@ const BlogContent = () => {
         initial={{ opacity: 0, y: -30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1, ease: "easeOut" }}
-        className="blog-header bg-cover bg-center text-center py-16 w-screen -mx-4 md:-mx-16 lg:-mx-24 h-96"
+        className="blog-header bg-cover bg-center text-center py-16 w-screen -mx-4 md:-mx-16 lg:-mx-24 h-96 flex flex-col justify-center items-center"
         style={{ backgroundImage: "url('/img/boat/bg-boat-dlx-mv.jpg')" }}
       >
-        <h1 className="text-4xl font-bold text-[#ffffff]">Blog</h1>
-        <div className="search-bar mt-8 flex justify-center gap-4 bg-[#f5f5f5] p-6 rounded-md shadow-md items-center w-full max-w-7xl mx-auto">
+        <h1 className="text-4xl font-bold text-[#ffffff] mb-8">Blog</h1>
+        <div className="search-bar flex justify-center gap-4 bg-[#f5f5f5] p-6 rounded-md shadow-md items-center w-full max-w-7xl mx-auto">
           <input
             type="text"
             placeholder="Search Article"
@@ -157,7 +157,7 @@ const BlogContent = () => {
             <option value="tips">Tips</option>
           </select>
           <button 
-            className="p-3 bg-yellow-500 text-white rounded-md w-full md:w-auto md:px-6 focus:outline-none active:opacity-100"
+            className="p-3 bg-gold text-white rounded-md w-full md:w-auto md:px-6 focus:outline-none active:opacity-100 hover:bg-gold-dark-10 transition-colors duration-300"
             onClick={() => {
               setSearchQuery("");
               setSelectedCategory("all");
@@ -287,7 +287,7 @@ const BlogContent = () => {
           >
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold">Travel</h2>
-              <Link href="/blog/viewall/travel" className="text-yellow-500 font-semibold">
+              <Link href="/blog/viewall/travel" className="text-gold font-semibold hover:text-gold-dark-10 transition-colors duration-300">
                 View All
               </Link>
             </div>
@@ -341,7 +341,7 @@ const BlogContent = () => {
           >
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold">Tips</h2>
-              <Link href="/blog/viewall/tips" className="text-yellow-500 font-semibold">
+              <Link href="/blog/viewall/tips" className="text-gold font-semibold hover:text-gold-dark-10 transition-colors duration-300">
                 View All
               </Link>
             </div>

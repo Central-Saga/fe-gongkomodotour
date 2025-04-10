@@ -143,7 +143,7 @@ export default function OpenTrip() {
               About Open Trip
             </h2>
             <p className="text-gray-600 leading-relaxed">
-              Open Trip adalah paket perjalanan yang terbuka untuk umum, di mana peserta dapat bergabung dengan peserta lain yang telah memesan perjalanan yang sama. Open Trip memiliki jadwal yang tetap dan harga yang lebih terjangkau.
+              Open Trip is a travel package open to the public, where participants can join with other participants who have booked the same trip. Open Trip has a fixed schedule and more affordable prices.
             </p>
           </motion.div>
 
@@ -197,7 +197,7 @@ export default function OpenTrip() {
               Open Trip Tours
             </h2>
             <p className="text-gray-600 mb-8 leading-relaxed max-w-2xl mx-auto">
-              Temukan pilihan paket perjalanan grup kami, sempurna untuk mereka yang ingin menjelajah bersama petualang lainnya.
+              Discover our selection of group travel packages, perfect for those who want to explore with other adventurers.
             </p>
           </motion.div>
           

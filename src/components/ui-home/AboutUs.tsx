@@ -62,7 +62,7 @@ export default function AboutUs() {
               transition={{ duration: 0.6, delay: 0.6 }}
               viewport={{ once: true }}
             >
-              <Link href="/about">
+              <Link href="/about-us">
                 <Button className="bg-gold text-white px-6 py-3 hover:bg-gold-dark-10 transition-all duration-300 rounded-md hover:scale-105">
                   Read more
                 </Button>
