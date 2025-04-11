@@ -30,6 +30,8 @@ export default function GalleryPage() {
   const formattedGalleryData = galleryData.map((gallery) => ({
     image: gallery.assets?.[0]?.file_url || "/img/default-gallery.jpg",
     title: gallery.title,
+    description: gallery.description || 'No Description',
+    category: gallery.category || 'Uncategorized',
   }));
 
   return (

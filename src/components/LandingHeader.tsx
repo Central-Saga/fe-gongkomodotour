@@ -47,12 +47,12 @@ export default function LandingHeader() {
                   </PopoverTrigger>
                   <PopoverContent 
                     align="start" 
-                    className="w-48 p-2 bg-white shadow-md absolute left-0 top-full transform -translate-x-2"
+                    className="w-48 p-2 bg-white shadow-md absolute left-0 top-full transform -translate-x-2 flex flex-col"
                   >
-                    <a href="/paket/open-trip" className="px-4 py-2 text-sm hover:text-gold transition-colors duration-200">
+                    <a href="/paket/open-trip" className="px-4 py-2 text-sm hover:text-gold transition-colors duration-200 whitespace-nowrap">
                       Open Trip
                     </a>
-                    <a href="/paket/private-trip" className="px-4 py-2 text-sm hover:text-gold transition-colors duration-200">
+                    <a href="/paket/private-trip" className="px-4 py-2 text-sm hover:text-gold transition-colors duration-200 whitespace-nowrap">
                       Private Trip
                     </a>
                   </PopoverContent>
@@ -104,12 +104,12 @@ export default function LandingHeader() {
                 </PopoverTrigger>
                 <PopoverContent 
                   align="end" 
-                  className="w-48 p-2 bg-white shadow-md"
+                  className="w-48 p-2 bg-white shadow-md flex flex-col"
                 >
-                  <a href="/auth/login" className="px-4 py-2 text-sm hover:text-gold transition-colors duration-200">
+                  <a href="/auth/login" className="px-4 py-2 text-sm hover:text-gold transition-colors duration-200 whitespace-nowrap">
                     Login
                   </a>
-                  <a href="/auth/register" className="px-4 py-2 text-sm hover:text-gold transition-colors duration-200">
+                  <a href="/auth/register" className="px-4 py-2 text-sm hover:text-gold transition-colors duration-200 whitespace-nowrap">
                     Register
                   </a>
                 </PopoverContent>
