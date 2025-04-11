@@ -11,7 +11,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -93,17 +93,20 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
                   src={mainImage}
                   alt={data.title || "Default Image"}
                   fill
+                  quality={100}
                   className="rounded-sm object-cover"
                 />
               </div>
             </DialogTrigger>
             <DialogContent className="max-w-4xl">
+              <DialogTitle className="sr-only">Gambar Detail</DialogTitle>
               {selectedImage && (
                 <Image
                   src={selectedImage}
                   alt="Selected Image"
                   width={800}
                   height={600}
+                  quality={100}
                   className="rounded-lg"
                 />
               )}
@@ -126,17 +129,20 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
                       src={image}
                       alt={`${data.title} ${index + 1}`}
                       fill
+                      quality={100}
                       className="rounded-sm object-cover"
                     />
                   </div>
                 </DialogTrigger>
                 <DialogContent className="max-w-4xl">
+                  <DialogTitle className="sr-only">Gambar Detail</DialogTitle>
                   {selectedImage && (
                     <Image
                       src={selectedImage}
                       alt="Selected Image"
                       width={800}
                       height={600}
+                      quality={100}
                       className="rounded-lg"
                     />
                   )}
@@ -149,9 +155,10 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
               <DialogTrigger asChild>
                 <div className="relative h-[196px] md:h-[221px] w-full flex items-center justify-center rounded-sm cursor-pointer">
                   <Image
-                    src={data.images[4] || "/img/default-image.png"} // Tambahkan fallback default
+                    src={data.images[4] || "/img/default-image.png"}
                     alt="More Info Background"
                     fill
+                    quality={100}
                     className="rounded-sm object-cover"
                   />
                   <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
@@ -160,16 +167,18 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
                 </div>
               </DialogTrigger>
               <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                <DialogTitle className="sr-only">Galeri Gambar</DialogTitle>
                 <div className="grid grid-cols-2 gap-4">
-                  {data.images.slice(4).map((image, index) => (
+                  {data.images.map((image, index) => (
                     <div
                       key={index}
                       className="relative h-[150px] w-[150px] md:h-[200px] md:w-[200px]"
                     >
                       <Image
-                        src={image || "/img/default-image.png"} // Tambahkan fallback default
+                        src={image || "/img/default-image.png"}
                         alt={`${data.title || "Default Image"} ${index + 4}`}
                         fill
+                        quality={100}
                         className="rounded-sm object-cover"
                       />
                     </div>
