@@ -37,10 +37,8 @@ export default function PrivateTrip() {
   useEffect(() => {
     const fetchPrivateTrips = async () => {
       try {
-        const response = await apiRequest<TripResponse>('GET', '/api/landing-page/trips');
-        let privateTrips = Array.isArray(response.data) 
-          ? response.data.filter(trip => trip.type === "Private Trip")
-          : [];
+        const response = await apiRequest<TripResponse>('GET', '/api/landing-page/trips?status=1&type=private');
+        let privateTrips = Array.isArray(response.data) ? response.data : [];
 
         // Extract unique durations
         const durations = new Set<string>();

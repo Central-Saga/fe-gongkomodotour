@@ -9,7 +9,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { apiRequest } from "@/lib/api";
-import { Trip } from "@/types/trips";
+import { Trip, FlightSchedule } from "@/types/trips";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -44,6 +44,7 @@ interface PackageData {
   };
   boatImages?: { image: string; title: string }[];
   mainImage?: string;
+  flightSchedules?: FlightSchedule[];
 }
 
 export default function DetailOpenTrip() {
@@ -133,7 +134,7 @@ export default function DetailOpenTrip() {
     mainImage: selectedPackage.assets?.[0]?.file_url 
       ? `${API_URL}${selectedPackage.assets[0].file_url}`
       : "/img/default-image.png",
-    // Tambahkan data tambahan dari API
+    flightSchedules: selectedPackage.flight_schedules || [],
     flightInfo: {
       guideFee1: selectedPackage.additional_fees?.find(fee => 
         fee.fee_category === "Guide Fee" && fee.unit === "per_day_guide"

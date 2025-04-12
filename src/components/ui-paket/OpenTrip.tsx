@@ -37,10 +37,8 @@ export default function OpenTrip() {
   useEffect(() => {
     const fetchOpenTrips = async () => {
       try {
-        const response = await apiRequest<TripResponse>('GET', '/api/landing-page/trips');
-        let openTrips = Array.isArray(response.data) 
-          ? response.data.filter(trip => trip.type === "Open Trip")
-          : [];
+        const response = await apiRequest<TripResponse>('GET', '/api/landing-page/trips?status=1&type=open');
+        let openTrips = Array.isArray(response.data) ? response.data : [];
 
         // Extract unique durations
         const durations = new Set<string>();
@@ -56,14 +54,14 @@ export default function OpenTrip() {
         // Apply sorting
         if (sortBy === "high-low") {
           openTrips.sort((a, b) => {
-            const priceA = parseInt(a.trip_durations?.[0]?.trip_prices?.[0]?.price_per_pax || "0");
-            const priceB = parseInt(b.trip_durations?.[0]?.trip_prices?.[0]?.price_per_pax || "0");
+            const priceA = parseInt(String(a.trip_durations?.[0]?.trip_prices?.[0]?.price_per_pax || "0"));
+            const priceB = parseInt(String(b.trip_durations?.[0]?.trip_prices?.[0]?.price_per_pax || "0"));
             return priceB - priceA;
           });
         } else if (sortBy === "low-high") {
           openTrips.sort((a, b) => {
-            const priceA = parseInt(a.trip_durations?.[0]?.trip_prices?.[0]?.price_per_pax || "0");
-            const priceB = parseInt(b.trip_durations?.[0]?.trip_prices?.[0]?.price_per_pax || "0");
+            const priceA = parseInt(String(a.trip_durations?.[0]?.trip_prices?.[0]?.price_per_pax || "0"));
+            const priceB = parseInt(String(b.trip_durations?.[0]?.trip_prices?.[0]?.price_per_pax || "0"));
             return priceA - priceB;
           });
         }
@@ -249,7 +247,7 @@ export default function OpenTrip() {
                               className="w-4 h-4 brightness-200 invert"
                             />
                             <span className="text-sm">
-                              {trip.trip_durations?.[0]?.duration_label || trip.duration || "Custom Duration"}
+                              {trip.trip_durations?.[0]?.duration_label || "Custom Duration"}
                             </span>
                           </div>
                           {trip.trip_durations?.[0]?.trip_prices?.[0]?.price_per_pax && (
@@ -262,7 +260,7 @@ export default function OpenTrip() {
                                 className="w-4 h-4 brightness-200 invert"
                               />
                               <span className="text-sm">
-                                IDR {parseInt(trip.trip_durations[0].trip_prices[0].price_per_pax).toLocaleString('id-ID')}/pax
+                                IDR {parseInt(String(trip.trip_durations[0].trip_prices[0].price_per_pax)).toLocaleString('id-ID')}/pax
                               </span>
                             </div>
                           )}

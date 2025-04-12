@@ -14,6 +14,17 @@ import {
 import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { useRouter, useSearchParams } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import { Badge } from "@/components/ui/badge";
+
+interface FlightSchedule {
+  id: number;
+  route: string;
+  eta_time: string;
+  eta_text: string;
+  etd_time: string;
+  etd_text: string;
+}
 
 interface PackageData {
   id: string;
@@ -23,7 +34,11 @@ interface PackageData {
   destination: string;
   daysTrip: string;
   description: string;
-  itinerary: { day: string; activities: string[] }[];
+  itinerary: { 
+    durationId: number;
+    durationLabel: string;
+    days: { day: string; activities: string[] }[];
+  }[];
   information: string;
   boat: string;
   groupSize?: string;
@@ -40,8 +55,9 @@ interface PackageData {
     guideFee1: string;
     guideFee2: string;
   };
-  boatImages?: { image: string; title: string }[]; // Tambahkan properti ini
-  mainImage?: string; // Tambahkan properti mainImage
+  boatImages?: { image: string; title: string }[];
+  mainImage?: string;
+  flightSchedules?: FlightSchedule[];
 }
 
 interface DetailPaketOpenTripProps {
@@ -57,6 +73,7 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
   const [selectedDay, setSelectedDay] = useState(0); // Tambahkan state untuk hari yang dipilih
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const router = useRouter();
+  const [selectedDurationId, setSelectedDurationId] = useState(0);
 
   // Tambahkan log untuk memeriksa nilai mainImage dan data.images
   console.log("Query Main Image:", searchParams.get("mainImage"));
@@ -74,10 +91,25 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
     }
   };
 
+  // Fungsi untuk menangani konten HTML dari WYSIWYG editor dengan styling
+  const renderHTMLContent = (htmlString: string) => {
+    return (
+      <div 
+        className="text-gray-600 text-sm [&_ol]:list-decimal [&_ul]:list-disc [&_ol]:pl-5 [&_ul]:pl-5 [&_ol]:space-y-2 [&_ul]:space-y-2 [&_p]:my-0 [&_li]:pl-2 [&_li]:relative [&_li]:leading-normal"
+        dangerouslySetInnerHTML={{ __html: htmlString }} 
+      />
+    );
+  };
+
   return (
     <div className="py-4 px-4">
       {/* Section 1: Gambar */}
-      <div className="relative mb-8">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="relative mb-8"
+      >
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
           {/* Gambar Utama */}
           <Dialog
@@ -86,7 +118,7 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
           >
             <DialogTrigger asChild>
               <div
-                className="relative h-[400px] md:h-[458px] md:col-span-7 cursor-pointer"
+                className="relative h-[400px] md:h-[458px] md:col-span-7 cursor-pointer overflow-hidden group"
                 onClick={() => setSelectedImage(mainImage)}
               >
                 <Image
@@ -94,22 +126,42 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
                   alt={data.title || "Default Image"}
                   fill
                   quality={100}
-                  className="rounded-sm object-cover"
+                  className="rounded-sm object-cover transition-transform duration-300 group-hover:scale-105"
                 />
+                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </div>
             </DialogTrigger>
-            <DialogContent className="max-w-4xl">
+            <DialogContent className="max-w-5xl bg-black/95 border-none p-0">
               <DialogTitle className="sr-only">Gambar Detail</DialogTitle>
-              {selectedImage && (
-                <Image
-                  src={selectedImage}
-                  alt="Selected Image"
-                  width={800}
-                  height={600}
-                  quality={100}
-                  className="rounded-lg"
-                />
-              )}
+              <AnimatePresence>
+                {selectedImage && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.3 }}
+                    className="relative"
+                  >
+                    <Image
+                      src={selectedImage}
+                      alt="Selected Image"
+                      width={1200}
+                      height={800}
+                      quality={100}
+                      className="rounded-lg"
+                    />
+                    <button
+                      onClick={() => setSelectedImage(null)}
+                      className="absolute top-4 right-4 text-white bg-black/50 p-2 rounded-full hover:bg-black/80 transition-colors duration-200"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </DialogContent>
           </Dialog>
           {/* Gambar Kecil */}
@@ -122,7 +174,7 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
               >
                 <DialogTrigger asChild>
                   <div
-                    className="relative h-[196px] md:h-[221px] w-full cursor-pointer"
+                    className="relative h-[196px] md:h-[221px] w-full cursor-pointer overflow-hidden group"
                     onClick={() => setSelectedImage(image)}
                   >
                     <Image
@@ -130,22 +182,42 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
                       alt={`${data.title} ${index + 1}`}
                       fill
                       quality={100}
-                      className="rounded-sm object-cover"
+                      className="rounded-sm object-cover transition-transform duration-300 group-hover:scale-105"
                     />
+                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   </div>
                 </DialogTrigger>
-                <DialogContent className="max-w-4xl">
+                <DialogContent className="max-w-5xl bg-black/95 border-none p-0">
                   <DialogTitle className="sr-only">Gambar Detail</DialogTitle>
-                  {selectedImage && (
-                    <Image
-                      src={selectedImage}
-                      alt="Selected Image"
-                      width={800}
-                      height={600}
-                      quality={100}
-                      className="rounded-lg"
-                    />
-                  )}
+                  <AnimatePresence>
+                    {selectedImage && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.3 }}
+                        className="relative"
+                      >
+                        <Image
+                          src={selectedImage}
+                          alt="Selected Image"
+                          width={1200}
+                          height={800}
+                          quality={100}
+                          className="rounded-lg"
+                        />
+                        <button
+                          onClick={() => setSelectedImage(null)}
+                          className="absolute top-4 right-4 text-white bg-black/50 p-2 rounded-full hover:bg-black/80 transition-colors duration-200"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                          </svg>
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </DialogContent>
               </Dialog>
             ))}
@@ -188,76 +260,105 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
             </Dialog>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Section 2: Judul dan Rating */}
-      <div className="mb-4 bg-[#f5f5f5] p-6 rounded-lg shadow-xl">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+        className="mb-4 bg-[#f5f5f5] p-6 rounded-lg shadow-xl"
+      >
         <div className="flex items-center mb-2">
-          <span className="bg-green-500 text-white px-3 py-2 rounded-sm text-sm mr-2">
+          <Badge variant="secondary" className="bg-green-500 hover:bg-green-600 text-white border-none text-base px-6 py-2">
             Open Trip
-          </span>
-          <span className="text-orange-500 text-xl ml-5">★ 5 (100 ulasan)</span>
+          </Badge>
         </div>
         <h1 className="text-4xl font-bold text-gray-800">{data.title}</h1>
         <p className="text-2xl text-gray-600 mt-2">
           Start from <strong>{data.price}</strong>
         </p>
-      </div>
+      </motion.div>
 
-      {/* Section 3: Destinasi */}
-      <div className="bg-[#f5f5f5] p-6 rounded-lg shadow-md mb-8">
+      {/* Section 3: Destination Info */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.4 }}
+        className="bg-gold/5 p-6 rounded-lg shadow-md mb-8"
+      >
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-80 mb-4 md:mb-0 max-w-6xl">
-            <div className="flex items-start">
-              <Image
-                src="/img/Meeting.png"
-                alt="Meeting Point Icon"
-                width={50}
-                height={50}
-                className="mr-2"
-              />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 w-full">
+            {/* Meeting Point */}
+            <motion.div 
+              whileHover={{ scale: 1.02 }}
+              transition={{ type: "spring", stiffness: 300 }}
+              className="flex items-center space-x-4"
+            >
+              <div className="p-2">
+                <Image
+                  src="/img/Meeting.png"
+                  alt="Meeting Point Icon"
+                  width={40}
+                  height={40}
+                  className="min-w-[40px]"
+                />
+              </div>
               <div className="flex flex-col">
-                <span className="text-gray-600 font-semibold">
-                  Meeting Point
-                </span>
+                <span className="text-gold font-semibold">Meeting Point</span>
                 <span className="text-gray-600">{data.meetingPoint}</span>
               </div>
-            </div>
-            <div className="flex items-start">
-              <Image
-                src="/img/icon-destination.png"
-                alt="Destinations Icon"
-                width={50}
-                height={50}
-                className="mr-2"
-              />
-              <div className="flex flex-col">
-                <span className="text-gray-600 font-semibold">Destinasi</span>
-                <span className="text-gray-600">
-                  {data.destinations} Destinasi
-                </span>
+            </motion.div>
+
+            {/* Destinations */}
+            <motion.div 
+              whileHover={{ scale: 1.02 }}
+              transition={{ type: "spring", stiffness: 300 }}
+              className="flex items-center space-x-4"
+            >
+              <div className="p-2">
+                <Image
+                  src="/img/icon-destination.png"
+                  alt="Destinations Icon"
+                  width={40}
+                  height={40}
+                  className="min-w-[40px]"
+                />
               </div>
-            </div>
-            <div className="flex items-start">
-              <Image
-                src="/img/icon/durasi.png"
-                alt="Days Trip Icon"
-                width={50}
-                height={50}
-                className="mr-2"
-              />
               <div className="flex flex-col">
-                <span className="text-gray-600 font-semibold">Durasi Trip</span>
+                <span className="text-gold font-semibold">Destinations</span>
+                <span className="text-gray-600">{data.destinations} Places</span>
+              </div>
+            </motion.div>
+
+            {/* Duration */}
+            <motion.div 
+              whileHover={{ scale: 1.02 }}
+              transition={{ type: "spring", stiffness: 300 }}
+              className="flex items-center space-x-4"
+            >
+              <div className="p-2">
+                <Image
+                  src="/img/icon/durasi.png"
+                  alt="Duration Icon"
+                  width={40}
+                  height={40}
+                  className="min-w-[40px]"
+                />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-gold font-semibold">Trip Duration</span>
                 <span className="text-gray-600">{data.daysTrip}</span>
               </div>
-            </div>
+            </motion.div>
           </div>
-          <div className="flex items-center space-x-4">
+
+          <div className="flex items-center space-x-4 mt-6 md:mt-0 w-full md:w-auto justify-center">
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
-                  className="border-gray-300 text-gray-800 px-4 py-2 rounded-lg"
+                  className="border-gold hover:border-gold/80 text-gold px-6 py-2 rounded-lg"
                 >
                   {selectedDate ? format(selectedDate, "PPP") : "Select Date"}
                 </Button>
@@ -271,30 +372,40 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
                 />
               </PopoverContent>
             </Popover>
-            {/* // components/ui-detail/DetailPaketOpenTrip.tsx */}
             {selectedDate && (
-              <Button
-                onClick={() => handleBookNow(data.id)}
-                className="bg-[#CFB53B] text-white px-6 py-2 rounded-lg font-semibold text-sm hover:bg-[#7F6D1F] hover:scale-95 transition-all duration-300"
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.2 }}
               >
-                Book Now
-              </Button>
+                <Button
+                  onClick={() => handleBookNow(data.id)}
+                  className="bg-gold text-white px-8 py-2 rounded-lg font-semibold text-sm hover:bg-gold-dark-20 hover:scale-95 transition-all duration-300"
+                >
+                  Book Now
+                </Button>
+              </motion.div>
             )}
           </div>
         </div>
-      </div>
+      </motion.div>
 
-      {/* Section 4: Tab Navigasi dan Konten */}
-      <div className="bg-white p-6 rounded-lg shadow-md">
+      {/* Section 4: Navigation Tabs */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.6 }}
+        className="bg-white p-6 rounded-lg shadow-md"
+      >
         <div className="flex space-x-4 mb-6">
           <Button
             variant={activeTab === "description" ? "default" : "outline"}
             onClick={() => setActiveTab("description")}
             className={`${
               activeTab === "description"
-                ? "bg-[#CFB53B] text-white"
-                : "bg-gray-200 text-gray-800"
-            } px-7 py-6 rounded-lg font-semibold text-sm hover:bg-[#7F6D1F] hover:text-white transition-all duration-300`}
+                ? "bg-gold text-white hover:bg-gold-dark-20"
+                : "bg-gold/5 text-gold hover:bg-gold hover:text-white"
+            } px-7 py-6 rounded-lg font-semibold text-sm transition-all duration-300`}
           >
             Description
           </Button>
@@ -303,9 +414,9 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
             onClick={() => setActiveTab("itinerary")}
             className={`${
               activeTab === "itinerary"
-                ? "bg-[#CFB53B] text-white"
-                : "bg-gray-200 text-gray-800"
-            } px-7 py-6 rounded-lg font-semibold text-sm hover:bg-[#7F6D1F] hover:text-white transition-all duration-300`}
+                ? "bg-gold text-white hover:bg-gold-dark-20"
+                : "bg-gold/5 text-gold hover:bg-gold hover:text-white"
+            } px-7 py-6 rounded-lg font-semibold text-sm transition-all duration-300`}
           >
             Itinerary
           </Button>
@@ -314,9 +425,9 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
             onClick={() => setActiveTab("information")}
             className={`${
               activeTab === "information"
-                ? "bg-[#CFB53B] text-white"
-                : "bg-gray-200 text-gray-800"
-            } px-7 py-6  rounded-lg font-semibold text-sm hover:bg-[#7F6D1F] hover:text-white transition-all duration-300`}
+                ? "bg-gold text-white hover:bg-gold-dark-20"
+                : "bg-gold/5 text-gold hover:bg-gold hover:text-white"
+            } px-7 py-6 rounded-lg font-semibold text-sm transition-all duration-300`}
           >
             Information
           </Button>
@@ -325,74 +436,98 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
             onClick={() => setActiveTab("boat")}
             className={`${
               activeTab === "boat"
-                ? "bg-[#CFB53B] text-white"
-                : "bg-gray-200 text-gray-800"
-            } px-7 py-6  rounded-lg font-semibold text-sm hover:bg-[#7F6D1F] hover:text-white transition-all duration-300`}
+                ? "bg-gold text-white hover:bg-gold-dark-20"
+                : "bg-gold/5 text-gold hover:bg-gold hover:text-white"
+            } px-7 py-6 rounded-lg font-semibold text-sm transition-all duration-300`}
           >
             Boat
           </Button>
         </div>
 
-        <div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+          className="mt-6"
+        >
           {activeTab === "description" && (
-            <div>
-              <h1 className="text-3xl font-bold text-gray-800 mb-2">
-                Description
-              </h1>
-              <div className="w-[150px] h-[3px] bg-[#CFB53B] mb-6"></div>
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <h1 className="text-3xl font-bold text-gray-800 mb-2">Description</h1>
+              <div className="w-[150px] h-[3px] bg-gold mb-6"></div>
               <p className="text-gray-600">{data.description}</p>
-            </div>
+            </motion.div>
           )}
           {activeTab === "itinerary" && (
-            <div>
-              {/* Header Itinerary dengan Tombol Days */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3 }}
+            >
               <div className="mb-6">
-                {/* Judul Itinerary */}
                 <div className="flex flex-col items-start">
-                  <h1 className="text-3xl font-bold text-gray-800">
-                    Itinerary
-                  </h1>
-                  {/* Garis di bawah judul */}
+                  <h1 className="text-3xl font-bold text-gray-800">Itinerary</h1>
                   <div className="w-[120px] h-[3px] bg-[#CFB53B] mt-1"></div>
                 </div>
 
-                {/* Tombol Days */}
+                <div className="mt-4">
+                  <select
+                    value={selectedDurationId}
+                    onChange={(e) => setSelectedDurationId(Number(e.target.value))}
+                    className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-gold"
+                  >
+                    {data.itinerary.map((duration) => (
+                      <option key={duration.durationId} value={duration.durationId}>
+                        {duration.durationLabel}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 <div className="flex justify-center space-x-4 mt-4">
-                  {data.itinerary.map((item, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setSelectedDay(index)}
-                      className={`px-4 py-2 rounded-lg font-semibold text-sm ${
-                        selectedDay === index
-                          ? "bg-[#f4f4f4] text-black border-t-4 border-[#CFB53B]"
-                          : "bg-gray-200 text-gray-800"
-                      } hover:bg-[#7F6D1F] hover:text-white transition-all duration-300`}
-                    >
-                      {item.day}
-                    </button>
-                  ))}
+                  {data.itinerary
+                    .find(d => d.durationId === selectedDurationId)
+                    ?.days.map((item, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setSelectedDay(index)}
+                        className={`px-4 py-2 rounded-lg font-semibold text-sm ${
+                          selectedDay === index
+                            ? "bg-[#f4f4f4] text-black border-t-4 border-[#CFB53B]"
+                            : "bg-gray-200 text-gray-800"
+                        } hover:bg-[#7F6D1F] hover:text-white transition-all duration-300`}
+                      >
+                        {item.day}
+                      </button>
+                    ))}
                 </div>
               </div>
-              {/* Garis di bawah judul
-            <div className="w-[120px] h-[3px] bg-[#CFB53B] mb-6"></div> */}
 
-              {/* Display Activities for Selected Day */}
               <div>
                 <h2 className="text-2xl font-bold text-gray-800 mb-4">
-                  {data.itinerary[selectedDay]?.day}
+                  {data.itinerary
+                    .find(d => d.durationId === selectedDurationId)
+                    ?.days[selectedDay]?.day}
                 </h2>
-                <ul className="list-disc list-inside text-gray-600 space-y-2">
-                  {data.itinerary[selectedDay]?.activities.map(
-                    (activity, index) => (
-                      <li key={index}>{activity}</li>
-                    )
+                <div className="space-y-2">
+                  {renderHTMLContent(
+                    data.itinerary
+                      .find(d => d.durationId === selectedDurationId)
+                      ?.days[selectedDay]?.activities.join('') || ''
                   )}
-                </ul>
+                </div>
               </div>
-            </div>
+            </motion.div>
           )}
           {activeTab === "information" && (
-            <div>
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3 }}
+            >
               <h1 className="text-3xl font-bold text-gray-800 mb-2">
                 Information
               </h1>
@@ -405,16 +540,62 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
                     <h2 className="text-xl font-bold text-gray-800 mb-4">
                       Include
                     </h2>
-                    <ul className="list-disc list-inside space-y-2">
-                      {data.include?.map((item, index) => (
-                        <li key={index} className="text-gray-600 text-sm">
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
+                    {renderHTMLContent(data.include?.join('') || '')}
                   </div>
 
-                  {/* Session Section */}
+                  {/* Flight Information */}
+                  <div className="bg-[#f5f5f5] p-6 rounded-lg shadow-sm min-h-[250px] flex flex-col">
+                    <h2 className="text-xl font-bold text-gray-800 mb-6">
+                      Flight Information
+                    </h2>
+                    <div className="space-y-6">
+                      {data.flightSchedules && data.flightSchedules.length > 0 ? (
+                        data.flightSchedules.map((schedule, index) => (
+                          <div key={index}>
+                            <h3 className="text-gold text-xl font-semibold mb-4">
+                              {schedule.route}
+                            </h3>
+                            <div className="grid grid-cols-2 gap-8">
+                              <div>
+                                <p className="text-gray-600 font-medium mb-2">Departure</p>
+                                <p className="text-gray-500">
+                                  {schedule.etd_text === "-" 
+                                    ? `${schedule.etd_time.slice(0, -3)} WITA` 
+                                    : schedule.etd_text}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-gray-600 font-medium mb-2">Arrival</p>
+                                <p className="text-gray-500">
+                                  {schedule.eta_text === "-" 
+                                    ? `${schedule.eta_time.slice(0, -3)} WITA` 
+                                    : schedule.eta_text}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-gray-600">
+                          <p>{data.flightInfo?.guideFee1}</p>
+                          <p className="mt-2">{data.flightInfo?.guideFee2}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Kolom Kanan */}
+                <div className="space-y-6">
+                  {/* Exclude Section */}
+                  <div className="bg-[#f5f5f5] p-6 rounded-lg shadow-sm min-h-[250px] flex flex-col">
+                    <h2 className="text-xl font-bold text-gray-800 mb-4">
+                      Exclude
+                    </h2>
+                    {renderHTMLContent(data.exclude?.join('') || '')}
+                  </div>
+
+                  {/* Season Section */}
                   <div className="bg-[#f5f5f5] p-6 rounded-lg shadow-sm min-h-[250px] flex flex-col">
                     <h2 className="text-xl font-bold text-gray-800 mb-4">
                       Season
@@ -427,7 +608,7 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
                         <p className="text-gray-600 text-sm">
                           {data.session?.highSeason.period}
                         </p>
-                        <p className="text-[#CFB53B] font-bold mt-1 text-sm">
+                        <p className="text-gold font-bold mt-1 text-sm">
                           {data.session?.highSeason.price}
                         </p>
                       </div>
@@ -438,50 +619,22 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
                         <p className="text-gray-600 text-sm">
                           {data.session?.peakSeason.period}
                         </p>
-                        <p className="text-[#CFB53B] font-bold mt-1 text-sm">
+                        <p className="text-gold font-bold mt-1 text-sm">
                           {data.session?.peakSeason.price}
                         </p>
                       </div>
                     </div>
                   </div>
                 </div>
-
-                {/* Kolom Kanan */}
-                <div className="space-y-6">
-                  {/* Exclude Section */}
-                  <div className="bg-[#f5f5f5] p-6 rounded-lg shadow-sm min-h-[250px] flex flex-col">
-                    <h2 className="text-xl font-bold text-gray-800 mb-4">
-                      Exclude
-                    </h2>
-                    <ul className="list-disc list-inside space-y-2">
-                      {data.exclude?.map((item, index) => (
-                        <li key={index} className="text-gray-600 text-sm">
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  {/* Flight Information */}
-                  <div className="bg-[#f5f5f5] p-6 rounded-lg shadow-sm min-h-[250px] flex flex-col">
-                    <h2 className="text-xl font-bold text-gray-800 mb-4">
-                      Flight Information
-                    </h2>
-                    <div className="space-y-2">
-                      <p className="text-gray-600 text-sm">
-                        {data.flightInfo?.guideFee1}
-                      </p>
-                      <p className="text-gray-600 text-sm">
-                        {data.flightInfo?.guideFee2}
-                      </p>
-                    </div>
-                  </div>
-                </div>
               </div>
-            </div>
+            </motion.div>
           )}
           {activeTab === "boat" && (
-            <div>
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3 }}
+            >
               <h1 className="text-3xl font-bold text-gray-800 mb-2">Boat</h1>
               <div className="w-[80px] h-[3px] bg-[#CFB53B] mb-6"></div>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 max-w-8xl mx-auto items-center mb-6">
@@ -511,10 +664,10 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
                   </Link>
                 ))}
               </div>
-            </div>
+            </motion.div>
           )}
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </div>
   );
 };
