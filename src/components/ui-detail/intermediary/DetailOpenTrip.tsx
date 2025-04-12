@@ -17,6 +17,19 @@ interface ApiResponse {
   data: Trip;
 }
 
+interface SimilarTripsResponse {
+  data: Trip[];
+}
+
+interface TripData {
+  image: string;
+  label: string;
+  name: string;
+  duration: string;
+  priceIDR: string;
+  slug: string;
+}
+
 interface PackageData {
   id: string;
   title: string;
@@ -64,6 +77,7 @@ export default function DetailOpenTrip() {
   const [selectedPackage, setSelectedPackage] = useState<Trip | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [similarTrips, setSimilarTrips] = useState<TripData[]>([]);
 
   useEffect(() => {
     const fetchTripDetails = async () => {
@@ -83,6 +97,27 @@ export default function DetailOpenTrip() {
         }
         
         setSelectedPackage(response.data);
+
+        // Fetch similar trips
+        const similarResponse = await apiRequest<SimilarTripsResponse>('GET', '/api/landing-page/trips?status=1&type=open');
+        if (similarResponse?.data) {
+          const similarTripsData = similarResponse.data
+            .filter((trip: Trip) => trip.id !== response.data.id) // Exclude current trip
+            .slice(0, 3) // Take only 3 trips
+            .map((trip: Trip) => ({
+              image: trip.assets?.[0]?.file_url 
+                ? `${API_URL}${trip.assets[0].file_url}`
+                : '/img/default-trip.jpg',
+              label: trip.type || "Open Trip",
+              name: trip.name || "Trip Name",
+              duration: trip.trip_durations?.[0]?.duration_label || "Custom Duration",
+              priceIDR: trip.trip_durations?.[0]?.trip_prices?.[0]?.price_per_pax 
+                ? `IDR ${parseInt(String(trip.trip_durations[0].trip_prices[0].price_per_pax)).toLocaleString('id-ID')}/pax`
+                : "Price not available",
+              slug: trip.id?.toString() || ""
+            }));
+          setSimilarTrips(similarTripsData);
+        }
       } catch (error) {
         console.error('Error fetching trip details:', error);
         setError("Gagal memuat detail trip");
@@ -198,7 +233,7 @@ export default function DetailOpenTrip() {
 
       {/* More Open Trip Section */}
       <DetailMoreTrip
-        trips={[]}
+        trips={similarTrips}
         tripType="open-trip"
       />
 
