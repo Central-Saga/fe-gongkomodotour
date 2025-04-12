@@ -487,13 +487,19 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
                     className="space-y-6 mt-2"
                   >
                     {duration.days.map((day, index) => (
-                      <div key={index} className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
+                      <motion.div 
+                        key={index} 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: index * 0.1 }}
+                        className="bg-white rounded-lg p-6 shadow-sm border border-gray-100"
+                      >
                         <h3 className="text-lg font-semibold mb-4 text-gold">{day.day}</h3>
                         <div 
                           className="text-gray-600 text-sm [&_ol]:list-decimal [&_ul]:list-disc [&_ol]:pl-5 [&_ul]:pl-5 [&_ol]:space-y-2 [&_ul]:space-y-2 [&_p]:my-0 [&_li]:pl-2 [&_li]:relative [&_li]:leading-normal"
                           dangerouslySetInnerHTML={{ __html: day.activities }}
                         />
-                      </div>
+                      </motion.div>
                     ))}
                   </TabsContent>
                 ))}

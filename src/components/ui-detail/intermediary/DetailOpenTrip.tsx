@@ -28,7 +28,7 @@ interface PackageData {
   itinerary: {
     durationId: number;
     durationLabel: string;
-    days: { day: string; activities: string[] }[];
+    days: { day: string; activities: string }[];
   }[];
   information: string;
   boat: string;
@@ -54,7 +54,7 @@ interface PackageData {
   trip_durations: {
     id: number;
     duration_label: string;
-    itineraries: { day: string; activities: string[] }[];
+    itineraries: { day: string; activities: string }[];
   }[];
 }
 
@@ -136,7 +136,7 @@ export default function DetailOpenTrip() {
       durationLabel: duration.duration_label,
       days: duration.itineraries?.map(itinerary => ({
         day: `Day ${itinerary.day_number}`,
-        activities: itinerary.activities.split('\n').filter(activity => activity.trim())
+        activities: itinerary.activities.split('\n').filter(activity => activity.trim()).join('<br>')
       })) || []
     })) || [],
     trip_durations: selectedPackage.trip_durations?.map(duration => ({
@@ -144,7 +144,7 @@ export default function DetailOpenTrip() {
       duration_label: duration.duration_label,
       itineraries: duration.itineraries?.map(itinerary => ({
         day: `Day ${itinerary.day_number}`,
-        activities: itinerary.activities.split('\n').filter(activity => activity.trim())
+        activities: itinerary.activities.split('\n').filter(activity => activity.trim()).join('<br>')
       })) || []
     })) || [],
     information: selectedPackage.note || "Informasi belum tersedia",
