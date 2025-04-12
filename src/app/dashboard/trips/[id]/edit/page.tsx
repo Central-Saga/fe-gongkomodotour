@@ -63,6 +63,8 @@ const tripSchema = z.object({
   meeting_point: z.string().min(1, "Meeting point harus diisi"),
   start_time: z.string().min(1, "Waktu mulai harus diisi"),
   end_time: z.string().min(1, "Waktu selesai harus diisi"),
+  has_boat: z.boolean(),
+  destination_count: z.number().min(0, "Jumlah destinasi harus diisi"),
   trip_durations: z.array(z.object({
     duration_label: z.string().min(1, "Label durasi harus diisi"),
     duration_days: z.number().min(1, "Jumlah hari harus diisi"),
@@ -130,6 +132,8 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
       meeting_point: "",
       start_time: "",
       end_time: "",
+      has_boat: false,
+      destination_count: 0,
       trip_durations: [{
         duration_label: "",
         duration_days: 1,
@@ -588,6 +592,50 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
                                   field.onChange("");
                                 }
                               }}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="has_boat"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Menggunakan Kapal</FormLabel>
+                          <Select 
+                            onValueChange={(value) => field.onChange(value === "true")} 
+                            value={field.value ? "true" : "false"}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Pilih status" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="true">Ya</SelectItem>
+                              <SelectItem value="false">Tidak</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="destination_count"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Jumlah Destinasi</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number"
+                              min="0"
+                              {...field}
+                              onChange={e => field.onChange(parseInt(e.target.value))}
                             />
                           </FormControl>
                           <FormMessage />

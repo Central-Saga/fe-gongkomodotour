@@ -105,6 +105,8 @@ export interface Trip {
   type: "Open Trip" | "Private Trip"
   status: "Aktif" | "Non Aktif"
   is_highlight: "Yes" | "No"
+  has_boat: boolean
+  destination_count: number
   created_at: string
   updated_at: string
   trip_durations: TripDuration[]
