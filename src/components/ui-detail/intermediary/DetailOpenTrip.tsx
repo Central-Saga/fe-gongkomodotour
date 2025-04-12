@@ -25,7 +25,11 @@ interface PackageData {
   destination: string;
   daysTrip: string;
   description: string;
-  itinerary: { day: string; activities: string[] }[];
+  itinerary: {
+    durationId: number;
+    durationLabel: string;
+    days: { day: string; activities: string[] }[];
+  }[];
   information: string;
   boat: string;
   groupSize?: string;
@@ -45,6 +49,13 @@ interface PackageData {
   boatImages?: { image: string; title: string }[];
   mainImage?: string;
   flightSchedules?: FlightSchedule[];
+  has_boat: boolean;
+  destination_count: number;
+  trip_durations: {
+    id: number;
+    duration_label: string;
+    itineraries: { day: string; activities: string[] }[];
+  }[];
 }
 
 export default function DetailOpenTrip() {
@@ -114,27 +125,41 @@ export default function DetailOpenTrip() {
     id: selectedPackage.id?.toString() || "",
     title: selectedPackage.name || "Nama Trip",
     price: selectedPackage.trip_durations?.[0]?.trip_prices?.[0]?.price_per_pax 
-      ? `IDR ${parseInt(selectedPackage.trip_durations[0].trip_prices[0].price_per_pax).toLocaleString('id-ID')}/pax`
+      ? `IDR ${selectedPackage.trip_durations[0].trip_prices[0].price_per_pax.toLocaleString('id-ID')}/pax`
       : "Harga belum tersedia",
     meetingPoint: selectedPackage.meeting_point || "Meeting point belum ditentukan",
     destination: selectedPackage.name || "Destinasi",
     daysTrip: selectedPackage.trip_durations?.[0]?.duration_label || "Custom Duration",
     description: selectedPackage.note || "Deskripsi belum tersedia",
-    itinerary: selectedPackage.itineraries?.map(itinerary => ({
-      day: `Day ${itinerary.day_number}`,
-      activities: itinerary.activities.split('\n').filter(activity => activity.trim())
+    itinerary: selectedPackage.trip_durations?.map(duration => ({
+      durationId: duration.id,
+      durationLabel: duration.duration_label,
+      days: duration.itineraries?.map(itinerary => ({
+        day: `Day ${itinerary.day_number}`,
+        activities: itinerary.activities.split('\n').filter(activity => activity.trim())
+      })) || []
+    })) || [],
+    trip_durations: selectedPackage.trip_durations?.map(duration => ({
+      id: duration.id,
+      duration_label: duration.duration_label,
+      itineraries: duration.itineraries?.map(itinerary => ({
+        day: `Day ${itinerary.day_number}`,
+        activities: itinerary.activities.split('\n').filter(activity => activity.trim())
+      })) || []
     })) || [],
     information: selectedPackage.note || "Informasi belum tersedia",
     boat: "Speed Boat", // Sesuaikan dengan data yang ada
     groupSize: "10-15 people", // Sesuaikan dengan data yang ada
     images: selectedPackage.assets?.map(asset => `${API_URL}${asset.file_url}`) || [],
-    destinations: selectedPackage.itineraries?.length || 0,
+    destinations: selectedPackage.destination_count || 0,
     include: selectedPackage.include?.split('\n').filter(item => item.trim()) || [],
     exclude: selectedPackage.exclude?.split('\n').filter(item => item.trim()) || [],
     mainImage: selectedPackage.assets?.[0]?.file_url 
       ? `${API_URL}${selectedPackage.assets[0].file_url}`
       : "/img/default-image.png",
     flightSchedules: selectedPackage.flight_schedules || [],
+    has_boat: selectedPackage.has_boat || false,
+    destination_count: selectedPackage.destination_count || 0,
     flightInfo: {
       guideFee1: selectedPackage.additional_fees?.find(fee => 
         fee.fee_category === "Guide Fee" && fee.unit === "per_day_guide"

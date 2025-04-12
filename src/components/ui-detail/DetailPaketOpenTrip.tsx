@@ -16,6 +16,7 @@ import { format } from "date-fns";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface FlightSchedule {
   id: number;
@@ -37,7 +38,10 @@ interface PackageData {
   itinerary: { 
     durationId: number;
     durationLabel: string;
-    days: { day: string; activities: string[] }[];
+    days: { 
+      day: string; 
+      activities: string;  // Changed to string to handle HTML content
+    }[];
   }[];
   information: string;
   boat: string;
@@ -45,8 +49,8 @@ interface PackageData {
   privateGuide?: string;
   images: string[];
   destinations?: number;
-  include?: string[];
-  exclude?: string[];
+  include?: string[];  // Changed to handle HTML content
+  exclude?: string[];  // Changed to handle HTML content
   session?: {
     highSeason: { period: string; price: string };
     peakSeason: { period: string; price: string };
@@ -58,6 +62,8 @@ interface PackageData {
   boatImages?: { image: string; title: string }[];
   mainImage?: string;
   flightSchedules?: FlightSchedule[];
+  has_boat: boolean;
+  destination_count: number;
 }
 
 interface DetailPaketOpenTripProps {
@@ -70,10 +76,9 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
     searchParams.get("mainImage") || data.mainImage || "/img/default-image.png"; // Pastikan fallback default tetap ada
   const [activeTab, setActiveTab] = useState("description");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [selectedDay, setSelectedDay] = useState(0); // Tambahkan state untuk hari yang dipilih
+  const [selectedDurationId, setSelectedDurationId] = useState<number>(data.itinerary[0]?.durationId || 0);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const router = useRouter();
-  const [selectedDurationId, setSelectedDurationId] = useState(0);
 
   // Tambahkan log untuk memeriksa nilai mainImage dan data.images
   console.log("Query Main Image:", searchParams.get("mainImage"));
@@ -89,16 +94,6 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
     } else {
       alert("Please select a date before booking.");
     }
-  };
-
-  // Fungsi untuk menangani konten HTML dari WYSIWYG editor dengan styling
-  const renderHTMLContent = (htmlString: string) => {
-    return (
-      <div 
-        className="text-gray-600 text-sm [&_ol]:list-decimal [&_ul]:list-disc [&_ol]:pl-5 [&_ul]:pl-5 [&_ol]:space-y-2 [&_ul]:space-y-2 [&_p]:my-0 [&_li]:pl-2 [&_li]:relative [&_li]:leading-normal"
-        dangerouslySetInnerHTML={{ __html: htmlString }} 
-      />
-    );
   };
 
   return (
@@ -462,65 +457,48 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
             </motion.div>
           )}
           {activeTab === "itinerary" && (
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className="mb-6">
-                <div className="flex flex-col items-start">
-                  <h1 className="text-3xl font-bold text-gray-800">Itinerary</h1>
-                  <div className="w-[120px] h-[3px] bg-[#CFB53B] mt-1"></div>
-                </div>
+            <div className="space-y-6">
+              <div className="flex flex-col items-start">
+                <h1 className="text-3xl font-bold text-gray-800">Itinerary</h1>
+                <div className="w-[120px] h-[3px] bg-gold mt-1 mb-6"></div>
+              </div>
 
-                <div className="mt-4">
-                  <select
-                    value={selectedDurationId}
-                    onChange={(e) => setSelectedDurationId(Number(e.target.value))}
-                    className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-gold"
+              <Tabs
+                defaultValue={selectedDurationId.toString()}
+                className="w-full"
+                onValueChange={(value) => setSelectedDurationId(parseInt(value))}
+              >
+                <TabsList className="mb-6 bg-transparent flex flex-wrap gap-2 h-auto p-0">
+                  {data.itinerary.map((duration) => (
+                    <TabsTrigger
+                      key={duration.durationId}
+                      value={duration.durationId.toString()}
+                      className="px-4 py-2 rounded-lg data-[state=active]:bg-gold data-[state=active]:text-white data-[state=active]:shadow-none bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    >
+                      {duration.durationLabel}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+
+                {data.itinerary.map((duration) => (
+                  <TabsContent 
+                    key={duration.durationId} 
+                    value={duration.durationId.toString()}
+                    className="space-y-6 mt-2"
                   >
-                    {data.itinerary.map((duration) => (
-                      <option key={duration.durationId} value={duration.durationId}>
-                        {duration.durationLabel}
-                      </option>
+                    {duration.days.map((day, index) => (
+                      <div key={index} className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
+                        <h3 className="text-lg font-semibold mb-4 text-gold">{day.day}</h3>
+                        <div 
+                          className="text-gray-600 text-sm [&_ol]:list-decimal [&_ul]:list-disc [&_ol]:pl-5 [&_ul]:pl-5 [&_ol]:space-y-2 [&_ul]:space-y-2 [&_p]:my-0 [&_li]:pl-2 [&_li]:relative [&_li]:leading-normal"
+                          dangerouslySetInnerHTML={{ __html: day.activities }}
+                        />
+                      </div>
                     ))}
-                  </select>
-                </div>
-
-                <div className="flex justify-center space-x-4 mt-4">
-                  {data.itinerary
-                    .find(d => d.durationId === selectedDurationId)
-                    ?.days.map((item, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setSelectedDay(index)}
-                        className={`px-4 py-2 rounded-lg font-semibold text-sm ${
-                          selectedDay === index
-                            ? "bg-[#f4f4f4] text-black border-t-4 border-[#CFB53B]"
-                            : "bg-gray-200 text-gray-800"
-                        } hover:bg-[#7F6D1F] hover:text-white transition-all duration-300`}
-                      >
-                        {item.day}
-                      </button>
-                    ))}
-                </div>
-              </div>
-
-              <div>
-                <h2 className="text-2xl font-bold text-gray-800 mb-4">
-                  {data.itinerary
-                    .find(d => d.durationId === selectedDurationId)
-                    ?.days[selectedDay]?.day}
-                </h2>
-                <div className="space-y-2">
-                  {renderHTMLContent(
-                    data.itinerary
-                      .find(d => d.durationId === selectedDurationId)
-                      ?.days[selectedDay]?.activities.join('') || ''
-                  )}
-                </div>
-              </div>
-            </motion.div>
+                  </TabsContent>
+                ))}
+              </Tabs>
+            </div>
           )}
           {activeTab === "information" && (
             <motion.div
@@ -540,7 +518,10 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
                     <h2 className="text-xl font-bold text-gray-800 mb-4">
                       Include
                     </h2>
-                    {renderHTMLContent(data.include?.join('') || '')}
+                    <div 
+                      className="text-gray-600 text-sm [&_ol]:list-decimal [&_ul]:list-disc [&_ol]:pl-5 [&_ul]:pl-5 [&_ol]:space-y-2 [&_ul]:space-y-2 [&_p]:my-0 [&_li]:pl-2 [&_li]:relative [&_li]:leading-normal"
+                      dangerouslySetInnerHTML={{ __html: data.include?.join('') || '' }}
+                    />
                   </div>
 
                   {/* Flight Information */}
@@ -592,7 +573,10 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
                     <h2 className="text-xl font-bold text-gray-800 mb-4">
                       Exclude
                     </h2>
-                    {renderHTMLContent(data.exclude?.join('') || '')}
+                    <div 
+                      className="text-gray-600 text-sm [&_ol]:list-decimal [&_ul]:list-disc [&_ol]:pl-5 [&_ul]:pl-5 [&_ol]:space-y-2 [&_ul]:space-y-2 [&_p]:my-0 [&_li]:pl-2 [&_li]:relative [&_li]:leading-normal"
+                      dangerouslySetInnerHTML={{ __html: data.exclude?.join('') || '' }}
+                    />
                   </div>
 
                   {/* Season Section */}
