@@ -1,68 +1,14 @@
 "use client";
 
-import Image from "next/image";
-import { Star } from "lucide-react"; // Menggunakan ikon bintang dari Lucide (kompatibel dengan Shadcn UI)
+import { Star } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { apiRequest } from "@/lib/api";
+import { Testimonial } from "@/types/testimonials";
 
 export default function Testimoni() {
-  const daftarTestimoni = [
-    {
-      judul: "Sunset Trip",
-      nama: "Ambuja",
-      tanggal: "10 Januari 2025",
-      komentar:
-        "Aku senang melakukan perjalanan ini aku harap aku dapat melaksanakan trip ini kembali di tahun ini",
-      gambar: "/img/pic-testi.jpg",
-      rating: 5,
-    },
-    {
-      judul: "Open Trip",
-      nama: "Ambuja",
-      tanggal: "10 Feb 2025",
-      komentar:
-        "Aku senang melakukan perjalanan ini aku harap aku dapat melaksanakan trip ini kembali di tahun ini",
-      gambar: "/img/pic-testi.jpg",
-      rating: 5,
-    },
-    {
-      judul: "Expllore Waerebo",
-      nama: "Ambuja",
-      tanggal: "10 Maret 2025",
-      komentar:
-        "Aku senang melakukan perjalanan ini aku harap aku dapat melaksanakan trip ini kembali di tahun ini",
-      gambar: "/img/pic-testi.jpg",
-      rating: 4,
-    },
-    {
-      judul: "Private Trip",
-      nama: "Ambuja",
-      tanggal: "10 Feb 2025",
-      komentar:
-        "Aku senang melakukan perjalanan ini aku harap aku dapat melaksanakan trip ini kembali di tahun ini",
-      gambar: "/img/pic-testi.jpg",
-      rating: 5,
-    },
-    {
-      judul: "Open Trip",
-      nama: "Ambuja",
-      tanggal: "10 Feb 2025",
-      komentar:
-        "Aku senang melakukan perjalanan ini aku harap aku dapat melaksanakan trip ini kembali di tahun ini",
-      gambar: "/img/pic-testi.jpg",
-      rating: 5,
-    },
-    {
-      judul: "Expllore Waerebo",
-      nama: "Ambuja",
-      tanggal: "10 Maret 2025",
-      komentar:
-        "Aku senang melakukan perjalanan ini aku harap aku dapat melaksanakan trip ini kembali di tahun ini",
-      gambar: "/img/pic-testi.jpg",
-      rating: 4,
-    },
-  ];
-
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [loading, setLoading] = useState(true);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
@@ -71,9 +17,31 @@ export default function Testimoni() {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    const fetchTestimonials = async () => {
+      try {
+        const response = await apiRequest<{ data: Testimonial[] }>(
+          'GET',
+          '/api/testimonials'
+        );
+        // Filter testimonial yang sudah disetujui dan di-highlight
+        const approvedAndHighlightedTestimonials = response.data.filter(
+          (testimonial) => testimonial.is_approved && testimonial.is_highlight
+        );
+        setTestimonials(approvedAndHighlightedTestimonials);
+      } catch (error) {
+        console.error('Error fetching testimonials:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTestimonials();
+  }, []);
+
+  useEffect(() => {
     intervalRef.current = setInterval(() => {
       if (scrollContainerRef.current) {
-        const nextIndex = (currentIndex + 1) % daftarTestimoni.length;
+        const nextIndex = (currentIndex + 1) % testimonials.length;
         const scrollAmount = nextIndex * 358; // 350px card width + 8px gap
         scrollContainerRef.current.scrollTo({
           left: scrollAmount,
@@ -88,7 +56,7 @@ export default function Testimoni() {
         clearInterval(intervalRef.current);
       }
     };
-  }, [currentIndex]);
+  }, [currentIndex, testimonials.length]);
 
   // Fungsi untuk menangani drag dengan klik kiri
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -117,7 +85,7 @@ export default function Testimoni() {
     }
     intervalRef.current = setInterval(() => {
       if (scrollContainerRef.current) {
-        const nextIndex = (currentIndex + 1) % daftarTestimoni.length;
+        const nextIndex = (currentIndex + 1) % testimonials.length;
         const scrollAmount = nextIndex * 358;
         scrollContainerRef.current.scrollTo({
           left: scrollAmount,
@@ -136,10 +104,23 @@ export default function Testimoni() {
     scrollContainerRef.current.scrollLeft = scrollLeft - walk;
   };
 
-  // Fungsi untuk mencegah drag pada elemen gambar
-  const handleImageDragStart = (e: React.DragEvent<HTMLImageElement>) => {
-    e.preventDefault();
+  // Fungsi untuk mendapatkan inisial dari nama
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
   };
+
+  if (loading) {
+    return (
+      <div className="py-20 bg-cover bg-center w-full flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+      </div>
+    );
+  }
 
   return (
     <motion.section
@@ -177,12 +158,12 @@ export default function Testimoni() {
           onMouseUp={handleMouseUp}
           onMouseMove={handleMouseMove}
         >
-          {daftarTestimoni.map((testimoni, indeks) => (
+          {testimonials.map((testimonial, index) => (
             <motion.div
-              key={indeks}
+              key={testimonial.id}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: indeks * 0.1 }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
               whileHover={{ scale: 1.02 }}
               className="min-w-[350px] bg-white/90 backdrop-blur-sm p-8 rounded-lg shadow-xl flex-shrink-0"
               style={{ scrollSnapAlign: "center" }}
@@ -202,7 +183,7 @@ export default function Testimoni() {
                   >
                     <Star
                       className={`w-5 h-5 ${
-                        i < testimoni.rating
+                        i < testimonial.rating
                           ? "text-yellow-400 fill-yellow-400"
                           : "text-gray-300"
                       }`}
@@ -211,35 +192,28 @@ export default function Testimoni() {
                 ))}
               </motion.div>
               <h3 className="text-xl font-semibold text-gray-800 mb-3">
-                {testimoni.judul}
+                {testimonial.trip?.name || "Trip"}
               </h3>
               <p className="text-gray-600 mb-4 line-clamp-3">
-                {testimoni.komentar}
+                {testimonial.review}
               </p>
               <div className="flex items-center mt-4">
                 <motion.div
                   whileHover={{ scale: 1.1 }}
-                  className="relative"
+                  className="relative w-10 h-10 rounded-full bg-yellow-500 flex items-center justify-center text-white font-bold mr-3"
                 >
-                  <Image
-                    src={testimoni.gambar}
-                    alt={testimoni.nama}
-                    width={40}
-                    height={40}
-                    className="w-10 h-10 rounded-full mr-3"
-                    onDragStart={handleImageDragStart}
-                  />
+                  {getInitials(testimonial.customer.user.name)}
                 </motion.div>
                 <div>
                   <p className="text-xs font-medium text-gray-800">
-                    {" "}
-                    {/* Reduced font size */}
-                    {testimoni.nama}
+                    {testimonial.customer.user.name}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {" "}
-                    {/* Reduced font size */}
-                    {testimoni.tanggal}
+                    {new Date(testimonial.created_at).toLocaleDateString('id-ID', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
                   </p>
                 </div>
               </div>
