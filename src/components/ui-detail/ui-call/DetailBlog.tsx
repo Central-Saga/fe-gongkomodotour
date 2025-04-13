@@ -17,21 +17,19 @@ export default function DetailBlog() {
         const response = await apiRequest<{ data: Blog[] }>("GET", "/api/landing-page/blogs?status=1");
         const posts = Array.isArray(response.data) ? response.data : [];
         
-        // Get latest 5 posts
-        const latest = [...posts]
+        // Get latest 6 posts
+        const sortedPosts = [...posts]
           .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-          .slice(0, 5);
+          .slice(0, 6);
         
         // Format blog data with proper image URLs
-        const formattedPosts = latest.map(post => {
-          console.log('Original asset URL:', post.assets?.[0]?.file_url);
+        const formattedPosts = sortedPosts.map(post => {
           const formattedPost = {
             ...post,
             assets: post.assets?.map(asset => {
               const fileUrl = asset.file_url.startsWith('http') 
                 ? asset.file_url 
                 : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}${asset.file_url}`;
-              console.log('Formatted asset URL:', fileUrl);
               return {
                 ...asset,
                 file_url: fileUrl
@@ -93,15 +91,27 @@ export default function DetailBlog() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-500"></div>
-      </div>
+      <motion.section 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="bg-white rounded-2xl shadow-xl w-full h-[600px] p-6"
+      >
+        <div className="flex flex-col items-center justify-center h-full">
+          <h2 className="text-3xl font-bold text-gray-800 mb-6">Latest Post</h2>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-500"></div>
+        </div>
+      </motion.section>
     );
   }
 
   return (
-    <section className="pt-12 px-4 md:px-8 bg-white rounded-2xl shadow-xl">
-      <div className="max-w-6xl mx-auto">
+    <motion.section 
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
+      transition={{ duration: 0.8 }}
+      className="bg-white rounded-2xl shadow-xl w-full h-[600px] p-6"
+    >
+      <div className="flex flex-col h-full">
         <motion.h2 
           className="text-3xl font-bold text-gray-800 mb-6 text-center"
           initial={{ opacity: 0, y: -20 }}
@@ -111,71 +121,67 @@ export default function DetailBlog() {
           Latest Post
         </motion.h2>
         <motion.div 
-          className="h-[600px] overflow-y-auto scrollbar-hide"
+          className="flex-1 overflow-y-auto overflow-x-hidden pr-4"
           variants={containerVariants}
           initial="hidden"
           animate="show"
+          style={{ maxHeight: "calc(100% - 4rem)" }}
         >
-          <div className="space-y-6 pr-4 pb-8">
-            {latestPosts.map((post) => {
-              console.log('Rendering post with assets:', post.assets);
-              return (
-                <motion.div 
-                  key={post.id}
-                  variants={itemVariants}
-                  initial="hidden"
-                  animate="show"
-                  whileHover="hover"
-                  className="post-card border rounded-lg shadow-md p-4 flex flex-col md:flex-row gap-4 bg-white hover:shadow-xl transition-shadow duration-300"
-                >
-                  {post.assets?.[0] && (
+          <div className="space-y-6 pb-4">
+            {latestPosts.map((post) => (
+              <motion.div 
+                key={post.id}
+                variants={itemVariants}
+                whileHover="hover"
+                className="post-card border rounded-lg shadow-md p-4 flex flex-col md:flex-row gap-4 bg-white hover:shadow-xl transition-shadow duration-300"
+              >
+                {post.assets?.[0] && (
+                  <motion.div 
+                    className="relative w-full md:w-48 h-48 overflow-hidden rounded-md flex-shrink-0"
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <Image
+                      src={post.assets[0].file_url}
+                      alt={post.title}
+                      fill
+                      className="object-cover rounded-md"
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                      unoptimized
+                      priority
+                    />
+                  </motion.div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <motion.h3 
+                    className="text-lg font-semibold"
+                    whileHover={{ scale: 1.01 }}
+                  >
+                    {post.title}
+                  </motion.h3>
+                  <p className="text-sm text-gray-600 mt-2 line-clamp-3">{post.content}</p>
+                  <div className="flex flex-wrap justify-between items-center mt-4 text-sm text-gray-500 gap-2">
                     <motion.div 
-                      className="relative w-full md:w-48 h-48 overflow-hidden rounded-md"
+                      className="flex items-center gap-1"
                       whileHover={{ scale: 1.05 }}
-                      transition={{ duration: 0.3 }}
                     >
-                      <Image
-                        src={post.assets[0].file_url}
-                        alt={post.title}
-                        fill
-                        className="object-cover rounded-md"
-                        sizes="(max-width: 768px) 100vw, 33vw"
-                        unoptimized
-                        priority
-                      />
+                      <FaUser className="w-4 h-4 flex-shrink-0" />
+                      <span className="truncate">Uploaded by: {post.author?.name}</span>
                     </motion.div>
-                  )}
-                  <div className="flex-1">
-                    <motion.h3 
-                      className="text-lg font-semibold"
-                      whileHover={{ scale: 1.01 }}
+                    <motion.div 
+                      className="flex items-center gap-1"
+                      whileHover={{ scale: 1.05 }}
                     >
-                      {post.title}
-                    </motion.h3>
-                    <p className="text-sm text-gray-600 mt-2 line-clamp-3">{post.content}</p>
-                    <div className="flex justify-between items-center mt-4 text-sm text-gray-500">
-                      <motion.div 
-                        className="flex items-center gap-1"
-                        whileHover={{ scale: 1.05 }}
-                      >
-                        <FaUser className="w-4 h-4" />
-                        <span>Uploaded by: {post.author?.name}</span>
-                      </motion.div>
-                      <motion.div 
-                        className="flex items-center gap-1"
-                        whileHover={{ scale: 1.05 }}
-                      >
-                        <FaRegCalendarAlt className="w-4 h-4" />
-                        <span>{new Date(post.created_at).toLocaleDateString()}</span>
-                      </motion.div>
-                    </div>
+                      <FaRegCalendarAlt className="w-4 h-4 flex-shrink-0" />
+                      <span>{new Date(post.created_at).toLocaleDateString()}</span>
+                    </motion.div>
                   </div>
-                </motion.div>
-              );
-            })}
+                </div>
+              </motion.div>
+            ))}
           </div>
         </motion.div>
       </div>
-    </section>
+    </motion.section>
   );
 }
