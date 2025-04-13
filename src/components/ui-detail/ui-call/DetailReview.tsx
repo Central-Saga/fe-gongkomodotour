@@ -20,7 +20,7 @@ export default function DetailReview({ tripId }: DetailReviewProps) {
       try {
         const response = await apiRequest<{ data: Testimonial[] }>(
           'GET',
-          '/api/testimonials'
+          '/api/landing-page/testimonials'
         );
         // Filter testimonial yang terkait dengan trip dan sudah disetujui
         const tripTestimonials = response.data.filter(

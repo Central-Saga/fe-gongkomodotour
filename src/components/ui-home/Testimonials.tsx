@@ -21,7 +21,7 @@ export default function Testimoni() {
       try {
         const response = await apiRequest<{ data: Testimonial[] }>(
           'GET',
-          '/api/testimonials'
+          '/api/landing-page/testimonials'
         );
         // Filter testimonial yang sudah disetujui dan di-highlight
         const approvedAndHighlightedTestimonials = response.data.filter(

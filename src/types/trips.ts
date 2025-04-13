@@ -114,6 +114,7 @@ export interface Trip {
   additional_fees: AdditionalFee[]
   surcharges: Surcharge[]
   assets: TripAsset[]
+  boat_assets: TripAsset[]
 }
 
 export type TripResponse = Trip[] 
