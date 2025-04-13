@@ -229,7 +229,7 @@ export default function DetailOpenTrip() {
       <DetailPaketOpenTrip data={transformedData} />
 
       {/* Review Section */}
-      <DetailReview reviews={[]} />
+      <DetailReview tripId={selectedPackage.id} />
 
       {/* More Open Trip Section */}
       <DetailMoreTrip
@@ -241,11 +241,11 @@ export default function DetailOpenTrip() {
       <div className="px-4 py-12 md:flex md:space-x-6">
         {/* Latest Post */}
         <div className="md:w-1/2 mb-6 md:mb-0">
-          <DetailBlog posts={[]} />
+          <DetailBlog />
         </div>
         {/* FAQ */}
         <div className="md:w-1/2">
-          <DetailFAQ faqs={[]} />
+          <DetailFAQ />
         </div>
       </div>
     </div>
