@@ -50,7 +50,9 @@ import { Testimonial } from "@/types/testimonials"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { apiRequest } from "@/lib/api"
+import { formatDate } from "@/lib/utils"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
+import { Badge } from "@/components/ui/badge"
 
 interface DataTableProps<TData> {
   columns: ColumnDef<TData, string>[]
@@ -67,7 +69,7 @@ interface TestimonialResponse {
 const exportToPDF = (data: Testimonial[]) => {
   const doc = new jsPDF()
   const pageWidth = doc.internal.pageSize.getWidth()
-  
+
   // Add header section (centered)
   doc.setFontSize(16)
   doc.setFont("helvetica", "bold")
@@ -76,7 +78,7 @@ const exportToPDF = (data: Testimonial[]) => {
   const companyNameX = (pageWidth - companyNameWidth) / 2
   const companyNameY = 20
   doc.text(companyName, companyNameX, companyNameY)
-  
+
   // Address and phone (centered below company name)
   doc.setFontSize(10)
   doc.setFont("helvetica", "normal")
@@ -86,7 +88,7 @@ const exportToPDF = (data: Testimonial[]) => {
     "Bali 80234",
     "0812-3867-588"
   ]
-  
+
   let yPos = companyNameY + 10
   address.forEach(line => {
     const lineWidth = doc.getTextWidth(line)
@@ -98,7 +100,7 @@ const exportToPDF = (data: Testimonial[]) => {
   // Add divider line
   doc.setLineWidth(0.5)
   doc.line(14, yPos + 5, pageWidth - 14, yPos + 5)
-  
+
   // Add report title (centered)
   doc.setFontSize(14)
   doc.setFont("helvetica", "bold")
@@ -106,13 +108,13 @@ const exportToPDF = (data: Testimonial[]) => {
   const reportTitleWidth = doc.getTextWidth(reportTitle)
   const reportTitleX = (pageWidth - reportTitleWidth) / 2
   doc.text(reportTitle, reportTitleX, yPos + 20)
-  
+
   // Add generated date (right aligned)
   doc.setFontSize(10)
   doc.setFont("helvetica", "normal")
   const dateText = `Generated on: ${new Date().toLocaleString()}`
   doc.text(dateText, pageWidth - 14, yPos + 30, { align: 'right' })
-  
+
   // Define the columns for the table
   const tableColumn = [
     "No",
@@ -124,7 +126,7 @@ const exportToPDF = (data: Testimonial[]) => {
     "Created At",
     "Updated At"
   ]
-  
+
   // Map the data to match the columns
   const tableRows = data.map((item, index) => [
     index + 1,
@@ -221,7 +223,7 @@ export function DataTable({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={() => handleDelete(testimonial)}
               disabled={isDeleting}
               className="bg-red-500 hover:bg-red-600"
@@ -237,7 +239,8 @@ export function DataTable({
   const renderSubComponent = ({ row }: { row: Row<Testimonial> }) => {
     const testimonial = row.original
     const customer = testimonial.customer
-    
+    const trip = testimonial.trip
+
     return (
       <div className="p-4 bg-muted/50 rounded-lg">
         <div className="space-y-4 max-w-5xl mx-auto">
@@ -245,6 +248,7 @@ export function DataTable({
             <h4 className="font-semibold text-lg mb-4 text-gray-800 border-b pb-2">Detail Testimonial</h4>
             <div className="grid gap-4">
               <div className="space-y-4">
+                {/* Review Section */}
                 <div>
                   <p className="text-gray-600 font-medium mb-2">Review:</p>
                   <div className="bg-gray-50 p-3 rounded-md">
@@ -253,41 +257,94 @@ export function DataTable({
                     </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+
+                {/* Trip Information */}
+                {trip && (
                   <div>
-                    <p className="text-gray-600 font-medium mb-2">Nama Customer:</p>
+                    <p className="text-gray-600 font-medium mb-2">Paket Tour:</p>
                     <div className="bg-gray-50 p-3 rounded-md">
-                      <p className="text-gray-800">{customer.user.name}</p>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-gray-600 text-sm">Nama Paket</p>
+                          <p className="text-gray-800 font-medium">{trip.name}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-600 text-sm">Tipe</p>
+                          <p className="text-gray-800 font-medium">{trip.type}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-600 text-sm">Include</p>
+                          <p className="text-gray-800 font-medium">{trip.include}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-600 text-sm">Exclude</p>
+                          <p className="text-gray-800 font-medium">{trip.exclude}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-600 text-sm">Meeting Point</p>
+                          <p className="text-gray-800 font-medium">{trip.meeting_point}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-600 text-sm">Note</p>
+                          <p className="text-gray-800 font-medium">{trip.note}</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div>
-                    <p className="text-gray-600 font-medium mb-2">Email:</p>
-                    <div className="bg-gray-50 p-3 rounded-md">
-                      <p className="text-gray-800">{customer.user.email}</p>
+                )}
+
+                {/* Customer Information */}
+                <div>
+                  <p className="text-gray-600 font-medium mb-2">Informasi Customer:</p>
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-gray-600 text-sm">Nama Lengkap</p>
+                        <p className="text-gray-800 font-medium">{customer.user.name}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-600 text-sm">Email</p>
+                        <p className="text-gray-800 font-medium">{customer.user.email}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-600 text-sm">No. HP</p>
+                        <p className="text-gray-800 font-medium">{customer.no_hp}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-600 text-sm">Alamat</p>
+                        <p className="text-gray-800 font-medium">{customer.alamat}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-600 text-sm">Nasionalitas</p>
+                        <p className="text-gray-800 font-medium">{customer.nasionality}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-600 text-sm">Region</p>
+                        <p className="text-gray-800 font-medium">{customer.region}</p>
+                      </div>
                     </div>
                   </div>
-                  <div>
-                    <p className="text-gray-600 font-medium mb-2">No. HP:</p>
-                    <div className="bg-gray-50 p-3 rounded-md">
-                      <p className="text-gray-800">{customer.no_hp}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-gray-600 font-medium mb-2">Alamat:</p>
-                    <div className="bg-gray-50 p-3 rounded-md">
-                      <p className="text-gray-800">{customer.alamat}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-gray-600 font-medium mb-2">Nasionalitas:</p>
-                    <div className="bg-gray-50 p-3 rounded-md">
-                      <p className="text-gray-800">{customer.nasionality}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-gray-600 font-medium mb-2">Region:</p>
-                    <div className="bg-gray-50 p-3 rounded-md">
-                      <p className="text-gray-800">{customer.region}</p>
+                </div>
+
+                {/* Additional Testimonial Information */}
+                <div>
+                  <p className="text-gray-600 font-medium mb-2">Informasi Tambahan:</p>
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-gray-600 text-sm">Highlight</p>
+                        <Badge className={`${testimonial.is_highlight ? "bg-yellow-500" : "bg-gray-500"} text-white`}>
+                          {testimonial.is_highlight ? "Ya" : "Tidak"}
+                        </Badge>
+                      </div>
+                      <div>
+                        <p className="text-gray-600 text-sm">Tanggal Dibuat</p>
+                        <p className="text-gray-800 font-medium">{formatDate(testimonial.created_at)}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-600 text-sm">Tanggal Diperbarui</p>
+                        <p className="text-gray-800 font-medium">{formatDate(testimonial.updated_at)}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -435,7 +492,7 @@ export function DataTable({
               >
                 Hapus Terpilih ({table.getSelectedRowModel().rows.length})
               </Button>
-              <Button 
+              <Button
                 variant="outline"
                 onClick={() => exportToPDF(table.getSelectedRowModel().rows.map(row => row.original as Testimonial))}
               >
@@ -444,7 +501,7 @@ export function DataTable({
               </Button>
             </>
           )}
-          <Button 
+          <Button
             className="bg-red-500 hover:bg-red-600 text-white transition-colors duration-200"
             variant="outline"
             onClick={() => exportToPDF(table.getFilteredRowModel().rows.map(row => row.original as Testimonial))}
@@ -466,9 +523,9 @@ export function DataTable({
                     {header.isPlaceholder
                       ? null
                       : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
                   </TableHead>
                 ))}
               </TableRow>
