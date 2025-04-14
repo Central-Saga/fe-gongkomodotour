@@ -25,6 +25,15 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
+interface TripPrice {
+  id: number;
+  trip_duration_id: number;
+  pax_min: number;
+  pax_max: number;
+  price_per_pax: number;
+  status: string;
+}
+
 interface PackageData {
   id: string;
   title: string;
@@ -43,7 +52,20 @@ interface PackageData {
   trip_durations?: {
     id: number;
     duration_label: string;
+    duration_days: number;
+    trip_prices?: TripPrice[];
     itineraries: { day: string; activities: string }[];
+  }[];
+  additional_fees?: {
+    id: number;
+    fee_category: string;
+    price: number;
+    region: "Domestic" | "Overseas" | "Domestic & Overseas";
+    unit: "per_pax" | "per_5pax" | "per_day" | "per_day_guide";
+    pax_min: number;
+    pax_max: number;
+    day_type: "Weekday" | "Weekend" | null;
+    is_required: boolean;
   }[];
 }
 
@@ -139,14 +161,33 @@ export default function Booking() {
             trip_durations: trip.trip_durations?.map(duration => ({
               id: duration.id,
               duration_label: duration.duration_label,
+              duration_days: duration.duration_days,
+              trip_prices: duration.trip_prices,
               itineraries: duration.itineraries?.map(itinerary => ({
                 day: `Day ${itinerary.day_number}`,
                 activities: itinerary.activities
               })) || []
+            })),
+            additional_fees: trip.additional_fees?.map(fee => ({
+              id: fee.id,
+              fee_category: fee.fee_category.replace(/[0-9]/g, '').trim(),
+              price: Number(fee.price || 0),
+              region: fee.region,
+              unit: fee.unit,
+              pax_min: fee.pax_min,
+              pax_max: fee.pax_max,
+              day_type: fee.day_type,
+              is_required: Boolean(fee.is_required)
             }))
           };
 
           setSelectedPackage(transformedData);
+          
+          // Set additional charges yang required secara otomatis
+          const requiredFees = trip.additional_fees
+            ?.filter(fee => fee.is_required)
+            .map(fee => fee.id.toString()) || [];
+          setAdditionalCharges(requiredFees);
         }
       } catch (error) {
         console.error('Error fetching trip data:', error);
@@ -171,14 +212,58 @@ export default function Booking() {
     setSelectedCabin("");
   };
 
+  const calculateBasePrice = () => {
+    if (!selectedPackage?.trip_durations?.[0]?.trip_prices || tripCount === 0) return 0;
+    
+    // Cari harga yang sesuai dengan jumlah pax
+    const applicablePrice = selectedPackage.trip_durations[0].trip_prices.find(
+      price => tripCount >= price.pax_min && tripCount <= price.pax_max
+    );
+
+    if (!applicablePrice) return 0;
+    return Number(applicablePrice.price_per_pax);
+  };
+
+  const calculateBasePriceTotal = () => {
+    return calculateBasePrice() * tripCount;
+  };
+
+  const calculateAdditionalFeeAmount = (fee: NonNullable<PackageData['additional_fees']>[number]) => {
+    const basePrice = Number(fee.price);
+    
+    switch (fee.unit) {
+      case 'per_pax':
+        return basePrice * tripCount;
+      case 'per_5pax':
+        return basePrice * Math.ceil(tripCount / 5);
+      case 'per_day':
+        // Ambil jumlah hari dari durasi yang dipilih
+        const durationDays = selectedPackage?.trip_durations?.[0]?.duration_days || 1;
+        return basePrice * durationDays;
+      case 'per_day_guide':
+        // Guide per hari
+        const days = selectedPackage?.trip_durations?.[0]?.duration_days || 1;
+        return basePrice * days;
+      default:
+        return basePrice;
+    }
+  };
+
+  const calculateAdditionalFees = () => {
+    if (!selectedPackage?.additional_fees) return 0;
+    return selectedPackage.additional_fees
+      .filter(fee => additionalCharges.includes(fee.id.toString()))
+      .reduce((total, fee) => total + calculateAdditionalFeeAmount(fee), 0);
+  };
+
+  const calculateSurchargeAmount = () => {
+    if (!surcharge) return 0;
+    const amount = parseInt(surcharge.replace(/[^0-9]/g, ''));
+    return amount * tripCount;
+  };
+
   const calculateTotalPrice = () => {
-    if (!selectedPackage?.price) return 0;
-    
-    const basePrice = parseInt(selectedPackage.price);
-    const surchargeAmount = surcharge ? parseInt(surcharge.replace(/[^0-9]/g, '')) : 0;
-    const totalPerPax = basePrice + surchargeAmount;
-    
-    return totalPerPax * tripCount;
+    return calculateBasePriceTotal() + calculateAdditionalFees() + calculateSurchargeAmount();
   };
 
   if (!packageId || !selectedPackage) {
@@ -290,7 +375,7 @@ export default function Booking() {
               >
                 <p className="text-gray-600">{selectedPackage.daysTrip}</p>
                 <p className="text-2xl font-bold text-gold">
-                  {selectedPackage.price ? `IDR ${parseInt(selectedPackage.price).toLocaleString('id-ID')}/pax` : "Harga belum tersedia"}
+                  IDR {calculateBasePrice().toLocaleString('id-ID')}/pax
                 </p>
               </motion.div>
 
@@ -305,10 +390,32 @@ export default function Booking() {
                   <p className="text-gray-600">Sub Total</p>
                   <p className="text-gray-600">
                     • {packageType === "open" ? "Open Trip" : "Private Trip"}{" "}
-                    {selectedPackage.price ? `IDR ${parseInt(selectedPackage.price).toLocaleString('id-ID')}/pax` : "0"}
+                    IDR {calculateBasePrice().toLocaleString('id-ID')}/pax x {tripCount} pax = IDR {calculateBasePriceTotal().toLocaleString('id-ID')}
                   </p>
                   {surcharge && (
-                    <p className="text-gray-600">• High Peak Season {surcharge}</p>
+                    <p className="text-gray-600">
+                      • High Peak Season IDR {(parseInt(surcharge.replace(/[^0-9]/g, ''))).toLocaleString('id-ID')}/pax x {tripCount} pax = IDR {calculateSurchargeAmount().toLocaleString('id-ID')}
+                    </p>
+                  )}
+                  {selectedPackage?.additional_fees && selectedPackage.additional_fees.filter(fee => additionalCharges.includes(fee.id.toString())).length > 0 && (
+                    <div className="space-y-1">
+                      <p className="text-gray-600">• Additional Fees:</p>
+                      {selectedPackage.additional_fees
+                        .filter(fee => additionalCharges.includes(fee.id.toString()))
+                        .map(fee => (
+                          <p key={fee.id} className="text-gray-600 ml-4">
+                            - {fee.fee_category}: IDR {fee.price > 0 ? fee.price.toLocaleString('id-ID') : ""}
+                            {fee.unit === 'per_pax' ? '/pax' : ''}
+                            {fee.unit === 'per_5pax' ? '/5 pax' : ''}
+                            {fee.unit === 'per_day' ? '/hari' : ''}
+                            {fee.unit === 'per_day_guide' ? '/hari' : ''}
+                            {fee.unit === 'per_pax' ? ` × ${tripCount} pax` : ''}
+                            {fee.unit === 'per_5pax' ? ` × ${Math.ceil(tripCount / 5)} unit` : ''}
+                            {(fee.unit === 'per_day' || fee.unit === 'per_day_guide') ? ` × ${selectedPackage?.trip_durations?.[0]?.duration_days || 1} hari` : ''}
+                            {' = '}IDR {calculateAdditionalFeeAmount(fee).toLocaleString('id-ID')}
+                          </p>
+                        ))}
+                    </div>
                   )}
                 </div>
                 <div className="border-t pt-2">
@@ -336,11 +443,11 @@ export default function Booking() {
                 transition={{ duration: 0.5, delay: 0.9 }}
               >
                 <Button
-                  className={`w-full py-4 rounded-lg font-bold text-2xl ${
+                  className={`w-full py-6 rounded-lg font-bold text-2xl transition-all duration-300 transform hover:scale-105 ${
                     isFormComplete
-                      ? "bg-gold text-white hover:bg-gold-dark-20"
+                      ? "bg-gold text-white hover:bg-gold-dark-20 shadow-lg hover:shadow-xl"
                       : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  } transition-colors duration-300`}
+                  }`}
                   disabled={!isFormComplete}
                   onClick={() =>
                     isFormComplete &&
@@ -504,19 +611,39 @@ export default function Booking() {
 
                   <div className="space-y-2">
                     <Label>Additional Charges</Label>
-                    <Select 
-                      value={additionalCharges.join(",")} 
-                      onValueChange={(value) => setAdditionalCharges(value.split(","))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Additional Charges" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="snorkeling">Snorkeling Equipment</SelectItem>
-                        <SelectItem value="camera">Underwater Camera</SelectItem>
-                        <SelectItem value="insurance">Travel Insurance</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="space-y-2">
+                      {selectedPackage?.additional_fees?.map((fee) => (
+                        <div key={fee.id} className="flex items-center justify-between p-2 border rounded-lg hover:bg-gray-50">
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              id={`fee-${fee.id}`}
+                              checked={additionalCharges.includes(fee.id.toString()) || fee.is_required}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setAdditionalCharges([...additionalCharges, fee.id.toString()]);
+                                } else if (!fee.is_required) {
+                                  setAdditionalCharges(additionalCharges.filter(id => id !== fee.id.toString()));
+                                }
+                              }}
+                              disabled={fee.is_required}
+                              className="rounded text-gold focus:ring-gold"
+                            />
+                            <Label htmlFor={`fee-${fee.id}`} className="cursor-pointer flex items-center">
+                              <span>{fee.fee_category}</span>
+                              {fee.is_required && <sup className="text-red-500 ml-0.5">*</sup>}
+                            </Label>
+                          </div>
+                          <span className="text-gold font-semibold">
+                            {fee.price > 0 ? `IDR ${fee.price.toLocaleString('id-ID')}` : ""}
+                            {fee.unit === 'per_pax' ? '/pax' : ''}
+                            {fee.unit === 'per_5pax' ? '/5 pax' : ''}
+                            {fee.unit === 'per_day' ? '/hari' : ''}
+                            {fee.unit === 'per_day_guide' ? '/hari' : ''}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
                   <div className="flex items-center space-x-2">

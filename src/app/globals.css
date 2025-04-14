@@ -178,6 +178,16 @@
         display: none !important; /* Menghilangkan panah bawaan */
     }
 
+    /* Menghilangkan spinner dari input number */
+    input[type='number']::-webkit-inner-spin-button,
+    input[type='number']::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+    input[type='number'] {
+        -moz-appearance: textfield;
+    }
+
     .bg-gold {
         background-color: var(--gold);
     }
