@@ -426,17 +426,19 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
           >
             Information
           </Button>
-          <Button
-            variant={activeTab === "boat" ? "default" : "outline"}
-            onClick={() => setActiveTab("boat")}
-            className={`${
-              activeTab === "boat"
-                ? "bg-gold text-white hover:bg-gold-dark-20"
-                : "bg-gold/5 text-gold hover:bg-gold hover:text-white"
-            } px-7 py-6 rounded-lg font-semibold text-sm transition-all duration-300`}
-          >
-            Boat
-          </Button>
+          {data.has_boat && (
+            <Button
+              variant={activeTab === "boat" ? "default" : "outline"}
+              onClick={() => setActiveTab("boat")}
+              className={`${
+                activeTab === "boat"
+                  ? "bg-gold text-white hover:bg-gold-dark-20"
+                  : "bg-gold/5 text-gold hover:bg-gold hover:text-white"
+              } px-7 py-6 rounded-lg font-semibold text-sm transition-all duration-300`}
+            >
+              Boat
+            </Button>
+          )}
         </div>
 
         <motion.div
@@ -619,7 +621,7 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
               </div>
             </motion.div>
           )}
-          {activeTab === "boat" && (
+          {activeTab === "boat" && data.has_boat && (
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}

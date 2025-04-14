@@ -57,6 +57,7 @@ const tripSchema = z.object({
   type: z.enum(["Open Trip", "Private Trip"]),
   status: z.enum(["Aktif", "Non Aktif"]),
   is_highlight: z.enum(["Yes", "No"]),
+  region: z.enum(["Domestic", "Overseas", "Domestic & Overseas"]),
   include: z.string().min(1, "Include harus diisi"),
   exclude: z.string().min(1, "Exclude harus diisi"),
   note: z.string().optional(),
@@ -126,6 +127,7 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
       type: "Open Trip",
       status: "Aktif",
       is_highlight: "No",
+      region: "Domestic",
       include: "",
       exclude: "",
       note: "",
@@ -515,8 +517,8 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
                         <FormItem>
                           <FormLabel>Highlight</FormLabel>
                           <Select 
-                            onValueChange={field.onChange} 
-                            value={field.value}
+                            onValueChange={(value) => field.onChange(value === "Yes")} 
+                            value={field.value ? "Yes" : "No"}
                           >
                             <FormControl>
                               <SelectTrigger>
@@ -526,6 +528,29 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
                             <SelectContent>
                               <SelectItem value="Yes">Yes</SelectItem>
                               <SelectItem value="No">No</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="region"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Region</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Pilih region" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Domestic">Domestic</SelectItem>
+                              <SelectItem value="Overseas">Overseas</SelectItem>
+                              <SelectItem value="Domestic & Overseas">Domestic & Overseas</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />

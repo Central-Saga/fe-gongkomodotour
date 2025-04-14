@@ -144,6 +144,31 @@ export const columns = ({ onDelete, onEdit }: ColumnsProps): ColumnDef<Trip>[] =
     },
   },
   {
+    accessorKey: "region",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        className="px-0"
+      >
+        Region
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
+    cell: ({ row }) => {
+      const region = row.getValue("region") as "Domestic" | "Overseas" | "Domestic & Overseas"
+      return (
+        <Badge className={`${
+          region === "Domestic" ? "bg-blue-500" : 
+          region === "Overseas" ? "bg-purple-500" : 
+          "bg-indigo-500"
+        } text-white`}>
+          {region}
+        </Badge>
+      )
+    },
+  },
+  {
     id: "actions",
     header: () => null,
     cell: ({ row }) => {
