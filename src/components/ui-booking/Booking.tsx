@@ -67,6 +67,13 @@ interface PackageData {
     day_type: "Weekday" | "Weekend" | null;
     is_required: boolean;
   }[];
+  surcharges?: {
+    id: number;
+    season: string;
+    start_date: string;
+    end_date: string;
+    surcharge_price: number;
+  }[];
 }
 
 export default function Booking() {
@@ -85,44 +92,88 @@ export default function Booking() {
   const [selectedBoat, setSelectedBoat] = useState<string>("");
   const [selectedCabin, setSelectedCabin] = useState<string>("");
   const [additionalCharges, setAdditionalCharges] = useState<string[]>([]);
+  const [selectedDurationDays, setSelectedDurationDays] = useState<number>(0);
 
-  const calculateSurcharge = () => {
-    if (!selectedPackage || !selectedDate) return null;
-
-    const highSeasonPeriods = [
-      "1 June ~ 31 August 2025",
-      "1-10 October 2025",
-      "14–20 February 2026",
-      "17–24 March 2026",
-    ];
-    const peakSeasonPeriods = [
-      "25 March ~ 5 April 2025",
-      "20 December 2025 ~ 5 January 2026",
-    ];
-
-    const highSeasonPrice = "IDR 300.000/pax";
-    const peakSeasonPrice = "IDR 500.000/pax";
-
-    const isHighSeason = highSeasonPeriods.some((period) => {
-      const [start, end] = period
-        .split("~")
-        .map((date) => new Date(date.trim()));
-      return selectedDate >= start && selectedDate <= end;
-    });
-
-    const isPeakSeason = peakSeasonPeriods.some((period) => {
-      const [start, end] = period
-        .split("~")
-        .map((date) => new Date(date.trim()));
-      return selectedDate >= start && selectedDate <= end;
-    });
-
-    if (isPeakSeason) return peakSeasonPrice;
-    if (isHighSeason) return highSeasonPrice;
-    return null;
+  const isWeekend = (date: Date) => {
+    const day = date.getDay();
+    return day === 0 || day === 6;
   };
 
-  const surcharge = calculateSurcharge();
+  const getDatesInRange = (startDate: Date, days: number) => {
+    const dates = [];
+    for (let i = 0; i < days; i++) {
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + i);
+      dates.push(date);
+    }
+    return dates;
+  };
+
+  const calculateSurcharge = () => {
+    if (!selectedPackage || !selectedDate || !selectedDurationDays) return null;
+
+    const tripDates = getDatesInRange(selectedDate, selectedDurationDays);
+    let surchargeAmount = 0;
+
+    selectedPackage.surcharges?.forEach(surcharge => {
+      const surchargeStart = new Date(surcharge.start_date);
+      const surchargeEnd = new Date(surcharge.end_date);
+
+      // Cek apakah ada tanggal dalam range perjalanan yang masuk ke periode surcharge
+      const isInSurchargePeriod = tripDates.some(date => 
+        date >= surchargeStart && date <= surchargeEnd
+      );
+
+      // Jika ada tanggal yang masuk periode surcharge, tambahkan surcharge (hanya sekali)
+      if (isInSurchargePeriod) {
+        surchargeAmount = Number(surcharge.surcharge_price);
+      }
+    });
+
+    return surchargeAmount > 0 ? surchargeAmount : null;
+  };
+
+  const getApplicableAdditionalFees = () => {
+    if (!selectedPackage?.additional_fees || !selectedDate || !selectedDurationDays) return [];
+
+    const tripDates = getDatesInRange(selectedDate, selectedDurationDays);
+    const applicableFees: typeof selectedPackage.additional_fees = [];
+
+    // Kelompokkan fee berdasarkan kategori
+    const feesByCategory = selectedPackage.additional_fees.reduce((acc, fee) => {
+      const hasWeekendDay = tripDates.some(date => isWeekend(date));
+      const hasWeekdayDay = tripDates.some(date => !isWeekend(date));
+      
+      if (
+        !fee.day_type ||
+        (fee.day_type === "Weekend" && hasWeekendDay) ||
+        (fee.day_type === "Weekday" && hasWeekdayDay)
+      ) {
+        const category = fee.fee_category.replace(/[0-9]/g, '').trim();
+        if (!acc[category]) {
+          acc[category] = [];
+        }
+        acc[category].push(fee);
+      }
+      return acc;
+    }, {} as Record<string, typeof selectedPackage.additional_fees>);
+
+    // Untuk setiap kategori, pilih fee yang sesuai dengan range pax
+    Object.values(feesByCategory).forEach(fees => {
+      if (fees.length > 0) {
+        // Jika ada multiple fee dengan kategori yang sama, pilih yang sesuai range pax
+        const applicableFee = tripCount > 0
+          ? fees.find(fee => tripCount >= fee.pax_min && tripCount <= fee.pax_max)
+          : fees[0]; // Default ke fee pertama jika belum ada tripCount
+
+        if (applicableFee) {
+          applicableFees.push(applicableFee);
+        }
+      }
+    });
+
+    return applicableFees;
+  };
 
   useEffect(() => {
     const fetchTripData = async () => {
@@ -178,6 +229,13 @@ export default function Booking() {
               pax_max: fee.pax_max,
               day_type: fee.day_type,
               is_required: Boolean(fee.is_required)
+            })),
+            surcharges: trip.surcharges?.map(surcharge => ({
+              id: surcharge.id,
+              season: surcharge.season,
+              start_date: surcharge.start_date,
+              end_date: surcharge.end_date,
+              surcharge_price: Number(surcharge.surcharge_price)
             }))
           };
 
@@ -185,7 +243,7 @@ export default function Booking() {
           
           // Set additional charges yang required secara otomatis
           const requiredFees = trip.additional_fees
-            ?.filter(fee => fee.is_required)
+            ?.filter(fee => Boolean(fee.is_required))
             .map(fee => fee.id.toString()) || [];
           setAdditionalCharges(requiredFees);
         }
@@ -197,7 +255,40 @@ export default function Booking() {
     fetchTripData();
   }, [packageId]);
 
-  const isFormComplete = selectedPackage && selectedDate && tripCount > 0;
+  useEffect(() => {
+    if (selectedDuration && selectedPackage?.trip_durations) {
+      const duration = selectedPackage.trip_durations.find(
+        d => d.duration_label === selectedDuration
+      );
+      if (duration) {
+        setSelectedDurationDays(duration.duration_days);
+      }
+    }
+  }, [selectedDuration, selectedPackage]);
+
+  useEffect(() => {
+    // Update additional charges based on date and duration
+    if (selectedDate && selectedDurationDays && tripCount > 0) {
+      const applicableFees = getApplicableAdditionalFees();
+      
+      // Pisahkan antara fee required dan non-required
+      const requiredFees = applicableFees.filter(fee => fee.is_required);
+      const nonRequiredFees = applicableFees.filter(fee => !fee.is_required);
+      
+      // Untuk fee required, auto select yang sesuai range pax
+      const requiredFeeIds = requiredFees.map(fee => fee.id.toString());
+      
+      // Untuk non-required, pertahankan pilihan user yang masih valid
+      const validNonRequiredCharges = additionalCharges.filter(id => 
+        nonRequiredFees.some(fee => fee.id.toString() === id)
+      );
+      
+      const newCharges = [...new Set([...requiredFeeIds, ...validNonRequiredCharges])];
+      if (JSON.stringify(newCharges) !== JSON.stringify(additionalCharges)) {
+        setAdditionalCharges(newCharges);
+      }
+    }
+  }, [selectedDate, selectedDurationDays, tripCount, selectedPackage]);
 
   const handleDurationChange = (value: string) => {
     setSelectedDuration(value);
@@ -238,12 +329,16 @@ export default function Booking() {
         return basePrice * Math.ceil(tripCount / 5);
       case 'per_day':
         // Ambil jumlah hari dari durasi yang dipilih
-        const durationDays = selectedPackage?.trip_durations?.[0]?.duration_days || 1;
-        return basePrice * durationDays;
+        const durationData = selectedPackage?.trip_durations?.find(
+          d => d.duration_label === selectedDuration
+        );
+        return basePrice * (durationData?.duration_days || 0);
       case 'per_day_guide':
         // Guide per hari
-        const days = selectedPackage?.trip_durations?.[0]?.duration_days || 1;
-        return basePrice * days;
+        const durationInfo = selectedPackage?.trip_durations?.find(
+          d => d.duration_label === selectedDuration
+        );
+        return basePrice * (durationInfo?.duration_days || 0);
       default:
         return basePrice;
     }
@@ -257,9 +352,10 @@ export default function Booking() {
   };
 
   const calculateSurchargeAmount = () => {
+    const surcharge = calculateSurcharge();
     if (!surcharge) return 0;
-    const amount = parseInt(surcharge.replace(/[^0-9]/g, ''));
-    return amount * tripCount;
+    // Surcharge dikalikan dengan jumlah pax
+    return surcharge * tripCount;
   };
 
   const calculateTotalPrice = () => {
@@ -392,9 +488,9 @@ export default function Booking() {
                     • {packageType === "open" ? "Open Trip" : "Private Trip"}{" "}
                     IDR {calculateBasePrice().toLocaleString('id-ID')}/pax x {tripCount} pax = IDR {calculateBasePriceTotal().toLocaleString('id-ID')}
                   </p>
-                  {surcharge && (
+                  {calculateSurcharge() && (
                     <p className="text-gray-600">
-                      • High Peak Season IDR {(parseInt(surcharge.replace(/[^0-9]/g, ''))).toLocaleString('id-ID')}/pax x {tripCount} pax = IDR {calculateSurchargeAmount().toLocaleString('id-ID')}
+                      • High Peak Season IDR {(parseInt(calculateSurcharge()?.toString() || "0")).toLocaleString('id-ID')}/pax x {tripCount} pax = IDR {calculateSurchargeAmount().toLocaleString('id-ID')}
                     </p>
                   )}
                   {selectedPackage?.additional_fees && selectedPackage.additional_fees.filter(fee => additionalCharges.includes(fee.id.toString())).length > 0 && (
@@ -402,19 +498,24 @@ export default function Booking() {
                       <p className="text-gray-600">• Additional Fees:</p>
                       {selectedPackage.additional_fees
                         .filter(fee => additionalCharges.includes(fee.id.toString()))
-                        .map(fee => (
-                          <p key={fee.id} className="text-gray-600 ml-4">
-                            - {fee.fee_category}: IDR {fee.price > 0 ? fee.price.toLocaleString('id-ID') : ""}
-                            {fee.unit === 'per_pax' ? '/pax' : ''}
-                            {fee.unit === 'per_5pax' ? '/5 pax' : ''}
-                            {fee.unit === 'per_day' ? '/hari' : ''}
-                            {fee.unit === 'per_day_guide' ? '/hari' : ''}
-                            {fee.unit === 'per_pax' ? ` × ${tripCount} pax` : ''}
-                            {fee.unit === 'per_5pax' ? ` × ${Math.ceil(tripCount / 5)} unit` : ''}
-                            {(fee.unit === 'per_day' || fee.unit === 'per_day_guide') ? ` × ${selectedPackage?.trip_durations?.[0]?.duration_days || 1} hari` : ''}
-                            {' = '}IDR {calculateAdditionalFeeAmount(fee).toLocaleString('id-ID')}
-                          </p>
-                        ))}
+                        .map(fee => {
+                          const durationData = selectedPackage.trip_durations?.find(
+                            d => d.duration_label === selectedDuration
+                          );
+                          const days = durationData?.duration_days || 0;
+                          const amount = calculateAdditionalFeeAmount(fee);
+                          
+                          return (
+                            <p key={fee.id} className="text-gray-600 ml-4">
+                              - {fee.fee_category}: IDR {Number(fee.price).toLocaleString('id-ID')}
+                              {fee.unit === 'per_pax' ? `/pax × ${tripCount} pax` : ''}
+                              {fee.unit === 'per_5pax' ? `/5 pax × ${Math.ceil(tripCount / 5)} unit` : ''}
+                              {fee.unit === 'per_day' ? `/hari × ${days} hari` : ''}
+                              {fee.unit === 'per_day_guide' ? `/hari × ${days} hari` : ''}
+                              {' = '}IDR {amount.toLocaleString('id-ID')}
+                            </p>
+                          );
+                        })}
                     </div>
                   )}
                 </div>
@@ -444,13 +545,13 @@ export default function Booking() {
               >
                 <Button
                   className={`w-full py-6 rounded-lg font-bold text-2xl transition-all duration-300 transform hover:scale-105 ${
-                    isFormComplete
+                    selectedDuration && selectedDate && tripCount > 0
                       ? "bg-gold text-white hover:bg-gold-dark-20 shadow-lg hover:shadow-xl"
                       : "bg-gray-300 text-gray-500 cursor-not-allowed"
                   }`}
-                  disabled={!isFormComplete}
+                  disabled={!selectedDuration || !selectedDate || tripCount === 0}
                   onClick={() =>
-                    isFormComplete &&
+                    selectedDuration && selectedDate && tripCount > 0 &&
                     router.push(
                       `/payment?packageId=${packageId}&type=${packageType}&date=${selectedDate?.toISOString()}&tripCount=${tripCount}`
                     )
@@ -537,114 +638,127 @@ export default function Booking() {
                 <h3 className="text-lg font-semibold">Detail Pesanan</h3>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Tanggal Keberangkatan</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="w-full justify-start text-left font-normal"
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {selectedDate ? format(selectedDate, "PPP") : "Pilih Tanggal"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <Calendar
-                          mode="single"
-                          selected={selectedDate}
-                          onSelect={setSelectedDate}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-
-                  <div className="space-y-2">
                     <Label>Durasi</Label>
                     <Select value={selectedDuration} onValueChange={handleDurationChange}>
                       <SelectTrigger>
                         <SelectValue placeholder="Pilih Durasi" />
                       </SelectTrigger>
                       <SelectContent>
-                        {selectedPackage.itinerary?.map((duration) => (
-                          <SelectItem key={duration.durationId} value={duration.durationLabel}>
-                            {duration.durationLabel}
+                        {selectedPackage?.trip_durations?.map((duration) => (
+                          <SelectItem key={duration.id} value={duration.duration_label}>
+                            {duration.duration_label}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
 
-                  {selectedPackage.has_boat && (
-                    <div className="space-y-2">
-                      <Label>Boat</Label>
-                      <Select value={selectedBoat} onValueChange={handleBoatChange}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Pilih Boat" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {selectedPackage.boatImages?.map((boat) => (
-                            <SelectItem key={boat.id} value={boat.id}>
-                              {boat.title}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-
-                  {selectedBoat && (
-                    <div className="space-y-2">
-                      <Label>Cabin</Label>
-                      <Select value={selectedCabin} onValueChange={setSelectedCabin}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Pilih Cabin" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="standard">Standard Cabin</SelectItem>
-                          <SelectItem value="deluxe">Deluxe Cabin</SelectItem>
-                          <SelectItem value="suite">Suite Cabin</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-
                   <div className="space-y-2">
-                    <Label>Additional Charges</Label>
-                    <div className="space-y-2">
-                      {selectedPackage?.additional_fees?.map((fee) => (
-                        <div key={fee.id} className="flex items-center justify-between p-2 border rounded-lg hover:bg-gray-50">
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id={`fee-${fee.id}`}
-                              checked={additionalCharges.includes(fee.id.toString()) || fee.is_required}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setAdditionalCharges([...additionalCharges, fee.id.toString()]);
-                                } else if (!fee.is_required) {
-                                  setAdditionalCharges(additionalCharges.filter(id => id !== fee.id.toString()));
-                                }
-                              }}
-                              disabled={fee.is_required}
-                              className="rounded text-gold focus:ring-gold"
-                            />
-                            <Label htmlFor={`fee-${fee.id}`} className="cursor-pointer flex items-center">
-                              <span>{fee.fee_category}</span>
-                              {fee.is_required && <sup className="text-red-500 ml-0.5">*</sup>}
-                            </Label>
-                          </div>
-                          <span className="text-gold font-semibold">
-                            {fee.price > 0 ? `IDR ${fee.price.toLocaleString('id-ID')}` : ""}
-                            {fee.unit === 'per_pax' ? '/pax' : ''}
-                            {fee.unit === 'per_5pax' ? '/5 pax' : ''}
-                            {fee.unit === 'per_day' ? '/hari' : ''}
-                            {fee.unit === 'per_day_guide' ? '/hari' : ''}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
+                    <Label>Tanggal Keberangkatan</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={`w-full justify-start text-left font-normal ${!selectedDuration ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          disabled={!selectedDuration}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {selectedDate ? format(selectedDate, "PPP") : "Pilih Tanggal"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" onOpenAutoFocus={e => e.preventDefault()}>
+                        <Calendar
+                          mode="single"
+                          selected={selectedDate}
+                          onSelect={setSelectedDate}
+                          disabled={!selectedDuration}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
+
+                  {selectedPackage?.has_boat && (
+                    <>
+                      <div className="space-y-2">
+                        <Label>Boat</Label>
+                        <Select value={selectedBoat} onValueChange={handleBoatChange}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Pilih Boat" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {selectedPackage.boatImages?.map((boat) => (
+                              <SelectItem key={boat.id} value={boat.id}>
+                                {boat.title}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {selectedBoat && (
+                        <div className="space-y-2">
+                          <Label>Cabin</Label>
+                          <Select value={selectedCabin} onValueChange={setSelectedCabin}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Pilih Cabin" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="standard">Standard Cabin</SelectItem>
+                              <SelectItem value="deluxe">Deluxe Cabin</SelectItem>
+                              <SelectItem value="suite">Suite Cabin</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {selectedDuration && selectedDate && (
+                    <div className="space-y-2">
+                      <Label>Additional Charges</Label>
+                      <div className="space-y-2">
+                        {getApplicableAdditionalFees().map((fee) => (
+                          <div key={fee.id} className="flex items-center justify-between p-2 border rounded-lg hover:bg-gray-50">
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id={`fee-${fee.id}`}
+                                checked={
+                                  fee.is_required 
+                                    ? tripCount >= fee.pax_min && tripCount <= fee.pax_max
+                                    : additionalCharges.includes(fee.id.toString())
+                                }
+                                onChange={(e) => {
+                                  if (fee.is_required) return; // Tidak ada perubahan untuk fee required
+                                  if (e.target.checked) {
+                                    setAdditionalCharges([...additionalCharges, fee.id.toString()]);
+                                  } else {
+                                    setAdditionalCharges(additionalCharges.filter(id => id !== fee.id.toString()));
+                                  }
+                                }}
+                                readOnly={fee.is_required}
+                                className={`rounded focus:ring-gold ${
+                                  fee.is_required ? 'cursor-not-allowed opacity-50' : 'text-gold'
+                                }`}
+                              />
+                              <Label htmlFor={`fee-${fee.id}`} className="cursor-pointer flex items-center">
+                                <span>{fee.fee_category}</span>
+                                {fee.is_required && <sup className="text-red-500 ml-0.5">*</sup>}
+                              </Label>
+                            </div>
+                            <span className="text-gold font-semibold">
+                              {fee.price > 0 ? `IDR ${fee.price.toLocaleString('id-ID')}` : ""}
+                              {fee.unit === 'per_pax' ? '/pax' : ''}
+                              {fee.unit === 'per_5pax' ? '/5 pax' : ''}
+                              {fee.unit === 'per_day' ? '/hari' : ''}
+                              {fee.unit === 'per_day_guide' ? '/hari' : ''}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   <div className="flex items-center space-x-2">
                     <input type="checkbox" id="hotel" className="rounded" />
