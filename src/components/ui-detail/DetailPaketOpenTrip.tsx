@@ -86,6 +86,11 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
   console.log("Final Main Image Path:", mainImage);
   console.log("Data Images Array:", data.images);
 
+  // Tambahkan log untuk memeriksa data boat
+  console.log("Has Boat:", data.has_boat);
+  console.log("Boat Images:", data.boatImages);
+  console.log("Full Data:", data);
+
   const handleBookNow = (packageId: string) => {
     if (selectedDate) {
       router.push(

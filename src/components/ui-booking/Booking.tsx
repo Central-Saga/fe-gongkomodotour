@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -22,6 +22,7 @@ import { Card } from "@/components/ui/card";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Boat } from "@/types/boats";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -76,6 +77,10 @@ interface PackageData {
   }[];
 }
 
+type BoatResponse = {
+  data: Boat[];
+};
+
 export default function Booking() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -93,6 +98,12 @@ export default function Booking() {
   const [selectedCabin, setSelectedCabin] = useState<string>("");
   const [additionalCharges, setAdditionalCharges] = useState<string[]>([]);
   const [selectedDurationDays, setSelectedDurationDays] = useState<number>(0);
+  const [boats, setBoats] = useState<Boat[]>([]);
+  const [filteredBoats, setFilteredBoats] = useState<Boat[]>([]);
+  const [requiredBoats, setRequiredBoats] = useState<number>(0);
+  const [requiredCabins, setRequiredCabins] = useState<number>(0);
+  const [selectedCabins, setSelectedCabins] = useState<{cabinId: string, pax: number}[]>([]);
+  const [isLoadingBoats, setIsLoadingBoats] = useState(false);
 
   const isWeekend = (date: Date) => {
     const day = date.getDay();
@@ -133,7 +144,7 @@ export default function Booking() {
     return surchargeAmount > 0 ? surchargeAmount : null;
   };
 
-  const getApplicableAdditionalFees = () => {
+  const getApplicableAdditionalFees = useCallback(() => {
     if (!selectedPackage?.additional_fees || !selectedDate || !selectedDurationDays) return [];
 
     const tripDates = getDatesInRange(selectedDate, selectedDurationDays);
@@ -173,7 +184,34 @@ export default function Booking() {
     });
 
     return applicableFees;
+  }, [selectedPackage?.additional_fees, selectedDate, selectedDurationDays, tripCount]);
+
+  const calculateTotalBoatCapacity = (boat: Boat) => {
+    return boat.cabin
+      .filter(cabin => cabin.status === "Aktif")
+      .reduce((total, cabin) => total + cabin.max_pax, 0);
   };
+
+  useEffect(() => {
+    if (tripCount > 0) {
+      const availableBoats = boats.filter(boat => {
+        const totalCapacity = calculateTotalBoatCapacity(boat);
+        return totalCapacity >= tripCount;
+      });
+      setFilteredBoats(availableBoats);
+      
+      // Reset selected boat jika boat yang dipilih tidak tersedia lagi
+      if (selectedBoat) {
+        const selectedBoatData = availableBoats.find(boat => boat.id.toString() === selectedBoat);
+        if (!selectedBoatData) {
+          setSelectedBoat("");
+          setSelectedCabin("");
+        }
+      }
+    } else {
+      setFilteredBoats(boats);
+    }
+  }, [tripCount, boats, selectedBoat]);
 
   useEffect(() => {
     const fetchTripData = async () => {
@@ -187,6 +225,7 @@ export default function Booking() {
 
         if (response.data) {
           const trip = response.data;
+          console.log('Original Trip Data:', trip);
           const transformedData: PackageData = {
             id: trip.id.toString(),
             title: trip.name,
@@ -238,8 +277,13 @@ export default function Booking() {
               surcharge_price: Number(surcharge.surcharge_price)
             }))
           };
-
+          console.log('Transformed Package Data:', transformedData);
           setSelectedPackage(transformedData);
+          
+          // Set durasi otomatis jika hanya ada satu opsi
+          if (transformedData.trip_durations?.length === 1) {
+            setSelectedDuration(transformedData.trip_durations[0].duration_label);
+          }
           
           // Set additional charges yang required secara otomatis
           const requiredFees = trip.additional_fees
@@ -288,7 +332,7 @@ export default function Booking() {
         setAdditionalCharges(newCharges);
       }
     }
-  }, [selectedDate, selectedDurationDays, tripCount, selectedPackage]);
+  }, [selectedDate, selectedDurationDays, tripCount, selectedPackage, additionalCharges, getApplicableAdditionalFees]);
 
   const handleDurationChange = (value: string) => {
     setSelectedDuration(value);
@@ -304,10 +348,17 @@ export default function Booking() {
   };
 
   const calculateBasePrice = () => {
-    if (!selectedPackage?.trip_durations?.[0]?.trip_prices || tripCount === 0) return 0;
+    if (!selectedPackage?.trip_durations || tripCount === 0) return 0;
+    
+    // Cari durasi yang dipilih
+    const selectedDurationData = selectedPackage.trip_durations.find(
+      d => d.duration_label === selectedDuration
+    );
+
+    if (!selectedDurationData?.trip_prices) return 0;
     
     // Cari harga yang sesuai dengan jumlah pax
-    const applicablePrice = selectedPackage.trip_durations[0].trip_prices.find(
+    const applicablePrice = selectedDurationData.trip_prices.find(
       price => tripCount >= price.pax_min && tripCount <= price.pax_max
     );
 
@@ -361,6 +412,89 @@ export default function Booking() {
   const calculateTotalPrice = () => {
     return calculateBasePriceTotal() + calculateAdditionalFees() + calculateSurchargeAmount();
   };
+
+  useEffect(() => {
+    const fetchBoats = async () => {
+      try {
+        setIsLoadingBoats(true);
+        console.log('Selected Package:', selectedPackage);
+        console.log('Has Boat:', selectedPackage?.has_boat);
+        console.log('Fetching boats...');
+        const response = await apiRequest<BoatResponse>(
+          'GET',
+          '/api/landing-page/boats'
+        );
+        console.log('Raw Boats Response:', response);
+        
+        if (response && response.data && Array.isArray(response.data)) {
+          // Filter hanya boat yang aktif
+          const activeBoats = response.data.filter(boat => {
+            console.log('Boat Status:', boat.status);
+            return boat.status === "Aktif";
+          });
+          console.log('Active boats:', activeBoats);
+          console.log('Number of active boats:', activeBoats.length);
+          setBoats(activeBoats);
+          setFilteredBoats(activeBoats);
+        } else {
+          console.log('Invalid response format:', response);
+        }
+      } catch (error) {
+        console.error('Error fetching boats:', error);
+      } finally {
+        setIsLoadingBoats(false);
+      }
+    };
+
+    if (selectedPackage?.has_boat) {
+      console.log('Package has boat, fetching boats...');
+      fetchBoats();
+    } else {
+      console.log('Package does not have boat, skipping fetch');
+    }
+  }, [selectedPackage?.has_boat]);
+
+  const calculateBoatAndCabinRequirements = () => {
+    if (!selectedBoat || !tripCount) return;
+
+    const selectedBoatData = boats.find(boat => boat.id.toString() === selectedBoat);
+    if (!selectedBoatData) return;
+
+    // Hitung total kapasitas cabin per boat
+    const totalCabinCapacity = calculateTotalBoatCapacity(selectedBoatData);
+
+    // Hitung jumlah boat yang dibutuhkan
+    const boatsNeeded = Math.ceil(tripCount / totalCabinCapacity);
+    setRequiredBoats(boatsNeeded);
+
+    // Hitung jumlah cabin yang dibutuhkan
+    const cabinsNeeded = Math.ceil(tripCount / selectedBoatData.cabin[0].max_pax);
+    setRequiredCabins(cabinsNeeded);
+
+    // Distribusikan pax ke cabin
+    const newSelectedCabins: {cabinId: string, pax: number}[] = [];
+    let remainingPax = tripCount;
+
+    selectedBoatData.cabin
+      .filter(cabin => cabin.status === "Aktif")
+      .sort((a, b) => b.max_pax - a.max_pax) // Urutkan dari cabin dengan kapasitas terbesar
+      .forEach(cabin => {
+        if (remainingPax > 0) {
+          const paxForThisCabin = Math.min(remainingPax, cabin.max_pax);
+          newSelectedCabins.push({
+            cabinId: cabin.id.toString(),
+            pax: paxForThisCabin
+          });
+          remainingPax -= paxForThisCabin;
+        }
+      });
+
+    setSelectedCabins(newSelectedCabins);
+  };
+
+  useEffect(() => {
+    calculateBoatAndCabinRequirements();
+  }, [selectedBoat, tripCount]);
 
   if (!packageId || !selectedPackage) {
     return (
@@ -644,11 +778,21 @@ export default function Booking() {
                         <SelectValue placeholder="Pilih Durasi" />
                       </SelectTrigger>
                       <SelectContent>
-                        {selectedPackage?.trip_durations?.map((duration) => (
-                          <SelectItem key={duration.id} value={duration.duration_label}>
-                            {duration.duration_label}
-                          </SelectItem>
-                        ))}
+                        {!selectedPackage?.trip_durations ? (
+                          <div className="p-2 text-center text-sm text-gray-500">
+                            Tidak ada durasi tersedia
+                          </div>
+                        ) : selectedPackage.trip_durations.length === 0 ? (
+                          <div className="p-2 text-center text-sm text-gray-500">
+                            Tidak ada durasi tersedia untuk paket ini
+                          </div>
+                        ) : (
+                          selectedPackage.trip_durations.map((duration) => (
+                            <SelectItem key={duration.id} value={duration.duration_label}>
+                              {duration.duration_label}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -682,16 +826,37 @@ export default function Booking() {
                     <>
                       <div className="space-y-2">
                         <Label>Boat</Label>
-                        <Select value={selectedBoat} onValueChange={handleBoatChange}>
+                        <Select 
+                          value={selectedBoat} 
+                          onValueChange={handleBoatChange}
+                          disabled={isLoadingBoats}
+                        >
                           <SelectTrigger>
-                            <SelectValue placeholder="Pilih Boat" />
+                            <SelectValue placeholder={isLoadingBoats ? "Loading boats..." : "Pilih Boat"} />
                           </SelectTrigger>
                           <SelectContent>
-                            {selectedPackage.boatImages?.map((boat) => (
-                              <SelectItem key={boat.id} value={boat.id}>
-                                {boat.title}
-                              </SelectItem>
-                            ))}
+                            {isLoadingBoats ? (
+                              <div className="p-2 text-center text-sm text-gray-500">
+                                Loading boats...
+                              </div>
+                            ) : filteredBoats.length === 0 ? (
+                              <div className="p-2 text-center text-sm text-gray-500">
+                                {tripCount > 0 ? "Tidak ada boat yang tersedia untuk jumlah pax ini" : "Tidak ada boat tersedia"}
+                              </div>
+                            ) : (
+                              filteredBoats.map((boat) => (
+                                <SelectItem 
+                                  key={boat.id} 
+                                  value={boat.id.toString()}
+                                  className="flex flex-col items-start"
+                                >
+                                  <span className="font-medium">{boat.boat_name}</span>
+                                  <span className="text-xs text-gray-500">
+                                    Kapasitas: {calculateTotalBoatCapacity(boat)} pax
+                                  </span>
+                                </SelectItem>
+                              ))
+                            )}
                           </SelectContent>
                         </Select>
                       </div>
@@ -704,9 +869,25 @@ export default function Booking() {
                               <SelectValue placeholder="Pilih Cabin" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="standard">Standard Cabin</SelectItem>
-                              <SelectItem value="deluxe">Deluxe Cabin</SelectItem>
-                              <SelectItem value="suite">Suite Cabin</SelectItem>
+                              {boats
+                                .find(boat => boat.id.toString() === selectedBoat)
+                                ?.cabin
+                                .filter(cabin => cabin.status === "Aktif")
+                                .map((cabin) => (
+                                  <SelectItem 
+                                    key={cabin.id} 
+                                    value={cabin.id.toString()}
+                                    className="flex flex-col items-start"
+                                  >
+                                    <span className="font-medium">{cabin.cabin_name}</span>
+                                    <span className="text-xs text-gray-500">
+                                      {cabin.bed_type} - Max {cabin.max_pax} pax
+                                    </span>
+                                    <span className="text-xs text-gold">
+                                      IDR {Number(cabin.base_price).toLocaleString('id-ID')}
+                                    </span>
+                                  </SelectItem>
+                                ))}
                             </SelectContent>
                           </Select>
                         </div>
@@ -767,6 +948,54 @@ export default function Booking() {
                 </div>
               </motion.div>
             </div>
+
+            {selectedPackage?.has_boat && selectedBoat && (
+              <div className="space-y-4 mt-4 p-4 bg-gray-50 rounded-lg">
+                <h3 className="font-semibold text-lg">Detail Boat & Cabin</h3>
+                
+                <div className="space-y-2">
+                  <p className="text-sm text-gray-600">
+                    Jumlah Boat yang Dibutuhkan: {requiredBoats} boat
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    Jumlah Cabin yang Dibutuhkan: {requiredCabins} cabin
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <h4 className="font-medium">Distribusi Pax per Cabin:</h4>
+                  {selectedCabins.map((cabin, index) => {
+                    const cabinData = boats
+                      .find(boat => boat.id.toString() === selectedBoat)
+                      ?.cabin.find(c => c.id.toString() === cabin.cabinId);
+                    
+                    return (
+                      <div key={index} className="flex justify-between items-center p-2 bg-white rounded">
+                        <span className="text-sm">
+                          {cabinData?.cabin_name} ({cabinData?.bed_type})
+                        </span>
+                        <span className="text-sm font-medium">
+                          {cabin.pax} pax
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="pt-2 border-t">
+                  <p className="text-sm font-medium">
+                    Total Harga Cabin: IDR {
+                      selectedCabins.reduce((total, cabin) => {
+                        const cabinData = boats
+                          .find(boat => boat.id.toString() === selectedBoat)
+                          ?.cabin.find(c => c.id.toString() === cabin.cabinId);
+                        return total + (Number(cabinData?.base_price) || 0);
+                      }, 0).toLocaleString('id-ID')
+                    }
+                  </p>
+                </div>
+              </div>
+            )}
           </motion.div>
         </div>
       </Card>
