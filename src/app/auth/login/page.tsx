@@ -22,6 +22,18 @@ import { useRouter } from "next/navigation";
 import { apiRequest } from "@/lib/api";
 import { motion } from "framer-motion";
 
+interface Customer {
+  id: number;
+  user_id: number;
+  alamat: string;
+  no_hp: string;
+  nasionality: string;
+  region: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
 interface LoginResponse {
   access_token: string;
   token_type: string;
@@ -29,10 +41,14 @@ interface LoginResponse {
     id: number;
     name: string;
     email: string;
+    role: string;
     status: string;
-    roles: string[];
-    permissions: string[];
+    created_at: string;
+    updated_at: string;
   };
+  customer: Customer;
+  roles: string[];
+  permissions: string[];
   status: string;
 }
 
@@ -109,12 +125,14 @@ export default function LoginPage() {
           id: response.user.id,
           name: response.user.name,
           email: response.user.email,
-          roles: response.user.roles,
-          permissions: response.user.permissions
+          role: response.user.role,
+          roles: response.roles,
+          permissions: response.permissions,
+          customer: response.customer
         }));
 
         // Bersihkan history dan redirect berdasarkan roles
-        if (response.user.roles.includes('Super Admin') || response.user.roles.includes('Admin')) {
+        if (response.roles.includes('Super Admin') || response.roles.includes('Admin')) {
           window.history.pushState(null, '', '/dashboard');
           router.replace('/dashboard');
         } else {

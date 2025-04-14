@@ -13,12 +13,26 @@ import { apiRequest } from '@/lib/api';
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 
+interface Customer {
+  id: number;
+  user_id: number;
+  alamat: string;
+  no_hp: string;
+  nasionality: string;
+  region: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
 interface UserData {
   id: number;
   name: string;
   email: string;
+  role: string;
   roles: string[];
   permissions: string[];
+  customer?: Customer;
 }
 
 export default function LandingHeader() {
@@ -176,18 +190,39 @@ export default function LandingHeader() {
                 </PopoverTrigger>
                 <PopoverContent 
                   align="end" 
-                  className="w-64 p-2 bg-white shadow-md flex flex-col"
+                  className="w-72 p-2 bg-white shadow-md flex flex-col"
                 >
                   {isLoggedIn && userData ? (
                     <>
                       <div className="px-4 py-3">
-                        <p className="text-base font-semibold text-gray-900">{userData.name}</p>
-                        <p className="text-sm text-gray-500 truncate">{userData.email}</p>
-                        {userData.roles.map((role, index) => (
-                          <span key={index} className="inline-block px-2 py-1 mt-1 text-xs font-medium bg-[#CFB53B] text-white rounded-full">
-                            {role}
-                          </span>
-                        ))}
+                        <div className="flex items-start gap-3">
+                          <Avatar className="h-10 w-10">
+                            <AvatarFallback className="bg-[#CFB53B] text-white">
+                              {userData.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <p className="text-base font-semibold text-gray-900">{userData.name}</p>
+                            <p className="text-sm text-gray-500 truncate">{userData.email}</p>
+                            {userData.roles.map((role, index) => (
+                              <span key={index} className="inline-block px-2 py-1 mt-1 text-xs font-medium bg-[#CFB53B] text-white rounded-full">
+                                {role}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        {userData.customer && (
+                          <div className="mt-3 text-sm text-gray-600">
+                            <p className="flex items-center gap-2">
+                              <span className="font-medium">Region:</span> 
+                              {userData.customer.region}
+                            </p>
+                            <p className="flex items-center gap-2">
+                              <span className="font-medium">Phone:</span> 
+                              {userData.customer.no_hp}
+                            </p>
+                          </div>
+                        )}
                       </div>
                       <Separator className="my-2" />
                       {(userData.roles.includes('Super Admin') || userData.roles.includes('Admin')) && (
@@ -198,6 +233,15 @@ export default function LandingHeader() {
                           <Settings size={16} />
                           Dashboard
                         </button>
+                      )}
+                      {userData.customer && (
+                        <a 
+                          href="/profile" 
+                          className="flex items-center px-4 py-2 text-sm hover:text-gold transition-colors duration-200 gap-2"
+                        >
+                          <User size={16} />
+                          My Profile
+                        </a>
                       )}
                       <button
                         onClick={handleLogout}
