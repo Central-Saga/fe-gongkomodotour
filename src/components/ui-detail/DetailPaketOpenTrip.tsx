@@ -59,7 +59,7 @@ interface PackageData {
     guideFee1: string;
     guideFee2: string;
   };
-  boatImages?: { image: string; title: string }[];
+  boatImages?: { image: string; title: string; id: string }[];
   mainImage?: string;
   flightSchedules?: FlightSchedule[];
   has_boat: boolean;
@@ -631,7 +631,7 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
                 {data.boatImages?.map((boat, index) => (
                   <Link
                     key={index}
-                    href={`/detail-boat?type=${encodeURIComponent(boat.title)}`}
+                    href={`/detail-boat?id=${boat.id}`}
                   >
                     <div className="relative group overflow-hidden rounded-lg shadow-lg cursor-pointer">
                       {/* Gambar Boat */}

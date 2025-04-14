@@ -1,39 +1,52 @@
 "use client";
 
-import DetailBoat from "@/components/ui-detail/boat/DetailBoat";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { apiRequest } from "@/lib/api";
 import { Boat } from "@/types/boats";
+import DetailBoat from "@/components/ui-detail/boat/DetailBoat";
+import Link from "next/link";
 
 interface BoatResponse {
-  data: Boat[];
-  message?: string;
-  status?: string;
+  data: Boat;
 }
 
-const DetailBoatPage = () => {
-  const [boats, setBoats] = useState<Boat[]>([]);
+export default function DetailBoatPage() {
+  const searchParams = useSearchParams();
+  const boatId = searchParams.get("id");
+  const [boat, setBoat] = useState<Boat | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchBoats = async () => {
+    const fetchBoatDetails = async () => {
+      if (!boatId) {
+        setError("ID boat tidak ditemukan");
+        setLoading(false);
+        return;
+      }
+
       try {
-        setLoading(true);
-        const response = await apiRequest<BoatResponse>('GET', '/api/boats');
-        if (response.data) {
-          setBoats(response.data);
+        const response = await apiRequest<BoatResponse>(
+          "GET",
+          `/api/landing-page/boats/${boatId}`
+        );
+        
+        if (!response?.data) {
+          throw new Error("Data boat tidak valid");
         }
-      } catch (err) {
-        console.error("Error fetching boats:", err);
-        setError("Gagal mengambil data kapal");
+        
+        setBoat(response.data);
+      } catch (error) {
+        console.error("Error fetching boat details:", error);
+        setError("Gagal memuat detail boat");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchBoats();
-  }, []);
+    fetchBoatDetails();
+  }, [boatId]);
 
   if (loading) {
     return (
@@ -43,30 +56,23 @@ const DetailBoatPage = () => {
     );
   }
 
-  if (error) {
+  if (error || !boat) {
     return (
       <div className="max-w-6xl mx-auto py-12 px-4">
-        <h1 className="text-3xl font-bold text-gray-800">Error</h1>
-        <p className="text-gray-600">{error}</p>
+        <h1 className="text-3xl font-bold text-gray-800">
+          {error || "Boat Tidak Ditemukan"}
+        </h1>
+        <p className="text-gray-600">
+          Mohon maaf, boat yang Anda cari tidak ditemukan.
+        </p>
+        <Link href="/">
+          <button className="mt-4 bg-[#CFB53B] text-white px-6 py-3 rounded-lg font-semibold text-sm hover:bg-[#7F6D1F] hover:scale-95 transition-all duration-300">
+            Kembali ke Beranda
+          </button>
+        </Link>
       </div>
     );
   }
 
-  // Transform data boat ke format yang diharapkan oleh DetailBoat
-  const boatImages = boats.flatMap(boat => 
-    boat.assets.map(asset => ({
-      image: asset.file_url.startsWith('http') 
-        ? asset.file_url 
-        : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}${asset.file_url}`,
-      title: asset.title || boat.boat_name
-    }))
-  );
-
-  return (
-    <div className="max-w-8xl mx-auto px-4">
-      <DetailBoat boatImages={boatImages} />
-    </div>
-  );
-};
-
-export default DetailBoatPage;
+  return <DetailBoat boat={boat} />;
+}
