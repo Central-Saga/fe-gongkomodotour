@@ -21,7 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Boat, Cabin } from "@/types/boats";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -81,6 +81,33 @@ type BoatResponse = {
   data: Boat[];
 };
 
+interface Hotel {
+  id: number;
+  hotel_name: string;
+  hotel_type: string;
+  occupancy: "Single Occupancy" | "Double Occupancy";
+  price: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface UserData {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  customer?: {
+    id: number;
+    user_id: number;
+    alamat: string;
+    no_hp: string;
+    nasionality: string;
+    region: "domestic" | "overseas";
+    status: string;
+  };
+}
+
 export default function Booking() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -103,6 +130,21 @@ export default function Booking() {
   const [requiredCabins, setRequiredCabins] = useState<number>(0);
   const [selectedCabins, setSelectedCabins] = useState<{cabinId: string, pax: number}[]>([]);
   const [isLoadingBoats, setIsLoadingBoats] = useState(false);
+  const [hotels, setHotels] = useState<Hotel[]>([]);
+  const [isLoadingHotels, setIsLoadingHotels] = useState(false);
+  const [selectedHotelRooms, setSelectedHotelRooms] = useState<{hotelId: string, rooms: number, pax: number}[]>([]);
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    address: "",
+    country: "",
+    phone: "",
+    notes: "",
+    requestHotel: false,
+    selectedHotel: "",
+    numberOfRooms: 1
+  });
 
   const isWeekend = (date: Date) => {
     const day = date.getDay();
@@ -404,13 +446,22 @@ export default function Booking() {
     return surcharge * tripCount;
   };
 
+  const calculateTotalHotelPrice = () => {
+    return selectedHotelRooms.reduce((total, room) => {
+      const hotel = hotels.find(h => h.id.toString() === room.hotelId);
+      if (!hotel) return total;
+      return total + (Number(hotel.price) * room.rooms);
+    }, 0);
+  };
+
   const calculateTotalPrice = () => {
     const basePriceTotal = calculateBasePriceTotal();
     const additionalFeesTotal = calculateAdditionalFees();
     const surchargeTotal = calculateSurchargeAmount();
     const cabinTotal = calculateTotalCabinPrice();
+    const hotelTotal = calculateTotalHotelPrice();
 
-    return basePriceTotal + additionalFeesTotal + surchargeTotal + cabinTotal;
+    return basePriceTotal + additionalFeesTotal + surchargeTotal + cabinTotal + hotelTotal;
   };
 
   useEffect(() => {
@@ -540,6 +591,94 @@ export default function Booking() {
       }
     }
   };
+
+  useEffect(() => {
+    const fetchHotels = async () => {
+      try {
+        setIsLoadingHotels(true);
+        console.log('Fetching hotels...');
+        const response = await apiRequest<{ data: Hotel[] }>(
+          'GET',
+          '/api/hotels'
+        );
+        console.log('Hotels response:', response);
+        
+        if (response && response.data) {
+          // Filter hanya hotel yang aktif
+          const activeHotels = response.data.filter(hotel => hotel.status === "Aktif");
+          console.log('Active hotels:', activeHotels);
+          setHotels(activeHotels);
+        } else {
+          console.log('No hotels data received');
+        }
+      } catch (error) {
+        console.error('Error fetching hotels:', error);
+      } finally {
+        setIsLoadingHotels(false);
+      }
+    };
+
+    // Panggil fetchHotels ketika komponen dimount
+    fetchHotels();
+  }, []);
+
+  const calculateTotalSelectedHotelPax = () => {
+    return selectedHotelRooms.reduce((total, room) => total + room.pax, 0);
+  };
+
+  const handleRoomChange = (hotelId: string, increment: boolean) => {
+    setSelectedHotelRooms(prev => {
+      const currentRoom = prev.find(room => room.hotelId === hotelId);
+      const hotel = hotels.find(h => h.id.toString() === hotelId);
+      if (!hotel) return prev;
+
+      const maxPaxPerRoom = hotel.occupancy === "Single Occupancy" ? 1 : 2;
+      const totalPaxAllocated = calculateTotalSelectedHotelPax();
+      const currentPax = currentRoom?.pax || 0;
+      const remainingPax = tripCount - (totalPaxAllocated - currentPax);
+
+      if (!currentRoom) {
+        if (!increment || remainingPax < maxPaxPerRoom) return prev;
+        return [...prev, { hotelId, rooms: 1, pax: maxPaxPerRoom }];
+      }
+
+      if (increment) {
+        if (remainingPax < maxPaxPerRoom) return prev;
+        const newRooms = currentRoom.rooms + 1;
+        const newPax = Math.min(currentPax + maxPaxPerRoom, remainingPax);
+        return prev.map(room => 
+          room.hotelId === hotelId ? { ...room, rooms: newRooms, pax: newPax } : room
+        );
+      } else {
+        if (currentRoom.rooms <= 1) {
+          return prev.filter(room => room.hotelId !== hotelId);
+        }
+        const newRooms = currentRoom.rooms - 1;
+        const newPax = currentPax - maxPaxPerRoom;
+        return prev.map(room => 
+          room.hotelId === hotelId ? { ...room, rooms: newRooms, pax: newPax } : room
+        );
+      }
+    });
+  };
+
+  useEffect(() => {
+    const userDataStr = localStorage.getItem('user');
+    if (userDataStr) {
+      const user = JSON.parse(userDataStr);
+      setUserData(user);
+      
+      // Set form data dengan data user
+      setFormData(prev => ({
+        ...prev,
+        name: user.name || "",
+        email: user.email || "",
+        address: user.customer?.alamat || "",
+        country: user.customer?.nasionality || "",
+        phone: user.customer?.no_hp?.replace(/^0/, '') || "", // Hapus awalan 0 jika ada
+      }));
+    }
+  }, []);
 
   if (!packageId || !selectedPackage) {
     return (
@@ -766,6 +905,28 @@ export default function Booking() {
                         • Total Harga Cabin: IDR {calculateTotalCabinPrice().toLocaleString('id-ID')}
                       </p>
                     )}
+                    {selectedHotelRooms.length > 0 && (
+                      <div className="space-y-1">
+                        <p className="text-gray-600">• Hotel:</p>
+                        {selectedHotelRooms.map(room => {
+                          const hotel = hotels.find(h => h.id.toString() === room.hotelId);
+                          if (!hotel) return null;
+                          const selectedRoom = selectedHotelRooms.find(r => r.hotelId === hotel.id.toString());
+                          const currentRooms = selectedRoom?.rooms || 0;
+                          const currentPax = selectedRoom?.pax || 0;
+                          
+                          return (
+                            <p key={hotel.id} className="text-gray-600 ml-4">
+                              - {hotel.hotel_name}: {currentRooms} kamar × IDR {Number(hotel.price).toLocaleString('id-ID')}/malam
+                              <br />
+                              <span className="text-xs text-gray-500">
+                                {currentPax} dari {tripCount} pax dialokasikan
+                              </span>
+                            </p>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                   <div className="mt-4 pt-4 border-t">
                     <p className="text-xl font-semibold">
@@ -810,8 +971,12 @@ export default function Booking() {
               transition={{ duration: 0.5, delay: 0.5 }}
               className="flex justify-between mb-4"
             >
-              <Badge variant="secondary" className="bg-[#efe6e6] text-gray-700 hover:bg-[#efe6e6]/80">
-                DOMESTIC
+              <Badge variant="secondary" className={`${
+                userData?.customer?.region === "overseas" 
+                  ? "bg-blue-100 text-blue-700 hover:bg-blue-100/80" 
+                  : "bg-[#efe6e6] text-gray-700 hover:bg-[#efe6e6]/80"
+              }`}>
+                {userData?.customer?.region === "overseas" ? "OVERSEAS" : "DOMESTIC"}
               </Badge>
             </motion.div>
             <div className="grid grid-cols-2 gap-6">
@@ -824,29 +989,46 @@ export default function Booking() {
                 <h3 className="text-lg font-semibold">Data Diri Pemesan</h3>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="title">Title</Label>
-                    <Input id="title" placeholder="Mr" />
-                  </div>
-                  <div className="space-y-2">
                     <Label htmlFor="name">Name</Label>
-                    <Input id="name" placeholder="Name" />
+                    <Input 
+                      id="name" 
+                      value={formData.name}
+                      readOnly
+                      className="bg-gray-100"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" placeholder="Email" />
+                    <Input 
+                      id="email" 
+                      type="email" 
+                      value={formData.email}
+                      readOnly
+                      className="bg-gray-100"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="address">Address</Label>
-                    <Input id="address" placeholder="Address" />
+                    <Input 
+                      id="address" 
+                      value={formData.address}
+                      readOnly
+                      className="bg-gray-100"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="country">Country</Label>
-                    <Input id="country" placeholder="Country" />
+                    <Input 
+                      id="country" 
+                      value={formData.country}
+                      readOnly
+                      className="bg-gray-100"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="phone">Phone Number</Label>
                     <div className="flex space-x-2">
-                      <Select>
+                      <Select defaultValue="+62" disabled>
                         <SelectTrigger className="w-1/4">
                           <SelectValue placeholder="+62" />
                         </SelectTrigger>
@@ -854,12 +1036,89 @@ export default function Booking() {
                           <SelectItem value="+62">+62</SelectItem>
                         </SelectContent>
                       </Select>
-                      <Input id="phone" placeholder="No. WhatsApp" className="w-3/4" />
+                      <Input 
+                        id="phone" 
+                        value={formData.phone}
+                        readOnly
+                        className="w-3/4 bg-gray-100"
+                      />
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="notes">Catatan Tambahan</Label>
-                    <Input id="notes" placeholder="Catatan Tambahan" className="h-20" />
+                    <div className="space-y-4">
+                      <Input 
+                        id="notes" 
+                        value={formData.notes}
+                        onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                        placeholder="Catatan Tambahan" 
+                        className="h-20"
+                      />
+
+                      {selectedDuration && selectedDate && (
+                        <div className="space-y-2">
+                          <Label>Hotel</Label>
+                          <div className="space-y-4">
+                            {isLoadingHotels ? (
+                              <div className="p-2 text-center text-sm text-gray-500">
+                                Loading hotels...
+                              </div>
+                            ) : hotels.length === 0 ? (
+                              <div className="p-2 text-center text-sm text-gray-500">
+                                Tidak ada hotel tersedia
+                              </div>
+                            ) : (
+                              hotels.map((hotel) => {
+                                const selectedRoom = selectedHotelRooms.find(room => room.hotelId === hotel.id.toString());
+                                const currentRooms = selectedRoom?.rooms || 0;
+                                const currentPax = selectedRoom?.pax || 0;
+                                
+                                return (
+                                  <div key={hotel.id} className="flex items-center justify-between p-3 border rounded-lg">
+                                    <div className="space-y-1">
+                                      <div className="font-medium">{hotel.hotel_name}</div>
+                                      <div className="text-sm text-gray-500">
+                                        {hotel.hotel_type} - {hotel.occupancy}
+                                      </div>
+                                      <div className="text-sm text-gold">
+                                        IDR {Number(hotel.price).toLocaleString('id-ID')}/malam
+                                      </div>
+                                      <div className="text-xs text-gray-500">
+                                        {currentPax} dari {tripCount} pax dialokasikan
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleRoomChange(hotel.id.toString(), false)}
+                                        disabled={currentRooms <= 0}
+                                      >
+                                        -
+                                      </Button>
+                                      <Input
+                                        type="number"
+                                        value={currentRooms}
+                                        readOnly
+                                        className="w-16 text-center"
+                                      />
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleRoomChange(hotel.id.toString(), true)}
+                                        disabled={calculateTotalSelectedHotelPax() >= tripCount}
+                                      >
+                                        +
+                                      </Button>
+                                    </div>
+                                  </div>
+                                );
+                              })
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -1065,11 +1324,6 @@ export default function Booking() {
                       </div>
                     </div>
                   )}
-
-                  <div className="flex items-center space-x-2">
-                    <input type="checkbox" id="hotel" className="rounded" />
-                    <Label htmlFor="hotel">Request Hotel</Label>
-                  </div>
                 </div>
               </motion.div>
             </div>
