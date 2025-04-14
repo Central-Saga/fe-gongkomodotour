@@ -22,7 +22,7 @@ import { Card } from "@/components/ui/card";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Boat } from "@/types/boats";
+import { Boat, Cabin } from "@/types/boats";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -95,7 +95,6 @@ export default function Booking() {
   const [tripCount, setTripCount] = useState(0);
   const [selectedDuration, setSelectedDuration] = useState<string>("");
   const [selectedBoat, setSelectedBoat] = useState<string>("");
-  const [selectedCabin, setSelectedCabin] = useState<string>("");
   const [additionalCharges, setAdditionalCharges] = useState<string[]>([]);
   const [selectedDurationDays, setSelectedDurationDays] = useState<number>(0);
   const [boats, setBoats] = useState<Boat[]>([]);
@@ -205,7 +204,6 @@ export default function Booking() {
         const selectedBoatData = availableBoats.find(boat => boat.id.toString() === selectedBoat);
         if (!selectedBoatData) {
           setSelectedBoat("");
-          setSelectedCabin("");
         }
       }
     } else {
@@ -336,15 +334,12 @@ export default function Booking() {
 
   const handleDurationChange = (value: string) => {
     setSelectedDuration(value);
-    // Reset boat dan cabin saat durasi berubah
+    // Reset boat saat durasi berubah
     setSelectedBoat("");
-    setSelectedCabin("");
   };
 
   const handleBoatChange = (value: string) => {
     setSelectedBoat(value);
-    // Reset cabin saat boat berubah
-    setSelectedCabin("");
   };
 
   const calculateBasePrice = () => {
@@ -410,7 +405,12 @@ export default function Booking() {
   };
 
   const calculateTotalPrice = () => {
-    return calculateBasePriceTotal() + calculateAdditionalFees() + calculateSurchargeAmount();
+    const basePriceTotal = calculateBasePriceTotal();
+    const additionalFeesTotal = calculateAdditionalFees();
+    const surchargeTotal = calculateSurchargeAmount();
+    const cabinTotal = calculateTotalCabinPrice();
+
+    return basePriceTotal + additionalFeesTotal + surchargeTotal + cabinTotal;
   };
 
   useEffect(() => {
@@ -452,9 +452,9 @@ export default function Booking() {
     } else {
       console.log('Package does not have boat, skipping fetch');
     }
-  }, [selectedPackage?.has_boat]);
+  }, [selectedPackage]);
 
-  const calculateBoatAndCabinRequirements = () => {
+  const calculateBoatAndCabinRequirements = useCallback(() => {
     if (!selectedBoat || !tripCount) return;
 
     const selectedBoatData = boats.find(boat => boat.id.toString() === selectedBoat);
@@ -470,31 +470,76 @@ export default function Booking() {
     // Hitung jumlah cabin yang dibutuhkan
     const cabinsNeeded = Math.ceil(tripCount / selectedBoatData.cabin[0].max_pax);
     setRequiredCabins(cabinsNeeded);
-
-    // Distribusikan pax ke cabin
-    const newSelectedCabins: {cabinId: string, pax: number}[] = [];
-    let remainingPax = tripCount;
-
-    selectedBoatData.cabin
-      .filter(cabin => cabin.status === "Aktif")
-      .sort((a, b) => b.max_pax - a.max_pax) // Urutkan dari cabin dengan kapasitas terbesar
-      .forEach(cabin => {
-        if (remainingPax > 0) {
-          const paxForThisCabin = Math.min(remainingPax, cabin.max_pax);
-          newSelectedCabins.push({
-            cabinId: cabin.id.toString(),
-            pax: paxForThisCabin
-          });
-          remainingPax -= paxForThisCabin;
-        }
-      });
-
-    setSelectedCabins(newSelectedCabins);
-  };
+  }, [selectedBoat, tripCount, boats]);
 
   useEffect(() => {
     calculateBoatAndCabinRequirements();
-  }, [selectedBoat, tripCount]);
+  }, [calculateBoatAndCabinRequirements]);
+
+  const calculateCabinPrice = (cabin: Cabin, pax: number) => {
+    const basePrice = Number(cabin.base_price);
+    const additionalPrice = Number(cabin.additional_price);
+    const minPax = cabin.min_pax;
+    
+    if (pax <= minPax) {
+      return basePrice;
+    } else {
+      const additionalPax = pax - minPax;
+      return basePrice + (additionalPrice * additionalPax);
+    }
+  };
+
+  const calculateTotalCabinPrice = () => {
+    return selectedCabins.reduce((total, selectedCabin) => {
+      const cabinData = boats
+        .find(boat => boat.id.toString() === selectedBoat)
+        ?.cabin.find(c => c.id.toString() === selectedCabin.cabinId);
+      
+      if (!cabinData) return total;
+      
+      const cabinPrice = calculateCabinPrice(cabinData, selectedCabin.pax);
+      
+      return total + cabinPrice;
+    }, 0);
+  };
+
+  const calculateTotalSelectedPax = () => {
+    return selectedCabins.reduce((total, cabin) => total + cabin.pax, 0);
+  };
+
+  const handleCabinPaxChange = (cabinId: string, increment: boolean) => {
+    const currentPax = selectedCabins.find(sc => sc.cabinId === cabinId)?.pax || 0;
+    const totalSelectedPax = calculateTotalSelectedPax();
+    const cabin = boats
+      .find(boat => boat.id.toString() === selectedBoat)
+      ?.cabin.find(c => c.id.toString() === cabinId);
+
+    if (!cabin) return;
+
+    if (increment) {
+      // Jika menambah pax
+      if (currentPax < cabin.max_pax && totalSelectedPax < tripCount) {
+        if (currentPax === 0) {
+          setSelectedCabins([...selectedCabins, { cabinId, pax: 1 }]);
+        } else {
+          setSelectedCabins(selectedCabins.map(sc => 
+            sc.cabinId === cabinId ? { ...sc, pax: sc.pax + 1 } : sc
+          ));
+        }
+      }
+    } else {
+      // Jika mengurangi pax
+      if (currentPax > 0) {
+        if (currentPax === 1) {
+          setSelectedCabins(selectedCabins.filter(sc => sc.cabinId !== cabinId));
+        } else {
+          setSelectedCabins(selectedCabins.map(sc => 
+            sc.cabinId === cabinId ? { ...sc, pax: sc.pax - 1 } : sc
+          ));
+        }
+      }
+    }
+  };
 
   if (!packageId || !selectedPackage) {
     return (
@@ -609,74 +654,129 @@ export default function Booking() {
                 </p>
               </motion.div>
 
-              <motion.div 
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.8 }}
-                className="space-y-2"
-              >
-                <h3 className="text-lg font-semibold">Detail Pembayaran</h3>
-                <div className="space-y-1">
-                  <p className="text-gray-600">Sub Total</p>
-                  <p className="text-gray-600">
-                    • {packageType === "open" ? "Open Trip" : "Private Trip"}{" "}
-                    IDR {calculateBasePrice().toLocaleString('id-ID')}/pax x {tripCount} pax = IDR {calculateBasePriceTotal().toLocaleString('id-ID')}
-                  </p>
-                  {calculateSurcharge() && (
-                    <p className="text-gray-600">
-                      • High Peak Season IDR {(parseInt(calculateSurcharge()?.toString() || "0")).toLocaleString('id-ID')}/pax x {tripCount} pax = IDR {calculateSurchargeAmount().toLocaleString('id-ID')}
-                    </p>
-                  )}
-                  {selectedPackage?.additional_fees && selectedPackage.additional_fees.filter(fee => additionalCharges.includes(fee.id.toString())).length > 0 && (
-                    <div className="space-y-1">
-                      <p className="text-gray-600">• Additional Fees:</p>
-                      {selectedPackage.additional_fees
-                        .filter(fee => additionalCharges.includes(fee.id.toString()))
-                        .map(fee => {
-                          const durationData = selectedPackage.trip_durations?.find(
-                            d => d.duration_label === selectedDuration
-                          );
-                          const days = durationData?.duration_days || 0;
-                          const amount = calculateAdditionalFeeAmount(fee);
-                          
-                          return (
-                            <p key={fee.id} className="text-gray-600 ml-4">
-                              - {fee.fee_category}: IDR {Number(fee.price).toLocaleString('id-ID')}
-                              {fee.unit === 'per_pax' ? `/pax × ${tripCount} pax` : ''}
-                              {fee.unit === 'per_5pax' ? `/5 pax × ${Math.ceil(tripCount / 5)} unit` : ''}
-                              {fee.unit === 'per_day' ? `/hari × ${days} hari` : ''}
-                              {fee.unit === 'per_day_guide' ? `/hari × ${days} hari` : ''}
-                              {' = '}IDR {amount.toLocaleString('id-ID')}
-                            </p>
-                          );
-                        })}
-                    </div>
-                  )}
-                </div>
-                <div className="border-t pt-2">
-                  <p className="text-lg font-semibold">
-                    Total Pembayaran:{" "}
-                    <AnimatePresence mode="wait">
-                      <motion.span
-                        key={calculateTotalPrice()}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.2 }}
-                        className="text-gold"
-                      >
-                        IDR {calculateTotalPrice().toLocaleString('id-ID')}
-                      </motion.span>
-                    </AnimatePresence>
-                  </p>
-                </div>
-              </motion.div>
-
               <motion.div
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.5, delay: 0.9 }}
+                className="space-y-6"
               >
+                {selectedPackage?.has_boat && selectedBoat && (
+                  <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+                    <h3 className="font-semibold text-lg">Detail Boat & Cabin</h3>
+                    
+                    <div className="space-y-2">
+                      <p className="text-sm text-gray-600">
+                        Jumlah Boat yang Dibutuhkan: {requiredBoats} boat
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        Jumlah Cabin yang Dibutuhkan: {requiredCabins} cabin
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h4 className="font-medium">Distribusi Pax per Cabin:</h4>
+                      {selectedCabins.map((cabin, index) => {
+                        const cabinData = boats
+                          .find(boat => boat.id.toString() === selectedBoat)
+                          ?.cabin.find(c => c.id.toString() === cabin.cabinId);
+                        
+                        if (!cabinData) return null;
+
+                        const cabinPrice = calculateCabinPrice(cabinData, cabin.pax);
+                        
+                        return (
+                          <div key={index} className="flex flex-col p-2 bg-white rounded">
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm">
+                                {cabinData.cabin_name} ({cabinData.bed_type})
+                              </span>
+                              <span className="text-sm font-medium">
+                                {cabin.pax} pax
+                              </span>
+                            </div>
+                            <div className="text-sm text-gray-500 mt-1">
+                              {cabin.pax <= cabinData.min_pax ? (
+                                <span>Base Price: IDR {Number(cabinData.base_price).toLocaleString('id-ID')}</span>
+                              ) : (
+                                <>
+                                  <span>Base Price: IDR {Number(cabinData.base_price).toLocaleString('id-ID')}</span>
+                                  <br />
+                                  <span>
+                                    Additional: {cabin.pax - cabinData.min_pax} pax × IDR {Number(cabinData.additional_price).toLocaleString('id-ID')} 
+                                    = IDR {((cabin.pax - cabinData.min_pax) * Number(cabinData.additional_price)).toLocaleString('id-ID')}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                            <div className="text-sm font-medium text-gold mt-1">
+                              Total: IDR {cabinPrice.toLocaleString('id-ID')}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div className="pt-2 border-t">
+                      <p className="text-sm font-medium">
+                        Total Harga Cabin: IDR {calculateTotalCabinPrice().toLocaleString('id-ID')}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <h3 className="font-semibold text-lg mb-4">Detail Pembayaran</h3>
+                  <div className="space-y-2 text-sm">
+                    <p className="text-gray-600">
+                      • {packageType === "open" ? "Open Trip" : "Private Trip"}{" "}
+                      IDR {calculateBasePrice().toLocaleString('id-ID')}/pax x {tripCount} pax = IDR {calculateBasePriceTotal().toLocaleString('id-ID')}
+                    </p>
+                    {calculateSurcharge() && (
+                      <p className="text-gray-600">
+                        • High Peak Season IDR {(parseInt(calculateSurcharge()?.toString() || "0")).toLocaleString('id-ID')}/pax x {tripCount} pax = IDR {calculateSurchargeAmount().toLocaleString('id-ID')}
+                      </p>
+                    )}
+                    {selectedPackage?.additional_fees && selectedPackage.additional_fees.filter(fee => additionalCharges.includes(fee.id.toString())).length > 0 && (
+                      <div className="space-y-1">
+                        <p className="text-gray-600">• Additional Fees:</p>
+                        {selectedPackage.additional_fees
+                          .filter(fee => additionalCharges.includes(fee.id.toString()))
+                          .map(fee => {
+                            const durationData = selectedPackage.trip_durations?.find(
+                              d => d.duration_label === selectedDuration
+                            );
+                            const days = durationData?.duration_days || 0;
+                            const amount = calculateAdditionalFeeAmount(fee);
+                            
+                            return (
+                              <p key={fee.id} className="text-gray-600 ml-4">
+                                - {fee.fee_category}: IDR {Number(fee.price).toLocaleString('id-ID')}
+                                {fee.unit === 'per_pax' ? `/pax × ${tripCount} pax` : ''}
+                                {fee.unit === 'per_5pax' ? `/5 pax × ${Math.ceil(tripCount / 5)} unit` : ''}
+                                {fee.unit === 'per_day' ? `/hari × ${days} hari` : ''}
+                                {fee.unit === 'per_day_guide' ? `/hari × ${days} hari` : ''}
+                                {' = '}IDR {amount.toLocaleString('id-ID')}
+                              </p>
+                            );
+                          })}
+                      </div>
+                    )}
+                    {selectedPackage?.has_boat && selectedBoat && calculateTotalCabinPrice() > 0 && (
+                      <p className="text-gray-600">
+                        • Total Harga Cabin: IDR {calculateTotalCabinPrice().toLocaleString('id-ID')}
+                      </p>
+                    )}
+                  </div>
+                  <div className="mt-4 pt-4 border-t">
+                    <p className="text-xl font-semibold">
+                      Total Pembayaran:{" "}
+                      <span className="text-gold">
+                        IDR {calculateTotalPrice().toLocaleString('id-ID')}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+
                 <Button
                   className={`w-full py-6 rounded-lg font-bold text-2xl transition-all duration-300 transform hover:scale-105 ${
                     selectedDuration && selectedDate && tripCount > 0
@@ -864,32 +964,57 @@ export default function Booking() {
                       {selectedBoat && (
                         <div className="space-y-2">
                           <Label>Cabin</Label>
-                          <Select value={selectedCabin} onValueChange={setSelectedCabin}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Pilih Cabin" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {boats
-                                .find(boat => boat.id.toString() === selectedBoat)
-                                ?.cabin
-                                .filter(cabin => cabin.status === "Aktif")
-                                .map((cabin) => (
-                                  <SelectItem 
-                                    key={cabin.id} 
-                                    value={cabin.id.toString()}
-                                    className="flex flex-col items-start"
-                                  >
-                                    <span className="font-medium">{cabin.cabin_name}</span>
-                                    <span className="text-xs text-gray-500">
-                                      {cabin.bed_type} - Max {cabin.max_pax} pax
-                                    </span>
-                                    <span className="text-xs text-gold">
-                                      IDR {Number(cabin.base_price).toLocaleString('id-ID')}
-                                    </span>
-                                  </SelectItem>
-                                ))}
-                            </SelectContent>
-                          </Select>
+                          <div className="space-y-4">
+                            {boats
+                              .find(boat => boat.id.toString() === selectedBoat)
+                              ?.cabin
+                              .filter(cabin => cabin.status === "Aktif")
+                              .map((cabin) => (
+                                <div key={cabin.id} className="flex items-center justify-between p-3 border rounded-lg">
+                                  <div className="space-y-1">
+                                    <div className="font-medium">{cabin.cabin_name}</div>
+                                    <div className="text-sm text-gray-500">
+                                      {cabin.bed_type} - {cabin.min_pax}-{cabin.max_pax} pax
+                                    </div>
+                                    <div className="text-sm text-gold">
+                                      Base Price: IDR {Number(cabin.base_price).toLocaleString('id-ID')}
+                                      <br />
+                                      Additional Price: IDR {Number(cabin.additional_price).toLocaleString('id-ID')}/pax
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleCabinPaxChange(cabin.id.toString(), false)}
+                                      disabled={!selectedCabins.find(sc => sc.cabinId === cabin.id.toString())?.pax}
+                                    >
+                                      -
+                                    </Button>
+                                    <Input
+                                      type="number"
+                                      value={selectedCabins.find(sc => sc.cabinId === cabin.id.toString())?.pax || 0}
+                                      readOnly
+                                      className="w-16 text-center"
+                                    />
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleCabinPaxChange(cabin.id.toString(), true)}
+                                      disabled={
+                                        selectedCabins.find(sc => sc.cabinId === cabin.id.toString())?.pax === cabin.max_pax ||
+                                        calculateTotalSelectedPax() >= tripCount
+                                      }
+                                    >
+                                      +
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            Total Pax Terpilih: {calculateTotalSelectedPax()} dari {tripCount} pax
+                          </div>
                         </div>
                       )}
                     </>
@@ -948,54 +1073,6 @@ export default function Booking() {
                 </div>
               </motion.div>
             </div>
-
-            {selectedPackage?.has_boat && selectedBoat && (
-              <div className="space-y-4 mt-4 p-4 bg-gray-50 rounded-lg">
-                <h3 className="font-semibold text-lg">Detail Boat & Cabin</h3>
-                
-                <div className="space-y-2">
-                  <p className="text-sm text-gray-600">
-                    Jumlah Boat yang Dibutuhkan: {requiredBoats} boat
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    Jumlah Cabin yang Dibutuhkan: {requiredCabins} cabin
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <h4 className="font-medium">Distribusi Pax per Cabin:</h4>
-                  {selectedCabins.map((cabin, index) => {
-                    const cabinData = boats
-                      .find(boat => boat.id.toString() === selectedBoat)
-                      ?.cabin.find(c => c.id.toString() === cabin.cabinId);
-                    
-                    return (
-                      <div key={index} className="flex justify-between items-center p-2 bg-white rounded">
-                        <span className="text-sm">
-                          {cabinData?.cabin_name} ({cabinData?.bed_type})
-                        </span>
-                        <span className="text-sm font-medium">
-                          {cabin.pax} pax
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div className="pt-2 border-t">
-                  <p className="text-sm font-medium">
-                    Total Harga Cabin: IDR {
-                      selectedCabins.reduce((total, cabin) => {
-                        const cabinData = boats
-                          .find(boat => boat.id.toString() === selectedBoat)
-                          ?.cabin.find(c => c.id.toString() === cabin.cabinId);
-                        return total + (Number(cabinData?.base_price) || 0);
-                      }, 0).toLocaleString('id-ID')
-                    }
-                  </p>
-                </div>
-              </div>
-            )}
           </motion.div>
         </div>
       </Card>
