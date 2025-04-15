@@ -108,6 +108,13 @@ interface UserData {
   };
 }
 
+interface BookingResponse {
+  data: {
+    id: number;
+    // tambahkan field lain jika diperlukan
+  };
+}
+
 export default function Booking() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -447,10 +454,20 @@ export default function Booking() {
   };
 
   const calculateTotalHotelPrice = () => {
+    if (!selectedDuration || !selectedPackage?.trip_durations) return 0;
+    
+    // Cari durasi yang dipilih
+    const durationData = selectedPackage.trip_durations.find(
+      d => d.duration_label === selectedDuration
+    );
+    
+    // Hitung jumlah malam (durasi hari - 1)
+    const nights = (durationData?.duration_days || 0) - 1;
+    
     return selectedHotelRooms.reduce((total, room) => {
       const hotel = hotels.find(h => h.id.toString() === room.hotelId);
       if (!hotel) return total;
-      return total + (Number(hotel.price) * room.rooms);
+      return total + (Number(hotel.price) * room.rooms * nights);
     }, 0);
   };
 
@@ -679,6 +696,61 @@ export default function Booking() {
       }));
     }
   }, []);
+
+  const handleBooking = async () => {
+    try {
+      if (!selectedPackage || !selectedDate || !userData?.customer?.id) {
+        console.error('Missing required data for booking');
+        return;
+      }
+
+      // Hitung tanggal selesai berdasarkan durasi yang dipilih
+      const durationData = selectedPackage.trip_durations?.find(
+        d => d.duration_label === selectedDuration
+      );
+      const endDate = new Date(selectedDate);
+      endDate.setDate(endDate.getDate() + (durationData?.duration_days || 0) - 1);
+
+      // Siapkan data booking
+      const bookingData = {
+        trip_id: Number(selectedPackage.id),
+        trip_duration_id: durationData?.id || 0,
+        customer_id: userData.customer.id,
+        user_id: userData.id,
+        hotel_occupancy_id: selectedHotelRooms.length > 0 ? 
+          Number(selectedHotelRooms[0].hotelId) : null,
+        total_pax: tripCount,
+        status: "Pending",
+        start_date: format(selectedDate, "yyyy-MM-dd"),
+        end_date: format(endDate, "yyyy-MM-dd"),
+        cabins: selectedCabins.map(cabin => ({
+          cabin_id: Number(cabin.cabinId),
+          total_pax: cabin.pax
+        })),
+        boat_ids: selectedBoat ? [Number(selectedBoat)] : [],
+        additional_fee_ids: additionalCharges.map(feeId => ({
+          additional_fee_id: Number(feeId)
+        }))
+      };
+
+      // Kirim data ke API
+      const response = await apiRequest<BookingResponse>(
+        'POST',
+        '/api/bookings',
+        bookingData
+      );
+
+      if (response?.data?.id) {
+        // Redirect ke halaman payment dengan ID booking
+        router.push(
+          `/payment?bookingId=${response.data.id}&packageId=${packageId}&type=${packageType}&date=${selectedDate?.toISOString()}&tripCount=${tripCount}`
+        );
+      }
+    } catch (error) {
+      console.error('Error creating booking:', error);
+      // Tambahkan handling error sesuai kebutuhan
+    }
+  };
 
   if (!packageId || !selectedPackage) {
     return (
@@ -915,9 +987,15 @@ export default function Booking() {
                           const currentRooms = selectedRoom?.rooms || 0;
                           const currentPax = selectedRoom?.pax || 0;
                           
+                          // Hitung jumlah malam
+                          const durationData = selectedPackage?.trip_durations?.find(
+                            d => d.duration_label === selectedDuration
+                          );
+                          const nights = (durationData?.duration_days || 0) - 1;
+                          
                           return (
                             <p key={hotel.id} className="text-gray-600 ml-4">
-                              - {hotel.hotel_name}: {currentRooms} kamar × IDR {Number(hotel.price).toLocaleString('id-ID')}/malam
+                              - {hotel.hotel_name}: {currentRooms} kamar × IDR {Number(hotel.price).toLocaleString('id-ID')}/malam × {nights} malam
                               <br />
                               <span className="text-xs text-gray-500">
                                 {currentPax} dari {tripCount} pax dialokasikan
@@ -945,12 +1023,7 @@ export default function Booking() {
                       : "bg-gray-300 text-gray-500 cursor-not-allowed"
                   }`}
                   disabled={!selectedDuration || !selectedDate || tripCount === 0}
-                  onClick={() =>
-                    selectedDuration && selectedDate && tripCount > 0 &&
-                    router.push(
-                      `/payment?packageId=${packageId}&type=${packageType}&date=${selectedDate?.toISOString()}&tripCount=${tripCount}`
-                    )
-                  }
+                  onClick={handleBooking}
                 >
                   BOOK NOW
                 </Button>

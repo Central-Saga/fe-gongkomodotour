@@ -9,6 +9,7 @@ export default function PaymentPage() {
   const packageType = searchParams.get("type");
   const date = searchParams.get("date");
   const tripCount = searchParams.get("tripCount");
+  const bookingId = searchParams.get("bookingId");
 
   return (
     <Payment
@@ -16,6 +17,7 @@ export default function PaymentPage() {
       packageType={packageType}
       date={date}
       tripCount={tripCount}
+      bookingId={bookingId}
     />
   );
 }
