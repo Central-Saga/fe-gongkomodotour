@@ -733,18 +733,21 @@ export default function Booking() {
       const bookingData = {
         trip_id: Number(selectedPackage.id),
         trip_duration_id: durationData?.id || 0,
-        customer_id: selectedCabins[0].cabinId,
-        user_id: selectedCabins[0].cabinId,
+        customer_name: formData.name,
+        customer_email: formData.email,
+        customer_address: formData.address,
+        customer_country: formData.country,
+        customer_phone: `${getCountryCallingCode(formData.country)}${formData.phone}`,
         hotel_occupancy_id: selectedHotelRooms.length > 0 ? 
           Number(selectedHotelRooms[0].hotelId) : null,
         total_pax: tripCount,
         status: "Pending",
         start_date: format(selectedDate, "yyyy-MM-dd"),
         end_date: format(endDate, "yyyy-MM-dd"),
-        cabins: selectedCabins.map(cabin => ({
+        cabins: selectedCabins.length > 0 ? selectedCabins.map(cabin => ({
           cabin_id: Number(cabin.cabinId),
           total_pax: cabin.pax
-        })),
+        })) : [],
         boat_ids: selectedBoat ? [Number(selectedBoat)] : [],
         additional_fee_ids: additionalCharges.map(feeId => ({
           additional_fee_id: Number(feeId)
@@ -754,7 +757,7 @@ export default function Booking() {
       // Kirim data ke API
       const response = await apiRequest<BookingResponse>(
         'POST',
-        '/api/bookings',
+        '/api/landing-page/bookings',
         bookingData
       );
 
