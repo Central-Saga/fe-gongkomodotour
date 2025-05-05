@@ -196,7 +196,7 @@ export default function DetailReview({ tripId }: DetailReviewProps) {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 whileHover={{ scale: 1.02 }}
-                className="min-w-[320px] max-w-[500px] w-full bg-white p-8 rounded-2xl shadow-2xl flex-shrink-0 flex flex-col justify-between relative"
+                className="min-w-[320px] max-w-[500px] w-full bg-white p-8 rounded-2xl shadow-2xl flex-shrink-0 flex flex-col justify-between relative mb-6"
                 style={{ scrollSnapAlign: "center" }}
               >
                 <Quote className="absolute top-6 left-6 w-8 h-8 text-yellow-400 opacity-30 z-10" />

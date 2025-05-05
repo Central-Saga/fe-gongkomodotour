@@ -5,6 +5,7 @@ export interface TripPrice {
   pax_max: number
   price_per_pax: number
   status: "Aktif" | "Non Aktif"
+  region: "Domestic" | "Overseas" | "Domestic & Overseas"
   created_at: string
   updated_at: string
 }

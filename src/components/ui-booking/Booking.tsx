@@ -23,6 +23,18 @@ import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { motion } from "framer-motion";
 import { Boat, Cabin } from "@/types/boats";
+import countries from "i18n-iso-countries";
+import enLocale from "i18n-iso-countries/langs/en.json";
+// @ts-expect-error: No types for country-telephone-data
+import { allCountries } from "country-telephone-data";
+
+// Inisialisasi daftar negara
+countries.registerLocale(enLocale);
+const countryList = countries.getNames("en", { select: "official" });
+const countryOptions = Object.entries(countryList).map(([code, name]) => ({
+  value: code,
+  label: name,
+}));
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -33,6 +45,7 @@ interface TripPrice {
   pax_max: number;
   price_per_pax: number;
   status: string;
+  region: "Domestic" | "Overseas" | "Domestic & Overseas";
 }
 
 interface PackageData {
@@ -92,27 +105,20 @@ interface Hotel {
   updated_at: string;
 }
 
-interface UserData {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-  customer?: {
-    id: number;
-    user_id: number;
-    alamat: string;
-    no_hp: string;
-    nasionality: string;
-    region: "domestic" | "overseas";
-    status: string;
-  };
-}
-
 interface BookingResponse {
   data: {
     id: number;
     // tambahkan field lain jika diperlukan
   };
+}
+
+// Helper untuk mendapatkan kode negara telepon
+function getCountryCallingCode(countryCode: string) {
+  if (!countryCode) return "";
+  const country = allCountries.find(
+    (c: { iso2: string }) => c.iso2.toUpperCase() === countryCode.toUpperCase()
+  );
+  return country ? `+${country.dialCode}` : "";
 }
 
 export default function Booking() {
@@ -140,7 +146,7 @@ export default function Booking() {
   const [hotels, setHotels] = useState<Hotel[]>([]);
   const [isLoadingHotels, setIsLoadingHotels] = useState(false);
   const [selectedHotelRooms, setSelectedHotelRooms] = useState<{hotelId: string, rooms: number, pax: number}[]>([]);
-  const [userData, setUserData] = useState<UserData | null>(null);
+  const [userRegion, setUserRegion] = useState<"domestic" | "overseas">("domestic");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -200,6 +206,14 @@ export default function Booking() {
 
     // Kelompokkan fee berdasarkan kategori
     const feesByCategory = selectedPackage.additional_fees.reduce((acc, fee) => {
+      // Cek apakah fee berlaku untuk region yang dipilih
+      const isApplicableRegion = 
+        fee.region === "Domestic & Overseas" || 
+        (userRegion === "domestic" && fee.region === "Domestic") || 
+        (userRegion === "overseas" && fee.region === "Overseas");
+
+      if (!isApplicableRegion) return acc;
+
       const hasWeekendDay = tripDates.some(date => isWeekend(date));
       const hasWeekdayDay = tripDates.some(date => !isWeekend(date));
       
@@ -220,10 +234,9 @@ export default function Booking() {
     // Untuk setiap kategori, pilih fee yang sesuai dengan range pax
     Object.values(feesByCategory).forEach(fees => {
       if (fees.length > 0) {
-        // Jika ada multiple fee dengan kategori yang sama, pilih yang sesuai range pax
         const applicableFee = tripCount > 0
           ? fees.find(fee => tripCount >= fee.pax_min && tripCount <= fee.pax_max)
-          : fees[0]; // Default ke fee pertama jika belum ada tripCount
+          : fees[0];
 
         if (applicableFee) {
           applicableFees.push(applicableFee);
@@ -232,7 +245,7 @@ export default function Booking() {
     });
 
     return applicableFees;
-  }, [selectedPackage?.additional_fees, selectedDate, selectedDurationDays, tripCount]);
+  }, [selectedPackage?.additional_fees, selectedDate, selectedDurationDays, tripCount, userRegion]);
 
   const calculateTotalBoatCapacity = (boat: Boat) => {
     return boat.cabin
@@ -401,9 +414,17 @@ export default function Booking() {
 
     if (!selectedDurationData?.trip_prices) return 0;
     
-    // Cari harga yang sesuai dengan jumlah pax
+    // Cari harga yang sesuai dengan jumlah pax dan region
     const applicablePrice = selectedDurationData.trip_prices.find(
-      price => tripCount >= price.pax_min && tripCount <= price.pax_max
+      price => {
+        const isInPaxRange = tripCount >= price.pax_min && tripCount <= price.pax_max;
+        // Cek apakah harga sesuai dengan region atau berlaku untuk kedua region
+        const isApplicableRegion = 
+          price.region === "Domestic & Overseas" || 
+          (userRegion === "domestic" && price.region === "Domestic") || 
+          (userRegion === "overseas" && price.region === "Overseas");
+        return isInPaxRange && isApplicableRegion;
+      }
     );
 
     if (!applicablePrice) return 0;
@@ -415,6 +436,14 @@ export default function Booking() {
   };
 
   const calculateAdditionalFeeAmount = (fee: NonNullable<PackageData['additional_fees']>[number]) => {
+    // Cek apakah fee berlaku untuk region yang dipilih
+    const isApplicableRegion = 
+      fee.region === "Domestic & Overseas" || 
+      (userRegion === "domestic" && fee.region === "Domestic") || 
+      (userRegion === "overseas" && fee.region === "Overseas");
+
+    if (!isApplicableRegion) return 0;
+
     const basePrice = Number(fee.price);
     
     switch (fee.unit) {
@@ -423,13 +452,11 @@ export default function Booking() {
       case 'per_5pax':
         return basePrice * Math.ceil(tripCount / 5);
       case 'per_day':
-        // Ambil jumlah hari dari durasi yang dipilih
         const durationData = selectedPackage?.trip_durations?.find(
           d => d.duration_label === selectedDuration
         );
         return basePrice * (durationData?.duration_days || 0);
       case 'per_day_guide':
-        // Guide per hari
         const durationInfo = selectedPackage?.trip_durations?.find(
           d => d.duration_label === selectedDuration
         );
@@ -441,7 +468,16 @@ export default function Booking() {
 
   const calculateAdditionalFees = () => {
     if (!selectedPackage?.additional_fees) return 0;
-    return selectedPackage.additional_fees
+    
+    // Filter additional fees berdasarkan region
+    const applicableFees = selectedPackage.additional_fees.filter(fee => {
+      if (fee.region === "Domestic & Overseas") return true;
+      if (userRegion === "domestic" && fee.region === "Domestic") return true;
+      if (userRegion === "overseas" && fee.region === "Overseas") return true;
+      return false;
+    });
+
+    return applicableFees
       .filter(fee => additionalCharges.includes(fee.id.toString()))
       .reduce((total, fee) => total + calculateAdditionalFeeAmount(fee), 0);
   };
@@ -616,7 +652,7 @@ export default function Booking() {
         console.log('Fetching hotels...');
         const response = await apiRequest<{ data: Hotel[] }>(
           'GET',
-          '/api/hotels'
+          '/api/landing-page/hotels'
         );
         console.log('Hotels response:', response);
         
@@ -679,27 +715,9 @@ export default function Booking() {
     });
   };
 
-  useEffect(() => {
-    const userDataStr = localStorage.getItem('user');
-    if (userDataStr) {
-      const user = JSON.parse(userDataStr);
-      setUserData(user);
-      
-      // Set form data dengan data user
-      setFormData(prev => ({
-        ...prev,
-        name: user.name || "",
-        email: user.email || "",
-        address: user.customer?.alamat || "",
-        country: user.customer?.nasionality || "",
-        phone: user.customer?.no_hp?.replace(/^0/, '') || "", // Hapus awalan 0 jika ada
-      }));
-    }
-  }, []);
-
   const handleBooking = async () => {
     try {
-      if (!selectedPackage || !selectedDate || !userData?.customer?.id) {
+      if (!selectedPackage || !selectedDate || !userRegion) {
         console.error('Missing required data for booking');
         return;
       }
@@ -715,8 +733,8 @@ export default function Booking() {
       const bookingData = {
         trip_id: Number(selectedPackage.id),
         trip_duration_id: durationData?.id || 0,
-        customer_id: userData.customer.id,
-        user_id: userData.id,
+        customer_id: selectedCabins[0].cabinId,
+        user_id: selectedCabins[0].cabinId,
         hotel_occupancy_id: selectedHotelRooms.length > 0 ? 
           Number(selectedHotelRooms[0].hotelId) : null,
         total_pax: tripCount,
@@ -1045,11 +1063,11 @@ export default function Booking() {
               className="flex justify-between mb-4"
             >
               <Badge variant="secondary" className={`${
-                userData?.customer?.region === "overseas" 
+                userRegion === "overseas" 
                   ? "bg-blue-100 text-blue-700 hover:bg-blue-100/80" 
                   : "bg-[#efe6e6] text-gray-700 hover:bg-[#efe6e6]/80"
               }`}>
-                {userData?.customer?.region === "overseas" ? "OVERSEAS" : "DOMESTIC"}
+                {userRegion === "overseas" ? "OVERSEAS" : "DOMESTIC"}
               </Badge>
             </motion.div>
             <div className="grid grid-cols-2 gap-6">
@@ -1066,8 +1084,8 @@ export default function Booking() {
                     <Input 
                       id="name" 
                       value={formData.name}
-                      readOnly
-                      className="bg-gray-100"
+                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="Your name"
                     />
                   </div>
                   <div className="space-y-2">
@@ -1076,8 +1094,8 @@ export default function Booking() {
                       id="email" 
                       type="email" 
                       value={formData.email}
-                      readOnly
-                      className="bg-gray-100"
+                      onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                      placeholder="example@gmail.com"
                     />
                   </div>
                   <div className="space-y-2">
@@ -1085,35 +1103,46 @@ export default function Booking() {
                     <Input 
                       id="address" 
                       value={formData.address}
-                      readOnly
-                      className="bg-gray-100"
+                      onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
+                      placeholder="Your address"
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="country">Country</Label>
-                    <Input 
-                      id="country" 
-                      value={formData.country}
-                      readOnly
-                      className="bg-gray-100"
-                    />
+                    <Select 
+                      value={formData.country} 
+                      onValueChange={(value) => {
+                        setFormData(prev => ({ ...prev, country: value }));
+                        // Update region based on country
+                        setUserRegion(value === "ID" ? "domestic" : "overseas");
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a country" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {countryOptions.map((country) => (
+                          <SelectItem key={country.value} value={country.value}>
+                            {country.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="phone">Phone Number</Label>
                     <div className="flex space-x-2">
-                      <Select defaultValue="+62" disabled>
-                        <SelectTrigger className="w-1/4">
-                          <SelectValue placeholder="+62" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="+62">+62</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <Input
+                        value={getCountryCallingCode(formData.country)}
+                        disabled
+                        className="w-1/4 text-center bg-gray-100"
+                      />
                       <Input 
                         id="phone" 
                         value={formData.phone}
-                        readOnly
-                        className="w-3/4 bg-gray-100"
+                        onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                        placeholder="Nomor telepon"
+                        className="w-3/4"
                       />
                     </div>
                   </div>
