@@ -107,8 +107,8 @@ export interface Trip {
   status: "Aktif" | "Non Aktif"
   is_highlight: "Yes" | "No"
   has_boat: boolean
+  has_hotel: boolean
   destination_count: number
-  region: "Domestic" | "Overseas" | "Domestic & Overseas"
   created_at: string
   updated_at: string
   trip_durations: TripDuration[]

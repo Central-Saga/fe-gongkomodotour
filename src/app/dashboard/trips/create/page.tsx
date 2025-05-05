@@ -35,7 +35,6 @@ const tripSchema = z.object({
   type: z.enum(["Open Trip", "Private Trip"]),
   status: z.enum(["Aktif", "Non Aktif"]),
   is_highlight: z.enum(["Yes", "No"]),
-  region: z.enum(["Domestic", "Overseas", "Domestic & Overseas"]),
   include: z.string().min(1, "Include harus diisi"),
   exclude: z.string().min(1, "Exclude harus diisi"),
   note: z.string().optional(),
@@ -43,6 +42,7 @@ const tripSchema = z.object({
   start_time: z.string().min(1, "Waktu mulai harus diisi"),
   end_time: z.string().min(1, "Waktu selesai harus diisi"),
   has_boat: z.boolean().default(false),
+  has_hotel: z.boolean().default(false),
   destination_count: z.number().min(0, "Jumlah destinasi harus diisi").default(0),
   trip_durations: z.array(z.object({
     duration_label: z.string().min(1, "Label durasi harus diisi"),
@@ -57,10 +57,64 @@ const tripSchema = z.object({
       pax_min: z.number().min(1, "Minimal pax harus diisi"),
       pax_max: z.number().min(1, "Maksimal pax harus diisi"),
       price_per_pax: z.number().min(0, "Harga per pax harus diisi"),
-      status: z.enum(["Aktif", "Non Aktif"])
+      status: z.enum(["Aktif", "Non Aktif"]),
+      region: z.enum(["Domestic", "Overseas", "Domestic & Overseas"])
     }))
-  }))
+  })),
+  flight_schedules: z.array(z.object({
+    route: z.string(),
+    etd_time: z.string(),
+    eta_time: z.string(),
+    etd_text: z.string().optional(),
+    eta_text: z.string().optional(),
+  })).optional(),
+  additional_fees: z.array(z.object({
+    fee_category: z.string(),
+    price: z.number(),
+    region: z.enum(["Domestic", "Overseas", "Domestic & Overseas"]),
+    unit: z.enum(["per_pax", "per_5pax", "per_day", "per_day_guide"]),
+    pax_min: z.number(),
+    pax_max: z.number(),
+    day_type: z.union([z.enum(["Weekday", "Weekend"]), z.null()]),
+    is_required: z.boolean(),
+    status: z.enum(["Aktif", "Non Aktif"]),
+  })).optional(),
+  surcharges: z.array(z.object({
+    season: z.string(),
+    start_date: z.string(),
+    end_date: z.string(),
+    surcharge_price: z.number(),
+    status: z.enum(["Aktif", "Non Aktif"]),
+  })).optional(),
 })
+
+type TripFormType = z.infer<typeof tripSchema> & {
+  flight_schedules?: {
+    route: string;
+    etd_time: string;
+    eta_time: string;
+    etd_text?: string;
+    eta_text?: string;
+  }[];
+  additional_fees?: {
+    fee_category: string;
+    price: number;
+    region: "Domestic" | "Overseas" | "Domestic & Overseas";
+    unit: "per_pax" | "per_5pax" | "per_day" | "per_day_guide";
+    pax_min: number;
+    pax_max: number;
+    day_type: "Weekday" | "Weekend" | null;
+    is_required: boolean;
+    status: "Aktif" | "Non Aktif";
+  }[];
+  surcharges?: {
+    season: string;
+    start_date: string;
+    end_date: string;
+    surcharge_price: number;
+    status: "Aktif" | "Non Aktif";
+  }[];
+};
 
 export default function CreateTripPage() {
   const router = useRouter()
@@ -69,12 +123,11 @@ export default function CreateTripPage() {
   const [fileTitles, setFileTitles] = useState<string[]>([])
   const [fileDescriptions, setFileDescriptions] = useState<string[]>([])
 
-  const defaultValues: z.infer<typeof tripSchema> = {
+  const defaultValues: TripFormType = {
     name: "",
     type: "Open Trip",
     status: "Aktif",
     is_highlight: "No",
-    region: "Domestic",
     include: "",
     exclude: "",
     note: "",
@@ -82,6 +135,7 @@ export default function CreateTripPage() {
     start_time: "",
     end_time: "",
     has_boat: false,
+    has_hotel: false,
     destination_count: 0,
     trip_durations: [{
       duration_label: "",
@@ -96,12 +150,16 @@ export default function CreateTripPage() {
         pax_min: 1,
         pax_max: 1,
         price_per_pax: 0,
-        status: "Aktif"
+        status: "Aktif",
+        region: "Domestic"
       }]
-    }]
+    }],
+    flight_schedules: [],
+    additional_fees: [],
+    surcharges: [],
   }
 
-  const form = useForm<z.infer<typeof tripSchema>>({
+  const form = useForm<TripFormType>({
     resolver: zodResolver(tripSchema),
     defaultValues
   })
@@ -119,15 +177,29 @@ export default function CreateTripPage() {
     }
   }
 
-  const onSubmit = async (values: z.infer<typeof tripSchema>) => {
+  const onSubmit = async (values: TripFormType) => {
     try {
       setIsSubmitting(true)
       
+      // Pastikan format waktu sesuai HH:mm:ss
+      const formatTime = (time: string) => {
+        if (!time) return "";
+        // Jika sudah ada detik, return apa adanya
+        if (/^\d{2}:\d{2}:\d{2}$/.test(time)) return time;
+        // Jika hanya HH:mm, tambahkan :00
+        if (/^\d{2}:\d{2}$/.test(time)) return time + ":00";
+        return time;
+      };
+      const payload = {
+        ...values,
+        start_time: formatTime(values.start_time),
+        end_time: formatTime(values.end_time),
+      };
       // 1. Create trip dulu untuk mendapatkan trip_id
       const response = await apiRequest(
         'POST',
         '/api/trips',
-        values
+        payload
       )
 
       if (response) {
@@ -168,6 +240,52 @@ export default function CreateTripPage() {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  const handleAddFlightSchedule = () => {
+    const currentSchedules = form.getValues("flight_schedules") ?? [];
+    form.setValue("flight_schedules", [
+      ...currentSchedules,
+      {
+        route: "",
+        etd_time: "00:00:00",
+        eta_time: "00:00:00",
+        etd_text: "",
+        eta_text: ""
+      }
+    ])
+  }
+
+  const handleAddAdditionalFee = () => {
+    const currentFees = form.getValues("additional_fees") || [];
+    form.setValue("additional_fees", [
+      ...currentFees,
+      {
+        fee_category: "",
+        price: 0,
+        region: "Domestic",
+        unit: "per_day",
+        pax_min: 1,
+        pax_max: 1,
+        day_type: "Weekday",
+        is_required: false,
+        status: "Aktif"
+      }
+    ])
+  }
+
+  const handleAddSurcharge = () => {
+    const currentSurcharges = form.getValues("surcharges") || [];
+    form.setValue("surcharges", [
+      ...currentSurcharges,
+      {
+        season: "",
+        start_date: "",
+        end_date: "",
+        surcharge_price: 0,
+        status: "Aktif"
+      }
+    ])
   }
 
   return (
@@ -271,20 +389,22 @@ export default function CreateTripPage() {
 
                     <FormField
                       control={form.control}
-                      name="region"
+                      name="has_boat"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Region</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormLabel>Menggunakan Kapal</FormLabel>
+                          <Select 
+                            onValueChange={(value) => field.onChange(value === "true")} 
+                            value={field.value ? "true" : "false"}
+                          >
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Pilih region" />
+                                <SelectValue placeholder="Pilih status" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="Domestic">Domestic</SelectItem>
-                              <SelectItem value="Overseas">Overseas</SelectItem>
-                              <SelectItem value="Domestic & Overseas">Domestic & Overseas</SelectItem>
+                              <SelectItem value="true">Ya</SelectItem>
+                              <SelectItem value="false">Tidak</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -294,76 +414,10 @@ export default function CreateTripPage() {
 
                     <FormField
                       control={form.control}
-                      name="meeting_point"
+                      name="has_hotel"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Meeting Point</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Masukkan meeting point" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="start_time"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Waktu Mulai</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="time" 
-                              {...field}
-                              value={field.value ? field.value.substring(0, 5) : ""}
-                              onChange={(e) => {
-                                const time = e.target.value;
-                                if (time) {
-                                  field.onChange(`${time}:00`);
-                                } else {
-                                  field.onChange("");
-                                }
-                              }}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="end_time"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Waktu Selesai</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="time" 
-                              {...field}
-                              value={field.value ? field.value.substring(0, 5) : ""}
-                              onChange={(e) => {
-                                const time = e.target.value;
-                                if (time) {
-                                  field.onChange(`${time}:00`);
-                                } else {
-                                  field.onChange("");
-                                }
-                              }}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="has_boat"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Menggunakan Kapal</FormLabel>
+                          <FormLabel>Menggunakan Hotel</FormLabel>
                           <Select 
                             onValueChange={(value) => field.onChange(value === "true")} 
                             value={field.value ? "true" : "false"}
@@ -395,6 +449,57 @@ export default function CreateTripPage() {
                               min="0"
                               {...field}
                               onChange={e => field.onChange(parseInt(e.target.value))}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="meeting_point"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Titik Kumpul</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Masukkan titik kumpul"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="start_time"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Waktu Mulai</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="time"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="end_time"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Waktu Selesai</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="time"
+                              {...field}
                             />
                           </FormControl>
                           <FormMessage />
@@ -489,7 +594,8 @@ export default function CreateTripPage() {
                               pax_min: 1,
                               pax_max: 1,
                               price_per_pax: 0,
-                              status: "Aktif"
+                              status: "Aktif",
+                              region: "Domestic"
                             }]
                           }
                         ])
@@ -679,7 +785,8 @@ export default function CreateTripPage() {
                                     pax_min: currentPrices.length > 0 ? currentPrices[currentPrices.length - 1].pax_max + 1 : 1,
                                     pax_max: currentPrices.length > 0 ? currentPrices[currentPrices.length - 1].pax_max + 2 : 2,
                                     price_per_pax: 0,
-                                    status: "Aktif"
+                                    status: "Aktif",
+                                    region: "Domestic"
                                   }
                                 ])
                               }}
@@ -691,7 +798,7 @@ export default function CreateTripPage() {
 
                           <div className="space-y-4">
                             {duration.prices.map((_, pIndex) => (
-                              <div key={pIndex} className="grid grid-cols-5 gap-4 p-4 bg-white rounded-lg items-end">
+                              <div key={pIndex} className="grid grid-cols-6 gap-4 p-4 bg-white rounded-lg items-end">
                                 <FormField
                                   control={form.control}
                                   name={`trip_durations.${dIndex}.prices.${pIndex}.pax_min`}
@@ -767,6 +874,28 @@ export default function CreateTripPage() {
                                     </FormItem>
                                   )}
                                 />
+                                <FormField
+                                  control={form.control}
+                                  name={`trip_durations.${dIndex}.prices.${pIndex}.region`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Region</FormLabel>
+                                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl>
+                                          <SelectTrigger>
+                                            <SelectValue placeholder="Pilih region" />
+                                          </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                          <SelectItem value="Domestic">Domestic</SelectItem>
+                                          <SelectItem value="Overseas">Overseas</SelectItem>
+                                          <SelectItem value="Domestic & Overseas">Domestic & Overseas</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
 
                                 {pIndex > 0 && (
                                   <FormItem className="flex flex-col justify-center">
@@ -794,6 +923,503 @@ export default function CreateTripPage() {
                             ))}
                           </div>
                         </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Flight Schedules */}
+                <div>
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-semibold text-gray-900">Jadwal Penerbangan</h2>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleAddFlightSchedule}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Tambah Jadwal
+                    </Button>
+                  </div>
+                  <div className="space-y-6">
+                    {form.watch("flight_schedules")?.map((_, index) => (
+                      <div key={index} className="p-4 bg-gray-50 rounded-lg space-y-4">
+                        <div className="flex justify-between items-center">
+                          <h3 className="font-medium">Jadwal {index + 1}</h3>
+                          {index > 0 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                const currentSchedules = form.getValues("flight_schedules")
+                                form.setValue("flight_schedules", 
+                                  currentSchedules.filter((_, i) => i !== index)
+                                )
+                              }}
+                            >
+                              <Trash className="w-4 h-4 text-red-500" />
+                            </Button>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-5 gap-4">
+                          <FormField
+                            control={form.control}
+                            name={`flight_schedules.${index}.route`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Rute</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="CGK - DPS" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`flight_schedules.${index}.etd_time`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>ETD</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    type="time" 
+                                    {...field}
+                                    value={field.value ? field.value.substring(0, 5) : "00:00"}
+                                    onChange={(e) => {
+                                      const time = e.target.value;
+                                      if (time) {
+                                        field.onChange(`${time}:00`);
+                                      }
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`flight_schedules.${index}.eta_time`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>ETA</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    type="time" 
+                                    {...field}
+                                    value={field.value ? field.value.substring(0, 5) : "00:00"}
+                                    onChange={(e) => {
+                                      const time = e.target.value;
+                                      if (time) {
+                                        field.onChange(`${time}:00`);
+                                      }
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`flight_schedules.${index}.etd_text`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>ETD Text</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    placeholder="Terminal 3" 
+                                    {...field}
+                                    value={field.value || ""}
+                                    onChange={(e) => {
+                                      const text = e.target.value;
+                                      field.onChange(text);
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`flight_schedules.${index}.eta_text`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>ETA Text</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    placeholder="Terminal Domestik" 
+                                    {...field}
+                                    value={field.value || ""}
+                                    onChange={(e) => {
+                                      const text = e.target.value;
+                                      field.onChange(text);
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Additional Fees */}
+                <div>
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-semibold text-gray-900">Additional Fees</h2>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleAddAdditionalFee}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Tambah Fee
+                    </Button>
+                  </div>
+                  <div className="space-y-6">
+                    {form.watch("additional_fees")?.map((fee, fIndex) => (
+                      <div key={fIndex} className="p-4 bg-gray-50 rounded-lg space-y-6">
+                        <div className="flex justify-between items-center">
+                          <h3 className="font-medium">Fee {fIndex + 1}</h3>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const currentFees = form.getValues("additional_fees") || [];
+                              form.setValue("additional_fees", 
+                                currentFees.filter((_, i) => i !== fIndex)
+                              )
+                            }}
+                          >
+                            <Trash className="w-4 h-4 text-red-500" />
+                          </Button>
+                        </div>
+                        <div className="grid grid-cols-4 gap-4 mb-4">
+                          <FormField
+                            control={form.control}
+                            name={`additional_fees.${fIndex}.fee_category`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Kategori Fee</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Contoh: Parkir" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`additional_fees.${fIndex}.price`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Harga</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    type="number"
+                                    min="0"
+                                    {...field}
+                                    onChange={e => field.onChange(parseInt(e.target.value))}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`additional_fees.${fIndex}.region`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Region</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Pilih region" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="Domestic">Domestic</SelectItem>
+                                    <SelectItem value="Overseas">Overseas</SelectItem>
+                                    <SelectItem value="Domestic & Overseas">Domestic & Overseas</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`additional_fees.${fIndex}.unit`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Satuan</FormLabel>
+                                <FormControl>
+                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Pilih satuan" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      <SelectItem value="per_pax">per_pax</SelectItem>
+                                      <SelectItem value="per_5pax">per_5pax</SelectItem>
+                                      <SelectItem value="per_day">per_day</SelectItem>
+                                      <SelectItem value="per_day_guide">per_day_guide</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name={`additional_fees.${fIndex}.pax_min`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Minimal Pax</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    type="number"
+                                    min="1"
+                                    {...field}
+                                    onChange={e => field.onChange(parseInt(e.target.value))}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`additional_fees.${fIndex}.pax_max`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Maksimal Pax</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    type="number"
+                                    min="1"
+                                    {...field}
+                                    onChange={e => field.onChange(parseInt(e.target.value))}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        <FormField
+                          control={form.control}
+                          name={`additional_fees.${fIndex}.day_type`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Tipe Hari</FormLabel>
+                              <FormControl>
+                                <Select
+                                  onValueChange={value => field.onChange(value === "null" ? null : value)}
+                                  value={field.value ?? "null"}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Pilih tipe hari" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="Weekday">Weekday</SelectItem>
+                                    <SelectItem value="Weekend">Weekend</SelectItem>
+                                    <SelectItem value="null">Tidak Ada</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name={`additional_fees.${fIndex}.is_required`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Diperlukan</FormLabel>
+                              <FormControl>
+                                <Select
+                                  onValueChange={value => field.onChange(value === "true")}
+                                  value={field.value ? "true" : "false"}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Pilih status" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="true">Diperlukan</SelectItem>
+                                    <SelectItem value="false">Tidak Diperlukan</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name={`additional_fees.${fIndex}.status`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Status</FormLabel>
+                              <FormControl>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Pilih status" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="Aktif">Aktif</SelectItem>
+                                    <SelectItem value="Non Aktif">Non Aktif</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Surcharges */}
+                <div>
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-semibold text-gray-900">Surcharges</h2>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleAddSurcharge}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Tambah Surcharge
+                    </Button>
+                  </div>
+                  <div className="space-y-6">
+                    {form.watch("surcharges")?.map((surcharge, sIndex) => (
+                      <div key={sIndex} className="p-4 bg-gray-50 rounded-lg space-y-6">
+                        <div className="flex justify-between items-center">
+                          <h3 className="font-medium">Surcharge {sIndex + 1}</h3>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const currentSurcharges = form.getValues("surcharges") || [];
+                              form.setValue("surcharges", 
+                                currentSurcharges.filter((_, i) => i !== sIndex)
+                              )
+                            }}
+                          >
+                            <Trash className="w-4 h-4 text-red-500" />
+                          </Button>
+                        </div>
+                        <div className="grid grid-cols-4 gap-4">
+                          <FormField
+                            control={form.control}
+                            name={`surcharges.${sIndex}.season`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Season</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Contoh: Musim Panas" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`surcharges.${sIndex}.start_date`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Start Date</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    type="date"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`surcharges.${sIndex}.end_date`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>End Date</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    type="date"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`surcharges.${sIndex}.surcharge_price`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Surcharge Price</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    type="number"
+                                    min="0"
+                                    {...field}
+                                    onChange={e => field.onChange(parseInt(e.target.value))}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        <FormField
+                          control={form.control}
+                          name={`surcharges.${sIndex}.status`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Status</FormLabel>
+                              <FormControl>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Pilih status" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="Aktif">Aktif</SelectItem>
+                                    <SelectItem value="Non Aktif">Non Aktif</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                       </div>
                     ))}
                   </div>
