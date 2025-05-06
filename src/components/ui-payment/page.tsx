@@ -209,6 +209,7 @@ export default function Payment({
     description: '',
   });
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isFinalized, setIsFinalized] = useState(false);
 
   // Ambil tanggal perjalanan dari query param jika ada
   const tripStartDateParam = searchParams.get('date');
@@ -461,6 +462,7 @@ export default function Payment({
       doc.setTextColor(100, 100, 100);
       doc.text(`Dicetak pada: ${new Date().toLocaleString('id-ID')}`, left, y);
       doc.save(`Invoice_Booking_${bookingData.id.toString().padStart(6, '0')}.pdf`);
+      setIsFinalized(true);
     } catch (err) {
       alert('Gagal membuat PDF. Silakan coba lagi.');
       console.error('PDF Error:', err);
@@ -568,6 +570,7 @@ export default function Payment({
                       checked={selectedPaymentMethod === method.bank}
                       onChange={() => setSelectedPaymentMethod(method.bank)}
                       className="mr-4 w-5 h-5 accent-gold"
+                      disabled={isFinalized}
                     />
                     <Image
                       src={method.logo}
@@ -586,6 +589,7 @@ export default function Payment({
                           type="button"
                           onClick={() => handleCopy(method.accountNumber)}
                           className="text-gray-500 hover:text-gray-700"
+                          disabled={isFinalized}
                         >
                           <FaCopy />
                         </button>
@@ -601,6 +605,7 @@ export default function Payment({
                 onClick={handleUploadClick}
                 className="w-full bg-gold text-white py-3 rounded-lg font-bold text-lg flex items-center justify-center mb-2 hover:bg-gold-dark-20 transition"
                 type="button"
+                disabled={isFinalized}
               >
                 <FaUpload className="mr-2" /> Pilih File
               </button>
@@ -610,6 +615,7 @@ export default function Payment({
                 style={{ display: "none" }}
                 accept="image/*,application/pdf"
                 onChange={handleFileChange}
+                disabled={isFinalized}
               />
               {imagePreview ? (
                 <div className="w-full flex justify-center">
@@ -635,6 +641,7 @@ export default function Payment({
                   placeholder="Nama Hotel"
                   value={hotelForm.requested_hotel_name}
                   onChange={e => setHotelForm(f => ({ ...f, requested_hotel_name: e.target.value }))}
+                  disabled={isFinalized}
                 />
                 <input
                   className="border rounded px-3 py-2 mb-2"
@@ -642,12 +649,14 @@ export default function Payment({
                   type="number"
                   value={hotelForm.amount}
                   onChange={e => setHotelForm(f => ({ ...f, amount: e.target.value }))}
+                  disabled={isFinalized}
                 />
                 <input
                   className="border rounded px-3 py-2 mb-2"
                   placeholder="Catatan Konfirmasi"
                   value={hotelForm.confirmed_note}
                   onChange={e => setHotelForm(f => ({ ...f, confirmed_note: e.target.value }))}
+                  disabled={isFinalized}
                 />
                 <input
                   className="border rounded px-3 py-2 mb-2"
@@ -655,12 +664,14 @@ export default function Payment({
                   type="number"
                   value={hotelForm.confirmed_price}
                   onChange={e => setHotelForm(f => ({ ...f, confirmed_price: e.target.value }))}
+                  disabled={isFinalized}
                 />
                 <input
                   className="border rounded px-3 py-2 mb-2 col-span-2"
                   placeholder="Deskripsi (opsional)"
                   value={hotelForm.description}
                   onChange={e => setHotelForm(f => ({ ...f, description: e.target.value }))}
+                  disabled={isFinalized}
                 />
               </div>
               <button
@@ -683,6 +694,7 @@ export default function Payment({
                     description: '',
                   });
                 }}
+                disabled={isFinalized}
               >Tambah Hotel Request</button>
               {hotelRequests.length > 0 && (
                 <div className="mt-4 w-full">
@@ -715,16 +727,27 @@ export default function Payment({
             {/* Button Submit di bawah section upload file */}
             <button
               className={`mt-8 w-full py-4 rounded-lg font-bold text-xl transition-all duration-300 transform hover:scale-105 ${
-                isUploaded && selectedPaymentMethod
+                isUploaded && selectedPaymentMethod && !isFinalized
                   ? "bg-green-500 text-white cursor-pointer hover:bg-green-600"
                   : "bg-gray-300 text-gray-500 cursor-not-allowed"
               }`}
-              disabled={!isUploaded || !selectedPaymentMethod}
+              disabled={!isUploaded || !selectedPaymentMethod || isFinalized}
               type="button"
               onClick={() => setShowDialog(true)}
             >
               Submit
             </button>
+            {/* Tampilkan tombol WhatsApp jika sudah finalized */}
+            {isFinalized && (
+              <a
+                href="https://wa.me/628123867588"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-4 w-full inline-block py-4 rounded-lg font-bold text-xl bg-green-600 text-white text-center hover:bg-green-700 transition"
+              >
+                Hubungi Admin via WhatsApp
+              </a>
+            )}
             {/* Dialog konfirmasi modern dengan framer-motion */}
             <AnimatePresence>
               {showDialog && (
