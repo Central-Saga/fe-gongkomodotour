@@ -19,6 +19,7 @@ interface TripPrice {
   pax_max: number;
   price_per_pax: string;
   status: string;
+  region: string;
   created_at: string;
   updated_at: string;
 }
@@ -88,6 +89,8 @@ interface Cabin {
   status: string;
   created_at: string;
   updated_at: string;
+  booking_total_price?: string;
+  booking_total_pax?: number;
 }
 
 interface User {
@@ -147,6 +150,14 @@ interface BookingData {
   user: User;
   hotel_occupancy: HotelOccupancy;
   additional_fees: AdditionalFee[];
+  customer_country?: string;
+  cabins?: CabinBooking[];
+}
+
+interface CabinBooking {
+  cabin_id: number;
+  total_pax: number;
+  total_price: number;
 }
 
 export default function Payment({
@@ -164,7 +175,7 @@ export default function Payment({
       try {
         const response = await apiRequest<{ data: BookingData }>(
           'GET',
-          `/api/bookings/${bookingId}`
+          `/api/landing-page/bookings/${bookingId}`
         );
         
         if (response.data) {
@@ -191,38 +202,93 @@ export default function Payment({
     alert("Bukti pembayaran berhasil diupload!");
   };
 
+  const getRegionFromCountry = (country: string | undefined) => {
+    if (!country || country === 'ID') return 'domestic';
+    return 'overseas';
+  };
+
   const calculateBasePrice = () => {
     if (!bookingData) return 0;
-    
-    const price = bookingData.trip_duration.trip_prices.find(
-      p => bookingData.total_pax >= p.pax_min && bookingData.total_pax <= p.pax_max
+    const prices = bookingData.trip_duration.trip_prices;
+    const region = getRegionFromCountry(bookingData.customer_country);
+    const price = prices.find(p =>
+      bookingData.total_pax >= p.pax_min &&
+      bookingData.total_pax <= p.pax_max &&
+      (p.region === 'Domestic & Overseas' ||
+       (region === 'domestic' && p.region === 'Domestic') ||
+       (region === 'overseas' && p.region === 'Overseas'))
     );
-    
     return price ? Number(price.price_per_pax) : 0;
   };
 
   const calculateBasePriceTotal = () => {
-    if (!bookingData || !bookingData.total_pax) return 0;
-    return calculateBasePrice() * bookingData.total_pax;
+    const basePrice = calculateBasePrice();
+    const total = basePrice * (bookingData?.total_pax || 0);
+    
+    console.log('Payment Base Price Calculation:', {
+      basePrice,
+      totalPax: bookingData?.total_pax,
+      total
+    });
+    
+    return total;
   };
 
   const calculateAdditionalFees = () => {
     if (!bookingData) return 0;
-    
-    return bookingData.additional_fees.reduce((total, fee) => {
+
+    const region = getRegionFromCountry(bookingData.customer_country);
+    const applicableFees = bookingData.additional_fees.filter(fee => {
+      // Cek apakah fee berlaku untuk region yang dipilih
+      const isApplicableRegion = 
+        fee.region === 'Domestic & Overseas' || 
+        (region === 'domestic' && fee.region === 'Domestic') || 
+        (region === 'overseas' && fee.region === 'Overseas');
+
+      if (!isApplicableRegion) return false;
+
+      // Cek apakah fee sesuai dengan range pax
+      const isInPaxRange = 
+        bookingData.total_pax >= fee.pax_min && 
+        bookingData.total_pax <= fee.pax_max;
+
+      return isInPaxRange;
+    });
+
+    const feesWithAmounts = applicableFees.map(fee => {
+      let amount = 0;
       switch (fee.unit) {
         case 'per_pax':
-          return total + (Number(fee.price) * bookingData.total_pax);
+          amount = Number(fee.price) * bookingData.total_pax;
+          break;
         case 'per_5pax':
-          return total + (Number(fee.price) * Math.ceil(bookingData.total_pax / 5));
+          amount = Number(fee.price) * Math.ceil(bookingData.total_pax / 5);
+          break;
         case 'per_day':
-          return total + (Number(fee.price) * bookingData.trip_duration.duration_days);
+          amount = Number(fee.price) * bookingData.trip_duration.duration_days;
+          break;
         case 'per_day_guide':
-          return total + (Number(fee.price) * bookingData.trip_duration.duration_days);
+          amount = Number(fee.price) * bookingData.trip_duration.duration_days;
+          break;
         default:
-          return total + Number(fee.price);
+          amount = Number(fee.price);
       }
-    }, 0);
+      return { fee, amount };
+    });
+
+    console.log('Payment Additional Fees Detail:', {
+      region,
+      applicableFees: feesWithAmounts.map(({ fee, amount }) => ({
+        category: fee.fee_category,
+        price: fee.price,
+        unit: fee.unit,
+        paxRange: `${fee.pax_min}-${fee.pax_max}`,
+        amount
+      })),
+      total: feesWithAmounts.reduce((total, { amount }) => total + amount, 0)
+    });
+
+    return feesWithAmounts.reduce((total, { amount }) => total + amount, 0);
   };
 
   const calculateCabinPrice = (cabin: Cabin, pax: number) => {
@@ -240,23 +306,53 @@ export default function Payment({
 
   const calculateTotalCabinPrice = () => {
     if (!bookingData?.cabin) return 0;
-    
+
+    // Jika ada booking_total_price, gunakan itu
+    if (bookingData.cabin[0]?.booking_total_price !== undefined) {
+      return bookingData.cabin.reduce((total, cabin) => {
+        return total + Number(cabin.booking_total_price);
+      }, 0);
+    }
+
+    // Jika tidak ada booking_total_price, gunakan booking_total_pax jika ada
     return bookingData.cabin.reduce((total, cabin) => {
-      return total + calculateCabinPrice(cabin, cabin.max_pax);
+      const pax = cabin.booking_total_pax || 0;
+      return total + calculateCabinPrice(cabin, pax);
     }, 0);
   };
 
   const calculateHotelPrice = () => {
     if (!bookingData?.hotel_occupancy) return 0;
     
-    return Number(bookingData.hotel_occupancy.price) * bookingData.trip_duration.duration_nights;
+    // Hitung jumlah malam (durasi hari - 1)
+    const nights = bookingData.trip_duration.duration_days - 1;
+    const total = Number(bookingData.hotel_occupancy.price) * nights;
+
+    console.log('Hotel Price Calculation:', {
+      hotelName: bookingData.hotel_occupancy.hotel_name,
+      pricePerNight: bookingData.hotel_occupancy.price,
+      nights,
+      total
+    });
+
+    return total;
   };
 
   const calculateTotalPrice = () => {
-    return calculateBasePriceTotal() + 
-           calculateAdditionalFees() + 
-           calculateTotalCabinPrice() + 
-           calculateHotelPrice();
+    const basePriceTotal = calculateBasePriceTotal();
+    const additionalFeesTotal = calculateAdditionalFees();
+    const cabinTotal = calculateTotalCabinPrice();
+    const hotelTotal = calculateHotelPrice();
+
+    console.log('Payment Total Price Components:', {
+      basePriceTotal,
+      additionalFeesTotal,
+      cabinTotal,
+      hotelTotal,
+      total: basePriceTotal + additionalFeesTotal + cabinTotal + hotelTotal
+    });
+
+    return basePriceTotal + additionalFeesTotal + cabinTotal + hotelTotal;
   };
 
   if (isLoading) {

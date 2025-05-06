@@ -477,9 +477,20 @@ export default function Booking() {
       return false;
     });
 
-    return applicableFees
+    const feesWithAmounts = applicableFees
       .filter(fee => additionalCharges.includes(fee.id.toString()))
-      .reduce((total, fee) => total + calculateAdditionalFeeAmount(fee), 0);
+      .map(fee => ({
+        fee,
+        amount: calculateAdditionalFeeAmount(fee)
+      }));
+
+    console.log('Booking Additional Fees:', {
+      selectedFees: additionalCharges,
+      applicableFees: feesWithAmounts,
+      total: feesWithAmounts.reduce((total, { amount }) => total + amount, 0)
+    });
+
+    return feesWithAmounts.reduce((total, { amount }) => total + amount, 0);
   };
 
   const calculateSurchargeAmount = () => {
@@ -744,15 +755,40 @@ export default function Booking() {
         status: "Pending",
         start_date: format(selectedDate, "yyyy-MM-dd"),
         end_date: format(endDate, "yyyy-MM-dd"),
-        cabins: selectedCabins.length > 0 ? selectedCabins.map(cabin => ({
-          cabin_id: Number(cabin.cabinId),
-          total_pax: cabin.pax
-        })) : [],
+        total_price: calculateTotalPrice(),
+        cabins: selectedCabins.length > 0 ? selectedCabins.map(cabin => {
+          const cabinData = boats
+            .find(boat => boat.id.toString() === selectedBoat)
+            ?.cabin.find(c => c.id.toString() === cabin.cabinId);
+          
+          return {
+            cabin_id: Number(cabin.cabinId),
+            total_pax: cabin.pax,
+            total_price: cabinData ? calculateCabinPrice(cabinData, cabin.pax) : 0
+          };
+        }) : [],
         boat_ids: selectedBoat ? [Number(selectedBoat)] : [],
-        additional_fee_ids: additionalCharges.map(feeId => ({
-          additional_fee_id: Number(feeId)
-        }))
+        additional_fee_ids: additionalCharges.map(feeId => {
+          const fee = selectedPackage.additional_fees?.find(f => f.id.toString() === feeId);
+          return {
+            additional_fee_id: Number(feeId),
+            total_price: fee ? calculateAdditionalFeeAmount(fee) : 0
+          };
+        })
       };
+
+      // Tampilkan data request
+      console.log('Booking Request Data:', JSON.stringify(bookingData, null, 2));
+
+      // Tampilkan alert dengan data request
+      alert('Data yang akan dikirim ke backend:\n\n' + JSON.stringify(bookingData, null, 2));
+
+      // Tanya user apakah ingin melanjutkan
+      const shouldContinue = window.confirm('Apakah Anda ingin melanjutkan dengan booking ini?');
+      
+      if (!shouldContinue) {
+        return;
+      }
 
       // Kirim data ke API
       const response = await apiRequest<BookingResponse>(
