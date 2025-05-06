@@ -102,16 +102,8 @@ const data = {
           url: "/dashboard/bookings",
         },
         {
-          title: "Get Started",
-          url: "#",
-        },
-        {
-          title: "Tutorials",
-          url: "#",
-        },
-        {
-          title: "Changelog",
-          url: "#",
+          title: "Transactions",
+          url: "/dashboard/transactions",
         },
       ],
     },

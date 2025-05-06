@@ -176,6 +176,13 @@ interface CabinBooking {
   total_price: number;
 }
 
+interface Asset {
+  title: string;
+  description: string;
+  file: File;
+  is_external: boolean;
+}
+
 // Tambahkan interface ekstensi untuk jsPDF
 interface JsPdfWithAutoTable {
   lastAutoTable?: { finalY: number }
@@ -188,6 +195,7 @@ export default function Payment({
   const [bookingData, setBookingData] = useState<BookingData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [paymentProof, setPaymentProof] = useState<File | null>(null);
+  const [assets, setAssets] = useState<Asset[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const searchParams = useSearchParams();
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("");
@@ -240,6 +248,16 @@ export default function Payment({
     if (file) {
       setPaymentProof(file);
       setIsUploaded(true);
+      
+      // Tambahkan file ke assets
+      const newAsset: Asset = {
+        title: "Bukti Transfer",
+        description: "Bukti transfer pembayaran",
+        file: file,
+        is_external: false
+      };
+      setAssets([newAsset]);
+      
       if (file.type.startsWith('image/')) {
         const reader = new FileReader();
         reader.onload = (ev) => {
@@ -776,31 +794,43 @@ export default function Payment({
                             className="px-6 py-2 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 transition"
                             onClick={async () => {
                               setSubmitError(null);
-                              const payload: Record<string, unknown> = {
-                                booking_id: bookingData?.id,
-                                bank_type: selectedPaymentMethod,
-                                total_amount: Number(bookingData?.total_price),
-                                payment_status: 'Menunggu Pembayaran',
-                              };
-                              if (hotelRequests.length > 0) payload.hotel_requests = hotelRequests;
-                              try {
-                                await apiRequest(
-                                  'POST',
-                                  '/api/landing-page/transactions',
-                                  payload
-                                );
-                                setSubmitSuccess(true);
-                                setTimeout(() => {
-                                  setShowDialog(false);
-                                  setSubmitSuccess(false);
-                                }, 4000);
-                              } catch (err: unknown) {
-                                if (typeof err === 'object' && err && 'message' in err) {
-                                  setSubmitError((err as { message?: string }).message || 'Gagal submit transaksi');
-                                } else {
-                                  setSubmitError('Gagal submit transaksi');
-                                }
+                              const formData = new FormData();
+                              
+                              // Tambahkan data transaksi
+                              formData.append('booking_id', String(bookingData?.id));
+                              formData.append('bank_type', selectedPaymentMethod);
+                              formData.append('total_amount', String(bookingData?.total_price));
+                              formData.append('payment_status', 'Menunggu Pembayaran');
+                              
+                              // Tambahkan hotel requests jika ada
+                              if (hotelRequests.length > 0) {
+                                formData.append('hotel_requests', JSON.stringify(hotelRequests));
                               }
+                              
+                              // Tambahkan assets
+                              if (assets.length > 0) {
+                                // Kirim data assets sebagai array
+                                formData.append('assets[0][title]', assets[0].title);
+                                formData.append('assets[0][description]', assets[0].description);
+                                formData.append('assets[0][is_external]', String(Number(assets[0].is_external)));
+                                formData.append('assets[0][file]', assets[0].file);
+                              }
+                              
+                              await apiRequest(
+                                'POST',
+                                '/api/landing-page/transactions',
+                                formData,
+                                {
+                                  headers: {
+                                    'Content-Type': 'multipart/form-data'
+                                  }
+                                }
+                              );
+                              setSubmitSuccess(true);
+                              setTimeout(() => {
+                                setShowDialog(false);
+                                setSubmitSuccess(false);
+                              }, 4000);
                             }}
                           >
                             Konfirmasi
