@@ -89,7 +89,7 @@ export default function AboutUs() {
               className="absolute left-0 top-1/2 -translate-y-1/2 z-10"
             >
               <Image
-                src="/img/about.png"
+                src="/img/about_us.png"
                 alt="About Us Left"
                 width={320}
                 height={400}
@@ -112,7 +112,7 @@ export default function AboutUs() {
               className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20"
             >
               <Image
-                src="/img/about.png"
+                src="/img/about_us.png"
                 alt="About Us Middle"
                 width={320}
                 height={400}
@@ -135,7 +135,7 @@ export default function AboutUs() {
               className="absolute right-0 top-1/2 -translate-y-1/2 z-10"
             >
               <Image
-                src="/img/about.png"
+                src="/img/about_us.png"
                 alt="About Us Right"
                 width={320}
                 height={400}
