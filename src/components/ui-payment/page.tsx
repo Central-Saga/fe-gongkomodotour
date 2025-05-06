@@ -167,6 +167,7 @@ interface BookingData {
   additional_fees: AdditionalFee[];
   customer_country?: string;
   cabins?: CabinBooking[];
+  is_hotel_requested?: number;
 }
 
 interface CabinBooking {
@@ -193,26 +194,14 @@ export default function Payment({
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [showDialog, setShowDialog] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [showUploadNotif, setShowUploadNotif] = useState(false);
-  const [hotelRequests, setHotelRequests] = useState<{
-    requested_hotel_name: string;
-    amount: number;
-    confirmed_note: string;
-    confirmed_price: number;
-    description: string;
-  }[]>([]);
-  const [hotelForm, setHotelForm] = useState({
-    requested_hotel_name: '',
-    amount: '',
-    confirmed_note: '',
-    confirmed_price: '',
-    description: '',
-  });
+  const [hotelRequests, setHotelRequests] = useState<string[]>([]);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isFinalized, setIsFinalized] = useState(false);
 
   // Ambil tanggal perjalanan dari query param jika ada
   const tripStartDateParam = searchParams.get('date');
+
+  const HOTEL_OPTIONS = ['Ayana Komodo Resort', 'Meruorah Hotel'];
 
   useEffect(() => {
     const fetchBookingData = async () => {
@@ -260,8 +249,6 @@ export default function Payment({
       } else {
         setImagePreview(null);
       }
-      setShowUploadNotif(true);
-      setTimeout(() => setShowUploadNotif(false), 2000);
     }
   };
 
@@ -421,6 +408,14 @@ export default function Payment({
         ]);
       }
 
+      // Tambahkan hotel request jika ada
+      if (bookingData.is_hotel_requested === 1 && hotelRequests.length > 0) {
+        rows.push(['Hotel Request', '']);
+        hotelRequests.forEach(hotel => {
+          rows.push([`- ${hotel}`, '']);
+        });
+      }
+
       // Pastikan rows tidak ada undefined/null
       const safeRows = rows.map(row => [row[0] || '-', row[1] || '-']);
 
@@ -557,186 +552,144 @@ export default function Payment({
           </div>
           {/* Right Section: Payment Method & Upload, dst tetap ada seperti sebelumnya */}
           <div className="w-full md:w-1/2 pl-0 md:pl-8">
-            <h2 className="text-lg font-bold">PAYMENT METHOD</h2>
-            <hr className="my-2 border-gray-300" />
-            <form>
-              {paymentDummy.paymentMethods.map((method, index) => (
-                <label key={index} className={`mt-4 flex items-center justify-between cursor-pointer border rounded-lg p-4 mb-2 transition ${selectedPaymentMethod === method.bank ? 'border-gold bg-gold/10' : 'hover:border-gold'}`}> 
-                  <div className="flex items-center">
-                    <input
-                      type="radio"
-                      name="paymentMethod"
-                      value={method.bank}
-                      checked={selectedPaymentMethod === method.bank}
-                      onChange={() => setSelectedPaymentMethod(method.bank)}
-                      className="mr-4 w-5 h-5 accent-gold"
-                      disabled={isFinalized}
-                    />
-                    <Image
-                      src={method.logo}
-                      alt={method.bank}
-                      width={60}
-                      height={60}
-                      className="mr-4"
-                    />
-                    <div>
-                      <p className="font-medium">{method.accountName}</p>
-                      <div className="flex items-center">
-                        <p className="text-xl font-bold mr-2">
-                          {method.accountNumber}
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => handleCopy(method.accountNumber)}
-                          className="text-gray-500 hover:text-gray-700"
+            {bookingData?.is_hotel_requested === 1 ? (
+              <>
+                <h2 className="text-lg font-bold">HOTEL REQUEST</h2>
+                <hr className="my-2 border-gray-300" />
+                <div className="mt-8 w-full bg-blue-50 rounded-lg p-6 border border-blue-200">
+                  <p className="font-semibold text-lg mb-4 text-blue-900">Pilih Hotel</p>
+                  <div className="space-y-4">
+                    {HOTEL_OPTIONS.map((hotel) => (
+                      <label
+                        key={hotel}
+                        className={`flex items-center p-4 border rounded-lg cursor-pointer transition ${
+                          hotelRequests.includes(hotel)
+                            ? 'border-blue-500 bg-blue-100'
+                            : 'hover:border-blue-300'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={hotelRequests.includes(hotel)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setHotelRequests([...hotelRequests, hotel]);
+                            } else {
+                              setHotelRequests(hotelRequests.filter(h => h !== hotel));
+                            }
+                          }}
+                          className="mr-3 h-5 w-5 text-blue-600"
                           disabled={isFinalized}
-                        >
-                          <FaCopy />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </label>
-              ))}
-            </form>
-            <div className="mt-8 bg-gray-50 rounded-lg p-6 flex flex-col items-center border border-gray-200">
-              <p className="font-semibold text-lg mb-2 text-center">Upload Bukti Pembayaran</p>
-              <button
-                onClick={handleUploadClick}
-                className="w-full bg-gold text-white py-3 rounded-lg font-bold text-lg flex items-center justify-center mb-2 hover:bg-gold-dark-20 transition"
-                type="button"
-                disabled={isFinalized}
-              >
-                <FaUpload className="mr-2" /> Pilih File
-              </button>
-              <input
-                type="file"
-                ref={fileInputRef}
-                style={{ display: "none" }}
-                accept="image/*,application/pdf"
-                onChange={handleFileChange}
-                disabled={isFinalized}
-              />
-              {imagePreview ? (
-                <div className="w-full flex justify-center">
-                  <Image
-                    src={imagePreview}
-                    alt="Preview"
-                    width={300}
-                    height={180}
-                    className="rounded-lg shadow object-contain border mb-2 max-h-60"
-                    style={{ maxHeight: '240px', width: 'auto', height: 'auto' }}
-                  />
-                </div>
-              ) : (
-                paymentProof && <span className="text-gray-700 text-sm">{paymentProof.name}</span>
-              )}
-            </div>
-            {/* Form Hotel Request */}
-            <div className="mt-8 w-full bg-blue-50 rounded-lg p-6 border border-blue-200">
-              <p className="font-semibold text-lg mb-4 text-blue-900">Hotel Request (Opsional)</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input
-                  className="border rounded px-3 py-2 mb-2"
-                  placeholder="Nama Hotel"
-                  value={hotelForm.requested_hotel_name}
-                  onChange={e => setHotelForm(f => ({ ...f, requested_hotel_name: e.target.value }))}
-                  disabled={isFinalized}
-                />
-                <input
-                  className="border rounded px-3 py-2 mb-2"
-                  placeholder="Nominal (contoh: 5000000)"
-                  type="number"
-                  value={hotelForm.amount}
-                  onChange={e => setHotelForm(f => ({ ...f, amount: e.target.value }))}
-                  disabled={isFinalized}
-                />
-                <input
-                  className="border rounded px-3 py-2 mb-2"
-                  placeholder="Catatan Konfirmasi"
-                  value={hotelForm.confirmed_note}
-                  onChange={e => setHotelForm(f => ({ ...f, confirmed_note: e.target.value }))}
-                  disabled={isFinalized}
-                />
-                <input
-                  className="border rounded px-3 py-2 mb-2"
-                  placeholder="Harga Konfirmasi"
-                  type="number"
-                  value={hotelForm.confirmed_price}
-                  onChange={e => setHotelForm(f => ({ ...f, confirmed_price: e.target.value }))}
-                  disabled={isFinalized}
-                />
-                <input
-                  className="border rounded px-3 py-2 mb-2 col-span-2"
-                  placeholder="Deskripsi (opsional)"
-                  value={hotelForm.description}
-                  onChange={e => setHotelForm(f => ({ ...f, description: e.target.value }))}
-                  disabled={isFinalized}
-                />
-              </div>
-              <button
-                className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-semibold"
-                type="button"
-                onClick={() => {
-                  if (!hotelForm.requested_hotel_name || !hotelForm.amount) return;
-                  setHotelRequests(reqs => [...reqs, {
-                    requested_hotel_name: hotelForm.requested_hotel_name,
-                    amount: Number(hotelForm.amount),
-                    confirmed_note: hotelForm.confirmed_note,
-                    confirmed_price: Number(hotelForm.confirmed_price),
-                    description: hotelForm.description,
-                  }]);
-                  setHotelForm({
-                    requested_hotel_name: '',
-                    amount: '',
-                    confirmed_note: '',
-                    confirmed_price: '',
-                    description: '',
-                  });
-                }}
-                disabled={isFinalized}
-              >Tambah Hotel Request</button>
-              {hotelRequests.length > 0 && (
-                <div className="mt-4 w-full">
-                  <p className="font-semibold mb-2 text-blue-900">Daftar Hotel Request:</p>
-                  <ul className="list-disc ml-6">
-                    {hotelRequests.map((req, idx) => (
-                      <li key={idx} className="mb-1 text-blue-800">
-                        <span className="font-bold">{req.requested_hotel_name}</span> - Rp{req.amount.toLocaleString('id-ID')}<br />
-                        <span className="text-xs">{req.description}</span>
-                      </li>
+                        />
+                        <span className="font-medium">{hotel}</span>
+                      </label>
                     ))}
-                  </ul>
+                  </div>
                 </div>
-              )}
-            </div>
-            {/* Dialog notifikasi upload file modern */}
-            <AnimatePresence>
-              {showUploadNotif && (
-                <motion.div
-                  initial={{ y: 100, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  exit={{ y: 100, opacity: 0 }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                  className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg font-semibold text-lg"
+                <button
+                  className={`mt-8 w-full py-4 rounded-lg font-bold text-xl transition-all duration-300 transform hover:scale-105 ${
+                    hotelRequests.length > 0 && !isFinalized
+                      ? "bg-green-500 text-white cursor-pointer hover:bg-green-600"
+                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  }`}
+                  disabled={hotelRequests.length === 0 || isFinalized}
+                  type="button"
+                  onClick={() => setShowDialog(true)}
                 >
-                  Bukti pembayaran berhasil diupload!
-                </motion.div>
-              )}
-            </AnimatePresence>
-            {/* Button Submit di bawah section upload file */}
-            <button
-              className={`mt-8 w-full py-4 rounded-lg font-bold text-xl transition-all duration-300 transform hover:scale-105 ${
-                isUploaded && selectedPaymentMethod && !isFinalized
-                  ? "bg-green-500 text-white cursor-pointer hover:bg-green-600"
-                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
-              }`}
-              disabled={!isUploaded || !selectedPaymentMethod || isFinalized}
-              type="button"
-              onClick={() => setShowDialog(true)}
-            >
-              Submit
-            </button>
+                  Submit
+                </button>
+              </>
+            ) : (
+              <>
+                <h2 className="text-lg font-bold">PAYMENT METHOD</h2>
+                <hr className="my-2 border-gray-300" />
+                <form>
+                  {paymentDummy.paymentMethods.map((method, index) => (
+                    <label key={index} className={`mt-4 flex items-center justify-between cursor-pointer border rounded-lg p-4 mb-2 transition ${selectedPaymentMethod === method.bank ? 'border-gold bg-gold/10' : 'hover:border-gold'}`}> 
+                      <div className="flex items-center">
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value={method.bank}
+                          checked={selectedPaymentMethod === method.bank}
+                          onChange={() => setSelectedPaymentMethod(method.bank)}
+                          className="mr-4 w-5 h-5 accent-gold"
+                          disabled={isFinalized}
+                        />
+                        <Image
+                          src={method.logo}
+                          alt={method.bank}
+                          width={60}
+                          height={60}
+                          className="mr-4"
+                        />
+                        <div>
+                          <p className="font-medium">{method.accountName}</p>
+                          <div className="flex items-center">
+                            <p className="text-xl font-bold mr-2">
+                              {method.accountNumber}
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => handleCopy(method.accountNumber)}
+                              className="text-gray-500 hover:text-gray-700"
+                              disabled={isFinalized}
+                            >
+                              <FaCopy />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </label>
+                  ))}
+                </form>
+                <div className="mt-8 bg-gray-50 rounded-lg p-6 flex flex-col items-center border border-gray-200">
+                  <p className="font-semibold text-lg mb-2 text-center">Upload Bukti Pembayaran</p>
+                  <button
+                    onClick={handleUploadClick}
+                    className="w-full bg-gold text-white py-3 rounded-lg font-bold text-lg flex items-center justify-center mb-2 hover:bg-gold-dark-20 transition"
+                    type="button"
+                    disabled={isFinalized}
+                  >
+                    <FaUpload className="mr-2" /> Pilih File
+                  </button>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    style={{ display: "none" }}
+                    accept="image/*,application/pdf"
+                    onChange={handleFileChange}
+                    disabled={isFinalized}
+                  />
+                  {imagePreview ? (
+                    <div className="w-full flex justify-center">
+                      <Image
+                        src={imagePreview}
+                        alt="Preview"
+                        width={300}
+                        height={180}
+                        className="rounded-lg shadow object-contain border mb-2 max-h-60"
+                        style={{ maxHeight: '240px', width: 'auto', height: 'auto' }}
+                      />
+                    </div>
+                  ) : (
+                    paymentProof && <span className="text-gray-700 text-sm">{paymentProof.name}</span>
+                  )}
+                </div>
+                <button
+                  className={`mt-8 w-full py-4 rounded-lg font-bold text-xl transition-all duration-300 transform hover:scale-105 ${
+                    isUploaded && selectedPaymentMethod && !isFinalized
+                      ? "bg-green-500 text-white cursor-pointer hover:bg-green-600"
+                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  }`}
+                  disabled={!isUploaded || !selectedPaymentMethod || isFinalized}
+                  type="button"
+                  onClick={() => setShowDialog(true)}
+                >
+                  Submit
+                </button>
+              </>
+            )}
             {/* Tampilkan tombol WhatsApp jika sudah finalized */}
             {isFinalized && (
               <a
@@ -829,7 +782,7 @@ export default function Payment({
                                 total_amount: Number(bookingData?.total_price),
                                 payment_status: 'Menunggu Pembayaran',
                               };
-                              if (hotelRequests.length > 0) payload.hotel_request_details = hotelRequests;
+                              if (hotelRequests.length > 0) payload.hotel_requests = hotelRequests;
                               try {
                                 await apiRequest(
                                   'POST',

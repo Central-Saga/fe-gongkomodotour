@@ -108,6 +108,7 @@ export interface Trip {
   is_highlight: "Yes" | "No"
   has_boat: boolean
   has_hotel: boolean
+  is_hotel_requested: boolean
   destination_count: number
   created_at: string
   updated_at: string

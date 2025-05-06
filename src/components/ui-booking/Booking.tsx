@@ -63,6 +63,8 @@ interface PackageData {
   }[];
   boatImages?: { image: string; title: string; id: string }[];
   has_boat?: boolean;
+  has_hotel?: boolean;
+  is_hotel_requested?: boolean;
   trip_durations?: {
     id: number;
     duration_label: string;
@@ -308,6 +310,8 @@ export default function Booking() {
               id: asset.id.toString()
             })),
             has_boat: trip.has_boat,
+            has_hotel: trip.has_hotel,
+            is_hotel_requested: trip.is_hotel_requested,
             trip_durations: trip.trip_durations?.map(duration => ({
               id: duration.id,
               duration_label: duration.duration_label,
@@ -774,7 +778,8 @@ export default function Booking() {
             additional_fee_id: Number(feeId),
             total_price: fee ? calculateAdditionalFeeAmount(fee) : 0
           };
-        })
+        }),
+        is_hotel_requested: selectedPackage?.is_hotel_requested ?? false
       };
 
       // Tampilkan data request
@@ -1196,68 +1201,93 @@ export default function Booking() {
                         className="h-20"
                       />
 
-                      {selectedDuration && selectedDate && (
-                        <div className="space-y-2">
-                          <Label>Hotel</Label>
-                          <div className="space-y-4">
-                            {isLoadingHotels ? (
-                              <div className="p-2 text-center text-sm text-gray-500">
-                                Loading hotels...
-                              </div>
-                            ) : hotels.length === 0 ? (
-                              <div className="p-2 text-center text-sm text-gray-500">
-                                Tidak ada hotel tersedia
-                              </div>
-                            ) : (
-                              hotels.map((hotel) => {
-                                const selectedRoom = selectedHotelRooms.find(room => room.hotelId === hotel.id.toString());
-                                const currentRooms = selectedRoom?.rooms || 0;
-                                const currentPax = selectedRoom?.pax || 0;
-                                
-                                return (
-                                  <div key={hotel.id} className="flex items-center justify-between p-3 border rounded-lg">
-                                    <div className="space-y-1">
-                                      <div className="font-medium">{hotel.hotel_name}</div>
-                                      <div className="text-sm text-gray-500">
-                                        {hotel.hotel_type} - {hotel.occupancy}
-                                      </div>
-                                      <div className="text-sm text-gold">
-                                        IDR {Number(hotel.price).toLocaleString('id-ID')}/malam
-                                      </div>
-                                      <div className="text-xs text-gray-500">
-                                        {currentPax} dari {tripCount} pax dialokasikan
-                                      </div>
-                                    </div>
-                                    <div className="flex items-center space-x-2">
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => handleRoomChange(hotel.id.toString(), false)}
-                                        disabled={currentRooms <= 0}
-                                      >
-                                        -
-                                      </Button>
-                                      <Input
-                                        type="number"
-                                        value={currentRooms}
-                                        readOnly
-                                        className="w-16 text-center"
-                                      />
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => handleRoomChange(hotel.id.toString(), true)}
-                                        disabled={calculateTotalSelectedHotelPax() >= tripCount}
-                                      >
-                                        +
-                                      </Button>
-                                    </div>
-                                  </div>
-                                );
-                              })
-                            )}
+                      {selectedDuration && selectedDate && selectedPackage?.has_hotel && (
+                        <>
+                          <div className="flex items-center space-x-2 mb-4">
+                            <input
+                              type="checkbox"
+                              id="hotel-request"
+                              checked={selectedPackage.is_hotel_requested ?? false}
+                              onChange={(e) => {
+                                setSelectedPackage(prev => {
+                                  if (!prev) return prev;
+                                  return {
+                                    ...prev,
+                                    is_hotel_requested: e.target.checked
+                                  };
+                                });
+                              }}
+                              className="rounded focus:ring-gold text-gold"
+                            />
+                            <Label htmlFor="hotel-request" className="cursor-pointer">
+                              Request Hotel
+                            </Label>
                           </div>
-                        </div>
+
+                          {!(selectedPackage.is_hotel_requested ?? false) && (
+                            <div className="space-y-2">
+                              <Label>Hotel</Label>
+                              <div className="space-y-4">
+                                {isLoadingHotels ? (
+                                  <div className="p-2 text-center text-sm text-gray-500">
+                                    Loading hotels...
+                                  </div>
+                                ) : hotels.length === 0 ? (
+                                  <div className="p-2 text-center text-sm text-gray-500">
+                                    Tidak ada hotel tersedia
+                                  </div>
+                                ) : (
+                                  hotels.map((hotel) => {
+                                    const selectedRoom = selectedHotelRooms.find(room => room.hotelId === hotel.id.toString());
+                                    const currentRooms = selectedRoom?.rooms || 0;
+                                    const currentPax = selectedRoom?.pax || 0;
+                                    
+                                    return (
+                                      <div key={hotel.id} className="flex items-center justify-between p-3 border rounded-lg">
+                                        <div className="space-y-1">
+                                          <div className="font-medium">{hotel.hotel_name}</div>
+                                          <div className="text-sm text-gray-500">
+                                            {hotel.hotel_type} - {hotel.occupancy}
+                                          </div>
+                                          <div className="text-sm text-gold">
+                                            IDR {Number(hotel.price).toLocaleString('id-ID')}/malam
+                                          </div>
+                                          <div className="text-xs text-gray-500">
+                                            {currentPax} dari {tripCount} pax dialokasikan
+                                          </div>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handleRoomChange(hotel.id.toString(), false)}
+                                            disabled={currentRooms <= 0}
+                                          >
+                                            -
+                                          </Button>
+                                          <Input
+                                            type="number"
+                                            value={currentRooms}
+                                            readOnly
+                                            className="w-16 text-center"
+                                          />
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handleRoomChange(hotel.id.toString(), true)}
+                                            disabled={calculateTotalSelectedHotelPax() >= tripCount}
+                                          >
+                                            +
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    );
+                                  })
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>
