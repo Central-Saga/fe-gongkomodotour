@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { FaUpload, FaCopy, FaCalendarAlt } from "react-icons/fa";
 import { MdOutlineDescription } from "react-icons/md";
@@ -52,6 +52,7 @@ interface Trip {
   has_boat: boolean;
   created_at: string;
   updated_at: string;
+  surcharges: Surcharge[];
 }
 
 interface Customer {
@@ -130,6 +131,17 @@ interface AdditionalFee {
   updated_at: string;
 }
 
+interface Surcharge {
+  id: number;
+  trip_id: number;
+  surcharge_price: string;
+  start_date: string;
+  end_date: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
 interface BookingData {
   id: number;
   trip_id: number;
@@ -166,7 +178,13 @@ export default function Payment({
   const [isUploaded, setIsUploaded] = useState(false);
   const [bookingData, setBookingData] = useState<BookingData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [paymentProof, setPaymentProof] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Ambil tanggal perjalanan dari query param jika ada
+  const tripStartDateParam = searchParams.get('date');
 
   useEffect(() => {
     const fetchBookingData = async () => {
@@ -196,10 +214,17 @@ export default function Payment({
     alert("Nomor rekening berhasil disalin!");
   };
 
-  const handleUpload = () => {
-    // Simulasi upload bukti pembayaran
-    setIsUploaded(true);
-    alert("Bukti pembayaran berhasil diupload!");
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPaymentProof(file);
+      setIsUploaded(true);
+      alert("Bukti pembayaran berhasil diupload!");
+    }
   };
 
   const getRegionFromCountry = (country: string | undefined) => {
@@ -234,125 +259,48 @@ export default function Payment({
     return total;
   };
 
-  const calculateAdditionalFees = () => {
-    if (!bookingData) return 0;
+  // Fungsi untuk menormalkan tanggal ke jam 00:00:00
+  const normalizeDate = (date: string | Date) => {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  };
 
-    const region = getRegionFromCountry(bookingData.customer_country);
-    const applicableFees = bookingData.additional_fees.filter(fee => {
-      // Cek apakah fee berlaku untuk region yang dipilih
-      const isApplicableRegion = 
-        fee.region === 'Domestic & Overseas' || 
-        (region === 'domestic' && fee.region === 'Domestic') || 
-        (region === 'overseas' && fee.region === 'Overseas');
-
-      if (!isApplicableRegion) return false;
-
-      // Cek apakah fee sesuai dengan range pax
-      const isInPaxRange = 
-        bookingData.total_pax >= fee.pax_min && 
-        bookingData.total_pax <= fee.pax_max;
-
-      return isInPaxRange;
+  // Fungsi untuk mendapatkan array tanggal perjalanan
+  const getTripDates = () => {
+    if (!bookingData) return [];
+    const startDateStr = tripStartDateParam || bookingData.trip?.start_time || bookingData.created_at;
+    const days = bookingData.trip_duration?.duration_days || 0;
+    if (!startDateStr || !days) return [];
+    const startDate = normalizeDate(startDateStr);
+    return Array.from({ length: days }, (_, i) => {
+      const d = new Date(startDate);
+      d.setDate(startDate.getDate() + i);
+      d.setHours(0, 0, 0, 0);
+      return d;
     });
+  };
 
-    const feesWithAmounts = applicableFees.map(fee => {
-      let amount = 0;
-      switch (fee.unit) {
-        case 'per_pax':
-          amount = Number(fee.price) * bookingData.total_pax;
-          break;
-        case 'per_5pax':
-          amount = Number(fee.price) * Math.ceil(bookingData.total_pax / 5);
-          break;
-        case 'per_day':
-          amount = Number(fee.price) * bookingData.trip_duration.duration_days;
-          break;
-        case 'per_day_guide':
-          amount = Number(fee.price) * bookingData.trip_duration.duration_days;
-          break;
-        default:
-          amount = Number(fee.price);
+  // Perhitungan surcharge berdasarkan tanggal perjalanan
+  const calculateSurcharge = () => {
+    console.log('DEBUG bookingData:', bookingData);
+    if (!bookingData?.trip?.surcharges) {
+      console.log('DEBUG: Tidak ada surcharges di trip');
+      return 0;
+    }
+    const tripDates = getTripDates();
+    console.log('DEBUG tripDates:', tripDates);
+    let surchargeAmount = 0;
+    bookingData.trip.surcharges.forEach(surcharge => {
+      const start = normalizeDate(surcharge.start_date);
+      const end = normalizeDate(surcharge.end_date);
+      console.log('DEBUG surcharge period:', start, end, 'price:', surcharge.surcharge_price);
+      const isInSurchargePeriod = tripDates.some(date => date >= start && date <= end);
+      if (isInSurchargePeriod) {
+        surchargeAmount = Number(surcharge.surcharge_price);
       }
-      return { fee, amount };
     });
-
-    console.log('Payment Additional Fees Detail:', {
-      region,
-      applicableFees: feesWithAmounts.map(({ fee, amount }) => ({
-        category: fee.fee_category,
-        price: fee.price,
-        unit: fee.unit,
-        paxRange: `${fee.pax_min}-${fee.pax_max}`,
-        amount
-      })),
-      total: feesWithAmounts.reduce((total, { amount }) => total + amount, 0)
-    });
-
-    return feesWithAmounts.reduce((total, { amount }) => total + amount, 0);
-  };
-
-  const calculateCabinPrice = (cabin: Cabin, pax: number) => {
-    const basePrice = Number(cabin.base_price);
-    const additionalPrice = Number(cabin.additional_price);
-    const minPax = cabin.min_pax;
-    
-    if (pax <= minPax) {
-      return basePrice;
-    } else {
-      const additionalPax = pax - minPax;
-      return basePrice + (additionalPrice * additionalPax);
-    }
-  };
-
-  const calculateTotalCabinPrice = () => {
-    if (!bookingData?.cabin) return 0;
-
-    // Jika ada booking_total_price, gunakan itu
-    if (bookingData.cabin[0]?.booking_total_price !== undefined) {
-      return bookingData.cabin.reduce((total, cabin) => {
-        return total + Number(cabin.booking_total_price);
-      }, 0);
-    }
-
-    // Jika tidak ada booking_total_price, gunakan booking_total_pax jika ada
-    return bookingData.cabin.reduce((total, cabin) => {
-      const pax = cabin.booking_total_pax || 0;
-      return total + calculateCabinPrice(cabin, pax);
-    }, 0);
-  };
-
-  const calculateHotelPrice = () => {
-    if (!bookingData?.hotel_occupancy) return 0;
-    
-    // Hitung jumlah malam (durasi hari - 1)
-    const nights = bookingData.trip_duration.duration_days - 1;
-    const total = Number(bookingData.hotel_occupancy.price) * nights;
-
-    console.log('Hotel Price Calculation:', {
-      hotelName: bookingData.hotel_occupancy.hotel_name,
-      pricePerNight: bookingData.hotel_occupancy.price,
-      nights,
-      total
-    });
-
-    return total;
-  };
-
-  const calculateTotalPrice = () => {
-    const basePriceTotal = calculateBasePriceTotal();
-    const additionalFeesTotal = calculateAdditionalFees();
-    const cabinTotal = calculateTotalCabinPrice();
-    const hotelTotal = calculateHotelPrice();
-
-    console.log('Payment Total Price Components:', {
-      basePriceTotal,
-      additionalFeesTotal,
-      cabinTotal,
-      hotelTotal,
-      total: basePriceTotal + additionalFeesTotal + cabinTotal + hotelTotal
-    });
-
-    return basePriceTotal + additionalFeesTotal + cabinTotal + hotelTotal;
+    return surchargeAmount * (bookingData.total_pax || 1);
   };
 
   if (isLoading) {
@@ -414,12 +362,10 @@ export default function Payment({
 
               {/* Cabin Details */}
               {bookingData?.cabin.map((cabin, index) => {
-                const cabinPrice = calculateCabinPrice(cabin, cabin.max_pax);
-                
                 return (
                   <div key={index}>
                     <p>{cabin.cabin_name} ({cabin.bed_type})</p>
-                    <p>{cabin.max_pax} pax = IDR {cabinPrice.toLocaleString('id-ID')}</p>
+                    <p>{cabin.max_pax} pax</p>
                   </div>
                 );
               })}
@@ -431,13 +377,21 @@ export default function Payment({
                   <p>IDR {Number(bookingData.hotel_occupancy.price).toLocaleString('id-ID')}/malam x {bookingData.trip_duration.duration_nights} malam</p>
                 </div>
               )}
+
+              {/* Surcharge Details */}
+              <div>
+                <p>Surcharge (High Peak Season)</p>
+                <p>
+                  IDR {(bookingData && bookingData.total_pax ? (calculateSurcharge() / bookingData.total_pax) : 0).toLocaleString('id-ID')}/pax x {bookingData?.total_pax} pax = IDR {calculateSurcharge().toLocaleString('id-ID')}
+                </p>
+              </div>
             </div>
             <div className="flex justify-end mt-6">
               <p className="font-semibold text-right mr-4">Sub Total</p>
-              <p className="text-gray-600">IDR {calculateTotalPrice().toLocaleString('id-ID')}</p>
+              <p className="text-gray-600">IDR {Number(bookingData?.total_price || 0).toLocaleString('id-ID')}</p>
             </div>
             <hr className="my-4 border-gray-300" />
-            <p className="font-bold text-lg">Jumlah Total: IDR {calculateTotalPrice().toLocaleString('id-ID')}</p>
+            <p className="font-bold text-lg">Jumlah Total: IDR {Number(bookingData?.total_price || 0).toLocaleString('id-ID')}</p>
           </div>
 
           {/* Right Section: Payment Method */}
@@ -474,13 +428,25 @@ export default function Payment({
                 </div>
               </div>
             ))}
+            <input
+              type="file"
+              ref={fileInputRef}
+              style={{ display: "none" }}
+              accept="image/*,application/pdf"
+              onChange={handleFileChange}
+            />
             <button
-              onClick={handleUpload}
-              className="mt-6 w-full bg-yellow-400 text-white py-4 rounded-lg font-bold text-xl flex items-center justify-center"
+              onClick={handleUploadClick}
+              className="mt-6 w-full bg-gold text-white py-4 rounded-lg font-bold text-xl flex items-center justify-center"
             >
               <FaUpload className="mr-2" />
               Upload Bukti Pembayaran
             </button>
+            {paymentProof && (
+              <div className="mt-2 text-green-600 text-sm">
+                File terpilih: {paymentProof.name}
+              </div>
+            )}
           </div>
         </div>
 
