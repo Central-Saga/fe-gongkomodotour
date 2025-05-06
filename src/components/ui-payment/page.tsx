@@ -8,6 +8,8 @@ import { MdOutlineDescription } from "react-icons/md";
 import { apiRequest } from "@/lib/api";
 import { paymentDummy } from "@/data/paymentDummy";
 import { motion, AnimatePresence } from "framer-motion";
+import jsPDF from "jspdf";
+import autoTable from 'jspdf-autotable';
 
 interface PaymentProps {
   bookingId: string | null;
@@ -173,6 +175,11 @@ interface CabinBooking {
   total_price: number;
 }
 
+// Tambahkan interface ekstensi untuk jsPDF
+interface JsPdfWithAutoTable {
+  lastAutoTable?: { finalY: number }
+}
+
 export default function Payment({
   bookingId,
 }: PaymentProps) {
@@ -331,6 +338,133 @@ export default function Payment({
       }
     });
     return surchargeAmount * (bookingData.total_pax || 1);
+  };
+
+  // Tambahkan fungsi handlePrintInvoice
+  const handlePrintInvoice = () => {
+    if (!bookingData) return;
+    try {
+      const doc = new jsPDF();
+      const gold: [number, number, number] = [218, 165, 32];
+      const left = 15;
+      const right = 195;
+      let y = 20;
+
+      // Header
+      doc.setFontSize(10);
+      doc.text('Gong Komodo Tour', left, y);
+      doc.setFontSize(22);
+      doc.setTextColor(gold[0], gold[1], gold[2]);
+      doc.text('INVOICE', right, y, { align: 'right' });
+      y += 8;
+      doc.setDrawColor(gold[0], gold[1], gold[2]);
+      doc.setLineWidth(1);
+      doc.line(left, y, right, y);
+      y += 6;
+
+      // Info Booking Box
+      doc.setFillColor(245, 245, 245);
+      doc.roundedRect(left, y, right - left, 24, 3, 3, 'F');
+      doc.setFontSize(11);
+      doc.setTextColor(0, 0, 0);
+      let infoY = y + 7;
+      doc.text(`Booking Code: #${bookingData.id.toString().padStart(6, '0')}`, left + 4, infoY);
+      if (bookingData.customer?.user_id) {
+        doc.text(`Customer: ${bookingData.customer?.user_id ? bookingData.user?.name : '-'}`, left + 70, infoY);
+      }
+      infoY += 7;
+      doc.text(`Trip: ${bookingData.trip.name}`, left + 4, infoY);
+      doc.text(`Tanggal Booking: ${new Date(bookingData.created_at).toLocaleString('id-ID')}`, left + 70, infoY);
+      y += 28;
+
+      // Rincian Biaya Table
+      doc.setFontSize(13);
+      doc.setTextColor(gold[0], gold[1], gold[2]);
+      doc.text('Rincian Biaya', left, y);
+      y += 4;
+      doc.setTextColor(0, 0, 0);
+
+      // Siapkan data tabel
+      const rows: [string, string][] = [];
+      rows.push([
+        bookingData.trip.type === 'Open Trip' ? 'Open Trip' : 'Private Trip',
+        `IDR ${calculateBasePrice().toLocaleString('id-ID')}/pax x ${bookingData.total_pax} pax = IDR ${calculateBasePriceTotal().toLocaleString('id-ID')}`
+      ]);
+      bookingData.additional_fees.forEach(fee => {
+        rows.push([
+          fee.fee_category || '-',
+          `IDR ${Number(fee.price).toLocaleString('id-ID')}` +
+            (fee.unit === 'per_pax' ? '/pax' : '') +
+            (fee.unit === 'per_5pax' ? '/5 pax' : '') +
+            (fee.unit === 'per_day' ? '/hari' : '') +
+            (fee.unit === 'per_day_guide' ? '/hari' : '')
+        ]);
+      });
+      bookingData.cabin.forEach(cabin => {
+        rows.push([
+          `${cabin.cabin_name || '-'} (${cabin.bed_type || '-'})`,
+          `${cabin.max_pax || 0} pax`
+        ]);
+      });
+      if (bookingData.hotel_occupancy) {
+        rows.push([
+          `${bookingData.hotel_occupancy.hotel_name || '-'} (${bookingData.hotel_occupancy.occupancy || '-'})`,
+          `IDR ${Number(bookingData.hotel_occupancy.price).toLocaleString('id-ID')}/malam x ${bookingData.trip_duration.duration_nights} malam`
+        ]);
+      }
+      const surcharge = calculateSurcharge();
+      if (surcharge > 0) {
+        rows.push([
+          'Surcharge (High Peak Season)',
+          `IDR ${(surcharge / (bookingData.total_pax || 1)).toLocaleString('id-ID')}/pax x ${bookingData.total_pax} pax = IDR ${surcharge.toLocaleString('id-ID')}`
+        ]);
+      }
+
+      // Pastikan rows tidak ada undefined/null
+      const safeRows = rows.map(row => [row[0] || '-', row[1] || '-']);
+
+      autoTable(doc, {
+        startY: y + 4,
+        head: [['Keterangan', 'Nominal']],
+        body: safeRows,
+        theme: 'grid',
+        headStyles: { fillColor: gold, textColor: 255, fontStyle: 'bold' },
+        bodyStyles: { textColor: 20 },
+        styles: { fontSize: 11, cellPadding: 2 },
+        columnStyles: { 1: { halign: 'right' } },
+        margin: { left: left, right: 15 },
+      });
+      // Type guard untuk akses lastAutoTable
+      let lastY = y + 8;
+      const docWithTable = doc as JsPdfWithAutoTable;
+      if (docWithTable.lastAutoTable && typeof docWithTable.lastAutoTable.finalY === 'number') {
+        lastY = docWithTable.lastAutoTable.finalY + 8;
+      }
+      y = lastY;
+
+      // Sub Total & Jumlah Total
+      doc.setFontSize(13);
+      doc.setTextColor(gold[0], gold[1], gold[2]);
+      doc.text('Sub Total:', left, y);
+      doc.setFontSize(13);
+      doc.setTextColor(0, 0, 0);
+      doc.text(`IDR ${Number(bookingData.total_price || 0).toLocaleString('id-ID')}`, right, y, { align: 'right' });
+      y += 9;
+      doc.setFontSize(15);
+      doc.setTextColor(gold[0], gold[1], gold[2]);
+      doc.text('Jumlah Total:', left, y);
+      doc.text(`IDR ${Number(bookingData.total_price || 0).toLocaleString('id-ID')}`, right, y, { align: 'right' });
+      y += 15;
+
+      // Footer
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text(`Dicetak pada: ${new Date().toLocaleString('id-ID')}`, left, y);
+      doc.save(`Invoice_Booking_${bookingData.id.toString().padStart(6, '0')}.pdf`);
+    } catch (err) {
+      alert('Gagal membuat PDF. Silakan coba lagi.');
+      console.error('PDF Error:', err);
+    }
   };
 
   if (isLoading) {
@@ -732,6 +866,20 @@ export default function Payment({
                         >
                           Terima kasih, bukti pembayaran Anda telah dikirim.
                         </motion.p>
+                        <div className="flex gap-4 mt-4">
+                          <button
+                            className="px-6 py-2 rounded-lg bg-gold text-white font-semibold hover:bg-gold-dark-20 transition"
+                            onClick={handlePrintInvoice}
+                          >
+                            Cetak Invoice (PDF)
+                          </button>
+                          <button
+                            className="px-6 py-2 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition"
+                            onClick={() => setShowDialog(false)}
+                          >
+                            Tutup
+                          </button>
+                        </div>
                       </motion.div>
                     )}
                   </motion.div>
