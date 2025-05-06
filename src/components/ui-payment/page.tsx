@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { FaUpload, FaCopy, FaCalendarAlt } from "react-icons/fa";
 import { MdOutlineDescription } from "react-icons/md";
 import { apiRequest } from "@/lib/api";
 import { paymentDummy } from "@/data/paymentDummy";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface PaymentProps {
   bookingId: string | null;
@@ -180,8 +181,27 @@ export default function Payment({
   const [isLoading, setIsLoading] = useState(true);
   const [paymentProof, setPaymentProof] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const router = useRouter();
   const searchParams = useSearchParams();
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("");
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [showDialog, setShowDialog] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [showUploadNotif, setShowUploadNotif] = useState(false);
+  const [hotelRequests, setHotelRequests] = useState<{
+    requested_hotel_name: string;
+    amount: number;
+    confirmed_note: string;
+    confirmed_price: number;
+    description: string;
+  }[]>([]);
+  const [hotelForm, setHotelForm] = useState({
+    requested_hotel_name: '',
+    amount: '',
+    confirmed_note: '',
+    confirmed_price: '',
+    description: '',
+  });
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Ambil tanggal perjalanan dari query param jika ada
   const tripStartDateParam = searchParams.get('date');
@@ -223,7 +243,17 @@ export default function Payment({
     if (file) {
       setPaymentProof(file);
       setIsUploaded(true);
-      alert("Bukti pembayaran berhasil diupload!");
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          setImagePreview(ev.target?.result as string);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        setImagePreview(null);
+      }
+      setShowUploadNotif(true);
+      setTimeout(() => setShowUploadNotif(false), 2000);
     }
   };
 
@@ -315,158 +345,403 @@ export default function Payment({
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f5f5] flex justify-center p-8">
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="min-h-screen bg-[#f5f5f5] flex justify-center p-8"
+    >
       <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-7xl relative">
-        <h1 className="text-3xl font-bold text-center mb-6">Order Summary</h1>
-        <div className="flex justify-between">
+        <div className="flex flex-col md:flex-row gap-8">
           {/* Left Section: Details */}
-          <div className="w-1/2 pr-6">
-            <h2 className="text-lg font-bold mb-5">DETAILS</h2>
-            <div className="flex items-center mb-4">
-              <div className="text-gray-500 text-2xl mr-4">
-                {/* No icon for Booking Code */}
+          <div className="w-full md:w-1/2 pr-0 md:pr-8">
+            <h2 className="text-2xl md:text-3xl font-bold text-left mb-8 tracking-tight border-l-4 border-gold pl-4 text-gold">DETAILS</h2>
+            <div className="mb-8">
+              <div className="flex flex-col gap-2 mb-4">
+                <span className="font-bold text-base md:text-lg text-gray-900">Booking Code: <span className="font-black text-black">#{bookingData?.id.toString().padStart(6, '0')}</span></span>
               </div>
-              <p className="font-bold">
-                Booking Code: #{bookingData?.id.toString().padStart(6, '0')}
-              </p>
-            </div>
-            <div className="flex items-center mb-4">
-              <MdOutlineDescription className="text-[#343232] text-2xl mr-4" />
-              <div>
-                <p className="font-semibold">Deskripsi</p>
-                <p>{bookingData?.trip.name}</p>
+              <div className="flex items-start gap-3 mb-2">
+                <MdOutlineDescription className="text-gold text-xl mt-1" />
+                <div>
+                  <span className="font-semibold block leading-tight text-gray-900">Deskripsi</span>
+                  <span className="text-black block">{bookingData?.trip.name}</span>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center mb-4">
-              <FaCalendarAlt className="text-[#343232] text-2xl mr-4" />
-              <div>
-                <p className="font-semibold">Date</p>
-                <p>Bayar sebelum {new Date(bookingData?.created_at || "").toLocaleString()}</p>
+              <div className="flex items-start gap-3 mb-2">
+                <FaCalendarAlt className="text-gold text-xl mt-1" />
+                <div>
+                  <span className="font-semibold block leading-tight text-gray-900">Date</span>
+                  <span className="text-black block">Bayar sebelum {new Date(bookingData?.created_at || "").toLocaleString()}</span>
+                </div>
               </div>
             </div>
-            <hr className="my-4 border-gray-300" />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <hr className="my-6 border-gray-200" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 mb-8">
               {/* Base Price */}
-              <div>
-                <p>{bookingData?.trip.type === "Open Trip" ? "Open Trip" : "Private Trip"}</p>
-                <p>IDR {calculateBasePrice().toLocaleString('id-ID')}/pax x {bookingData?.total_pax} pax = IDR {calculateBasePriceTotal().toLocaleString('id-ID')}</p>
+              <div className="mb-2">
+                <span className="font-semibold block mb-1 text-gray-900">{bookingData?.trip.type === "Open Trip" ? "Open Trip" : "Private Trip"}</span>
+                <span className="text-black">IDR {calculateBasePrice().toLocaleString('id-ID')}/pax x {bookingData?.total_pax} pax = <b>IDR {calculateBasePriceTotal().toLocaleString('id-ID')}</b></span>
               </div>
-
               {/* Additional Fees */}
               {bookingData?.additional_fees.map((fee, index) => (
-                <div key={index}>
-                  <p>{fee.fee_category}</p>
-                  <p>IDR {Number(fee.price).toLocaleString('id-ID')}{fee.unit === 'per_pax' ? '/pax' : ''}{fee.unit === 'per_5pax' ? '/5 pax' : ''}{fee.unit === 'per_day' ? '/hari' : ''}{fee.unit === 'per_day_guide' ? '/hari' : ''}</p>
+                <div key={index} className="mb-2">
+                  <span className="font-semibold block mb-1 text-gray-900">{fee.fee_category}</span>
+                  <span className="text-black">IDR {Number(fee.price).toLocaleString('id-ID')}{fee.unit === 'per_pax' ? '/pax' : ''}{fee.unit === 'per_5pax' ? '/5 pax' : ''}{fee.unit === 'per_day' ? '/hari' : ''}{fee.unit === 'per_day_guide' ? '/hari' : ''}</span>
                 </div>
               ))}
-
               {/* Cabin Details */}
-              {bookingData?.cabin.map((cabin, index) => {
-                return (
-                  <div key={index}>
-                    <p>{cabin.cabin_name} ({cabin.bed_type})</p>
-                    <p>{cabin.max_pax} pax</p>
-                  </div>
-                );
-              })}
-
+              {bookingData?.cabin.map((cabin, index) => (
+                <div key={index} className="mb-2">
+                  <span className="font-semibold block mb-1 text-gray-900">{cabin.cabin_name} ({cabin.bed_type})</span>
+                  <span className="text-black">{cabin.max_pax} pax</span>
+                </div>
+              ))}
               {/* Hotel Details */}
               {bookingData?.hotel_occupancy && (
-                <div>
-                  <p>{bookingData.hotel_occupancy.hotel_name} ({bookingData.hotel_occupancy.occupancy})</p>
-                  <p>IDR {Number(bookingData.hotel_occupancy.price).toLocaleString('id-ID')}/malam x {bookingData.trip_duration.duration_nights} malam</p>
+                <div className="mb-2">
+                  <span className="font-semibold block mb-1 text-gray-900">{bookingData.hotel_occupancy.hotel_name} ({bookingData.hotel_occupancy.occupancy})</span>
+                  <span className="text-black">IDR {Number(bookingData.hotel_occupancy.price).toLocaleString('id-ID')}/malam x {bookingData.trip_duration.duration_nights} malam</span>
                 </div>
               )}
-
               {/* Surcharge Details */}
-              <div>
-                <p>Surcharge (High Peak Season)</p>
-                <p>
-                  IDR {(bookingData && bookingData.total_pax ? (calculateSurcharge() / bookingData.total_pax) : 0).toLocaleString('id-ID')}/pax x {bookingData?.total_pax} pax = IDR {calculateSurcharge().toLocaleString('id-ID')}
-                </p>
+              <div className="mb-2">
+                <span className="font-semibold block mb-1 text-gray-900">Surcharge (High Peak Season)</span>
+                <span className="text-black">IDR {(bookingData && bookingData.total_pax ? (calculateSurcharge() / bookingData.total_pax) : 0).toLocaleString('id-ID')}/pax x {bookingData?.total_pax} pax = <b>IDR {calculateSurcharge().toLocaleString('id-ID')}</b></span>
               </div>
             </div>
-            <div className="flex justify-end mt-6">
-              <p className="font-semibold text-right mr-4">Sub Total</p>
-              <p className="text-gray-600">IDR {Number(bookingData?.total_price || 0).toLocaleString('id-ID')}</p>
+            <div className="flex justify-end items-center mb-2">
+              <span className="font-bold text-lg mr-4 text-gold">Sub Total</span>
+              <span className="text-black font-bold text-lg">IDR {Number(bookingData?.total_price || 0).toLocaleString('id-ID')}</span>
             </div>
-            <hr className="my-4 border-gray-300" />
-            <p className="font-bold text-lg">Jumlah Total: IDR {Number(bookingData?.total_price || 0).toLocaleString('id-ID')}</p>
+            <hr className="my-4 border-gold/40" />
+            <div className="flex justify-between items-center">
+              <span className="font-black text-xl md:text-2xl text-gold">Jumlah Total:</span>
+              <span className="font-black text-xl md:text-2xl text-gold">IDR {Number(bookingData?.total_price || 0).toLocaleString('id-ID')}</span>
+            </div>
           </div>
-
-          {/* Right Section: Payment Method */}
-          <div className="w-1/2 pl-6">
+          {/* Right Section: Payment Method & Upload, dst tetap ada seperti sebelumnya */}
+          <div className="w-full md:w-1/2 pl-0 md:pl-8">
             <h2 className="text-lg font-bold">PAYMENT METHOD</h2>
             <hr className="my-2 border-gray-300" />
-            {paymentDummy.paymentMethods.map((method, index) => (
-              <div
-                className="mt-4 flex items-center justify-between"
-                key={index}
-              >
-                <div className="flex items-center">
-                  <Image
-                    src={method.logo}
-                    alt={method.bank}
-                    width={300}
-                    height={300}
-                    className="mr-4"
-                  />
-                  <div>
-                    <p className="font-medium">{method.accountName}</p>
-                    <div className="flex items-center">
-                      <p className="text-xl font-bold mr-2">
-                        {method.accountNumber}
-                      </p>
-                      <button
-                        onClick={() => handleCopy(method.accountNumber)}
-                        className="text-gray-500 hover:text-gray-700"
-                      >
-                        <FaCopy />
-                      </button>
+            <form>
+              {paymentDummy.paymentMethods.map((method, index) => (
+                <label key={index} className={`mt-4 flex items-center justify-between cursor-pointer border rounded-lg p-4 mb-2 transition ${selectedPaymentMethod === method.bank ? 'border-gold bg-gold/10' : 'hover:border-gold'}`}> 
+                  <div className="flex items-center">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value={method.bank}
+                      checked={selectedPaymentMethod === method.bank}
+                      onChange={() => setSelectedPaymentMethod(method.bank)}
+                      className="mr-4 w-5 h-5 accent-gold"
+                    />
+                    <Image
+                      src={method.logo}
+                      alt={method.bank}
+                      width={60}
+                      height={60}
+                      className="mr-4"
+                    />
+                    <div>
+                      <p className="font-medium">{method.accountName}</p>
+                      <div className="flex items-center">
+                        <p className="text-xl font-bold mr-2">
+                          {method.accountNumber}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => handleCopy(method.accountNumber)}
+                          className="text-gray-500 hover:text-gray-700"
+                        >
+                          <FaCopy />
+                        </button>
+                      </div>
                     </div>
                   </div>
+                </label>
+              ))}
+            </form>
+            <div className="mt-8 bg-gray-50 rounded-lg p-6 flex flex-col items-center border border-gray-200">
+              <p className="font-semibold text-lg mb-2 text-center">Upload Bukti Pembayaran</p>
+              <button
+                onClick={handleUploadClick}
+                className="w-full bg-gold text-white py-3 rounded-lg font-bold text-lg flex items-center justify-center mb-2 hover:bg-gold-dark-20 transition"
+                type="button"
+              >
+                <FaUpload className="mr-2" /> Pilih File
+              </button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                style={{ display: "none" }}
+                accept="image/*,application/pdf"
+                onChange={handleFileChange}
+              />
+              {imagePreview ? (
+                <div className="w-full flex justify-center">
+                  <Image
+                    src={imagePreview}
+                    alt="Preview"
+                    width={300}
+                    height={180}
+                    className="rounded-lg shadow object-contain border mb-2 max-h-60"
+                    style={{ maxHeight: '240px', width: 'auto', height: 'auto' }}
+                  />
                 </div>
+              ) : (
+                paymentProof && <span className="text-gray-700 text-sm">{paymentProof.name}</span>
+              )}
+            </div>
+            {/* Form Hotel Request */}
+            <div className="mt-8 w-full bg-blue-50 rounded-lg p-6 border border-blue-200">
+              <p className="font-semibold text-lg mb-4 text-blue-900">Hotel Request (Opsional)</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input
+                  className="border rounded px-3 py-2 mb-2"
+                  placeholder="Nama Hotel"
+                  value={hotelForm.requested_hotel_name}
+                  onChange={e => setHotelForm(f => ({ ...f, requested_hotel_name: e.target.value }))}
+                />
+                <input
+                  className="border rounded px-3 py-2 mb-2"
+                  placeholder="Nominal (contoh: 5000000)"
+                  type="number"
+                  value={hotelForm.amount}
+                  onChange={e => setHotelForm(f => ({ ...f, amount: e.target.value }))}
+                />
+                <input
+                  className="border rounded px-3 py-2 mb-2"
+                  placeholder="Catatan Konfirmasi"
+                  value={hotelForm.confirmed_note}
+                  onChange={e => setHotelForm(f => ({ ...f, confirmed_note: e.target.value }))}
+                />
+                <input
+                  className="border rounded px-3 py-2 mb-2"
+                  placeholder="Harga Konfirmasi"
+                  type="number"
+                  value={hotelForm.confirmed_price}
+                  onChange={e => setHotelForm(f => ({ ...f, confirmed_price: e.target.value }))}
+                />
+                <input
+                  className="border rounded px-3 py-2 mb-2 col-span-2"
+                  placeholder="Deskripsi (opsional)"
+                  value={hotelForm.description}
+                  onChange={e => setHotelForm(f => ({ ...f, description: e.target.value }))}
+                />
               </div>
-            ))}
-            <input
-              type="file"
-              ref={fileInputRef}
-              style={{ display: "none" }}
-              accept="image/*,application/pdf"
-              onChange={handleFileChange}
-            />
+              <button
+                className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-semibold"
+                type="button"
+                onClick={() => {
+                  if (!hotelForm.requested_hotel_name || !hotelForm.amount) return;
+                  setHotelRequests(reqs => [...reqs, {
+                    requested_hotel_name: hotelForm.requested_hotel_name,
+                    amount: Number(hotelForm.amount),
+                    confirmed_note: hotelForm.confirmed_note,
+                    confirmed_price: Number(hotelForm.confirmed_price),
+                    description: hotelForm.description,
+                  }]);
+                  setHotelForm({
+                    requested_hotel_name: '',
+                    amount: '',
+                    confirmed_note: '',
+                    confirmed_price: '',
+                    description: '',
+                  });
+                }}
+              >Tambah Hotel Request</button>
+              {hotelRequests.length > 0 && (
+                <div className="mt-4 w-full">
+                  <p className="font-semibold mb-2 text-blue-900">Daftar Hotel Request:</p>
+                  <ul className="list-disc ml-6">
+                    {hotelRequests.map((req, idx) => (
+                      <li key={idx} className="mb-1 text-blue-800">
+                        <span className="font-bold">{req.requested_hotel_name}</span> - Rp{req.amount.toLocaleString('id-ID')}<br />
+                        <span className="text-xs">{req.description}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+            {/* Dialog notifikasi upload file modern */}
+            <AnimatePresence>
+              {showUploadNotif && (
+                <motion.div
+                  initial={{ y: 100, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: 100, opacity: 0 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                  className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg font-semibold text-lg"
+                >
+                  Bukti pembayaran berhasil diupload!
+                </motion.div>
+              )}
+            </AnimatePresence>
+            {/* Button Submit di bawah section upload file */}
             <button
-              onClick={handleUploadClick}
-              className="mt-6 w-full bg-gold text-white py-4 rounded-lg font-bold text-xl flex items-center justify-center"
+              className={`mt-8 w-full py-4 rounded-lg font-bold text-xl transition-all duration-300 transform hover:scale-105 ${
+                isUploaded && selectedPaymentMethod
+                  ? "bg-green-500 text-white cursor-pointer hover:bg-green-600"
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              }`}
+              disabled={!isUploaded || !selectedPaymentMethod}
+              type="button"
+              onClick={() => setShowDialog(true)}
             >
-              <FaUpload className="mr-2" />
-              Upload Bukti Pembayaran
+              Submit
             </button>
-            {paymentProof && (
-              <div className="mt-2 text-green-600 text-sm">
-                File terpilih: {paymentProof.name}
-              </div>
-            )}
+            {/* Dialog konfirmasi modern dengan framer-motion */}
+            <AnimatePresence>
+              {showDialog && (
+                <motion.div
+                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0, y: 20 }}
+                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                    exit={{ scale: 0.8, opacity: 0, y: 20 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                    className="bg-white rounded-xl shadow-xl p-8 max-w-md w-full flex flex-col items-center"
+                  >
+                    {!submitSuccess ? (
+                      <>
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ delay: 0.2, type: "spring" }}
+                          className="mb-6"
+                        >
+                          <div className="w-16 h-16 bg-gold/10 rounded-full flex items-center justify-center">
+                            <svg className="w-8 h-8 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          </div>
+                        </motion.div>
+                        <motion.h3 
+                          initial={{ y: 20, opacity: 0 }}
+                          animate={{ y: 0, opacity: 1 }}
+                          transition={{ delay: 0.3 }}
+                          className="text-2xl font-bold mb-4 text-center"
+                        >
+                          Konfirmasi Pembayaran
+                        </motion.h3>
+                        <motion.p 
+                          initial={{ y: 20, opacity: 0 }}
+                          animate={{ y: 0, opacity: 1 }}
+                          transition={{ delay: 0.4 }}
+                          className="mb-6 text-center text-gray-700"
+                        >
+                          Apakah Anda yakin ingin submit pembayaran dengan metode <span className="font-semibold text-gold">{selectedPaymentMethod}</span>?
+                        </motion.p>
+                        {submitError && (
+                          <motion.div 
+                            initial={{ y: 20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            className="mb-4 text-red-600 text-center font-semibold bg-red-50 p-3 rounded-lg"
+                          >
+                            {submitError}
+                          </motion.div>
+                        )}
+                        <motion.div 
+                          initial={{ y: 20, opacity: 0 }}
+                          animate={{ y: 0, opacity: 1 }}
+                          transition={{ delay: 0.5 }}
+                          className="flex gap-4 w-full justify-center"
+                        >
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="px-6 py-2 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition"
+                            onClick={() => setShowDialog(false)}
+                          >
+                            Batal
+                          </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="px-6 py-2 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 transition"
+                            onClick={async () => {
+                              setSubmitError(null);
+                              const payload: Record<string, unknown> = {
+                                booking_id: bookingData?.id,
+                                bank_type: selectedPaymentMethod,
+                                total_amount: Number(bookingData?.total_price),
+                                payment_status: 'Menunggu Pembayaran',
+                              };
+                              if (hotelRequests.length > 0) payload.hotel_request_details = hotelRequests;
+                              try {
+                                await apiRequest(
+                                  'POST',
+                                  '/api/landing-page/transactions',
+                                  payload
+                                );
+                                setSubmitSuccess(true);
+                                setTimeout(() => {
+                                  setShowDialog(false);
+                                  setSubmitSuccess(false);
+                                }, 4000);
+                              } catch (err: unknown) {
+                                if (typeof err === 'object' && err && 'message' in err) {
+                                  setSubmitError((err as { message?: string }).message || 'Gagal submit transaksi');
+                                } else {
+                                  setSubmitError('Gagal submit transaksi');
+                                }
+                              }
+                            }}
+                          >
+                            Konfirmasi
+                          </motion.button>
+                        </motion.div>
+                      </>
+                    ) : (
+                      <motion.div
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.8, opacity: 0 }}
+                        className="flex flex-col items-center w-full"
+                      >
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ type: "spring", stiffness: 200, damping: 10 }}
+                          className="mb-6"
+                        >
+                          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
+                            <svg className="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                        </motion.div>
+                        <motion.h4 
+                          initial={{ y: 20, opacity: 0 }}
+                          animate={{ y: 0, opacity: 1 }}
+                          transition={{ delay: 0.2 }}
+                          className="text-2xl font-bold mb-2 text-center text-green-600"
+                        >
+                          Pembayaran Berhasil!
+                        </motion.h4>
+                        <motion.p 
+                          initial={{ y: 20, opacity: 0 }}
+                          animate={{ y: 0, opacity: 1 }}
+                          transition={{ delay: 0.3 }}
+                          className="text-gray-700 text-center mb-4"
+                        >
+                          Terima kasih, bukti pembayaran Anda telah dikirim.
+                        </motion.p>
+                      </motion.div>
+                    )}
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
-
-        {/* Next Button */}
-        <button
-          className={`absolute bottom-6 right-6 py-4 px-8 rounded-lg font-bold text-xl ${
-            isUploaded
-              ? "bg-green-500 text-white cursor-pointer"
-              : "bg-gray-300 text-gray-500 cursor-not-allowed"
-          }`}
-          disabled={!isUploaded}
-          onClick={() => {
-            if (isUploaded) {
-              router.push("/booking/book-history"); // Redirect to Book History page
-            }
-          }}
-        >
-          Next
-        </button>
       </div>
-    </div>
+    </motion.div>
   );
 }
+
