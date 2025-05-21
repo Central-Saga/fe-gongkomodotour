@@ -15,524 +15,641 @@ import {
   AccordionContent,
 } from "@/components/ui/accordion";
 import { FaChevronDown, FaUsers, FaBed, FaBath } from "react-icons/fa";
-
-// Tambahkan tipe untuk properti boatImages
-interface BoatImage {
-  image: string;
-  title: string;
-}
+import { Boat } from "@/types/boats";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface DetailBoatProps {
-  boatImages: BoatImage[];
+  boat: Boat;
 }
 
-const boatData = {
-  title: "Luxury Phinisi Boat",
-  mainImage: "/img/boat/boat-alf.jpg",
-  images: [
-    "/img/boat/boat-alf.jpg",
-    "/img/boat/boat-alf.jpg",
-    "/img/boat/boat-alf.jpg",
-    "/img/boat/boat-alf.jpg",
-    "/img/boat/boat-alf.jpg",
-  ],
-  specifications: [
-    { label: "Length", value: "32 meters" },
-    { label: "Beam", value: "8 meters" },
-    { label: "Cruising Speed", value: "7-11 knots" },
-    { label: "Fresh Water Capacity", value: "13,000 liters" },
-    { label: "Fuel Capacity", value: "8,000 liters" },
-    { label: "Engine", value: "Mitsubishi 8DC9" },
-    { label: "Generator", value: "Double PSI20" },
-    { label: "Navigation", value: "Compass, Radar, AIS, GPS, Map" },
-    { label: "Radio", value: "VHF" },
-    { label: "Capacity", value: "20-25 persons" },
-  ],
-  facilities: [
-    "Front sundeck area",
-    "Top sun deck area",
-    "Sun chair",
-    "Bean bag",
-    "Snorkeling equipment",
-    "Karaoke set",
-    "Bluetooth sound system",
-    "TV",
-    "Fridge",
-    "Dispenser",
-    "Large Jacuzzi",
-    "Comfort cabin with AC",
-    "Meals during the trip",
-    "Coffee, tea, mineral water",
-    "Bar",
-  ],
-  cabinInformation:
-    "Each of the 8 cabins are equipped with AC & ensuite bathroom:\n\n" +
-    "- Royal Suite Cabin: Queen bed + 2 extra beds (4 persons)\n" +
-    "- Signature Cabin 1: Queen bed + extra bed (3 persons)\n" +
-    "- Signature Cabin 2: Queen bed + extra bed (3 persons)\n" +
-    "- Deluxe Cabin 1: Queen bed + extra bed (3 persons)\n" +
-    "- Deluxe Cabin 2: Queen bed + extra bed (3 persons)\n" +
-    "- Superior Cabin 1: Queen bed + extra bed (3 persons)\n" +
-    "- Superior Cabin 2: Queen bed + extra bed (3 persons)",
-  cabinPictures: [
-    {
-      title: "Royal Suite Cabin",
-      images: [
-        "/img/boat/boat-zm.jpg",
-        "/img/boat/boat-zm.jpg",
-        "/img/boat/boat-zm.jpg",
-      ],
-      description:
-        "2-4 Person | Queen Bed + Extra Bed + Private Balcony | Private Bathroom",
-      prices: [
-        { label: "Add Person", price: "IDR 8.950.000/pax" },
-        { label: "Min 2 Pax", price: "IDR 8.950.000/pax" },
-      ],
-    },
-    {
-      title: "Deluxe Cabin",
-      images: [
-        "/img/boat/boat-zm.jpg",
-        "/img/boat/boat-zm.jpg",
-        "/img/boat/boat-zm.jpg",
-      ],
-      description: "2-3 Person | Queen Bed + Extra Bed | Private Bathroom",
-      prices: [
-        { label: "Add Person", price: "IDR 7.500.000/pax" },
-        { label: "Min 2 Pax", price: "IDR 7.500.000/pax" },
-      ],
-    },
-    {
-      title: "Superior Cabin",
-      images: [
-        "/img/boat/boat-zm.jpg",
-        "/img/boat/boat-zm.jpg",
-        "/img/boat/boat-zm.jpg",
-      ],
-      description: "2-3 Person | Queen Bed + Extra Bed | Private Bathroom",
-      prices: [
-        { label: "Add Person", price: "IDR 6.500.000/pax" },
-        { label: "Min 2 Pax", price: "IDR 6.500.000/pax" },
-      ],
-    },
-    {
-      title: "Superior Cabin",
-      images: [
-        "/img/boat/boat-zm.jpg",
-        "/img/boat/boat-zm.jpg",
-        "/img/boat/boat-zm.jpg",
-      ],
-      description: "2-3 Person | Queen Bed + Extra Bed | Private Bathroom",
-      prices: [
-        { label: "Add Person", price: "IDR 6.500.000/pax" },
-        { label: "Min 2 Pax", price: "IDR 6.500.000/pax" },
-      ],
-    },
-  ],
-};
-
-export default function DetailBoat({ boatImages }: DetailBoatProps) {
+export default function DetailBoat({ boat }: DetailBoatProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
   const [isMoreInfoOpen, setIsMoreInfoOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState<string | undefined>(undefined);
 
-  const handleAccordionToggle = (index: number) => {
-    setExpandedIndex(expandedIndex === index ? null : index);
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+  const mainImage = boat.assets[0]?.file_url 
+    ? (boat.assets[0].file_url.startsWith('http') 
+        ? boat.assets[0].file_url 
+        : `${API_URL}${boat.assets[0].file_url}`)
+    : "/img/default-image.png";
+
+  const specifications = boat.spesification.split('\n').map(spec => {
+    const [label, value] = spec.split(':').map(s => s.trim());
+    return { label, value };
+  });
+
+  const facilities = boat.facilities.split(',').map(facility => facility.trim());
+
+  const cabinInfo = boat.cabin_information.split('\n').map(cabin => {
+    const [type, count] = cabin.split(':').map(s => s.trim());
+    return { type, count };
+  });
+
+  // Membagi cabin menjadi dua kolom
+  const cabinsKiri = boat.cabin.slice(0, Math.ceil(boat.cabin.length / 2));
+  const cabinsKanan = boat.cabin.slice(Math.ceil(boat.cabin.length / 2));
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5
+      }
+    },
+    hover: {
+      scale: 1.02,
+      transition: {
+        duration: 0.2
+      }
+    }
+  };
+
+  const contentVariants = {
+    hidden: { 
+      opacity: 0,
+      height: 0,
+      transition: {
+        duration: 0.3
+      }
+    },
+    visible: { 
+      opacity: 1,
+      height: "auto",
+      transition: {
+        duration: 0.3
+      }
+    }
   };
 
   return (
-    <div className="py-4 px-3 max-w-6xl mx-auto">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="py-4 px-3 max-w-6xl mx-auto"
+    >
       {/* Section 1: Gambar Utama dan Gambar Kecil */}
-      <div className="relative mb-6">
+      <motion.div 
+        className="relative mb-6"
+        whileHover={{ scale: 1.02 }}
+        transition={{ type: "spring", stiffness: 300 }}
+      >
         {/* Gambar Utama */}
         <Dialog
           open={!!selectedImage}
           onOpenChange={() => setSelectedImage(null)}
         >
           <DialogTrigger asChild>
-            <div className="relative h-[200px] md:h-[370px] w-full cursor-pointer rounded-lg overflow-hidden shadow-md">
+            <motion.div 
+              className="relative h-[200px] md:h-[370px] w-full cursor-pointer rounded-lg overflow-hidden shadow-md"
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
               <Image
-                src={boatData.mainImage}
-                alt={boatData.title}
+                src={mainImage}
+                alt={boat.boat_name}
                 fill
                 className="object-cover"
                 quality={100}
-                onClick={() => setSelectedImage(boatData.mainImage)}
+                onClick={() => setSelectedImage(mainImage)}
               />
-            </div>
+            </motion.div>
           </DialogTrigger>
           <DialogContent className="max-w-3xl">
-            <DialogTitle>{boatData.title}</DialogTitle>
-            {selectedImage && (
-              <Image
-                src={selectedImage}
-                alt="Selected Image"
-                width={800}
-                height={600}
-                className="rounded-lg object-cover"
-                quality={100}
-              />
-            )}
+            <DialogTitle className="text-gold">{boat.boat_name}</DialogTitle>
+            <AnimatePresence>
+              {selectedImage && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Image
+                    src={selectedImage}
+                    alt="Selected Image"
+                    width={800}
+                    height={600}
+                    className="rounded-lg object-cover"
+                    quality={100}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </DialogContent>
         </Dialog>
 
         {/* Gambar Kecil */}
-        <div className="flex gap-2 mt-3 justify-center">
-          {boatData.images.slice(0, 3).map((image, index) => (
+        <motion.div 
+          className="flex gap-2 mt-3 justify-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          {boat.assets.slice(0, 3).map((asset, index) => (
             <Dialog
               key={index}
               open={!!selectedImage}
               onOpenChange={() => setSelectedImage(null)}
             >
               <DialogTrigger asChild>
-                <div
+                <motion.div
                   className="relative h-[70px] w-[100px] md:h-[90px] md:w-[130px] cursor-pointer rounded-lg overflow-hidden shadow-sm"
-                  onClick={() => setSelectedImage(image)}
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                  onClick={() => setSelectedImage(asset.file_url.startsWith('http') 
+                    ? asset.file_url 
+                    : `${API_URL}${asset.file_url}`)}
                 >
                   <Image
-                    src={image}
-                    alt={`${boatData.title} ${index + 1}`}
+                    src={asset.file_url.startsWith('http') 
+                      ? asset.file_url 
+                      : `${API_URL}${asset.file_url}`}
+                    alt={`${boat.boat_name} ${index + 1}`}
                     fill
                     className="object-cover"
                     quality={100}
                   />
-                </div>
+                </motion.div>
               </DialogTrigger>
-              <DialogContent className="max-w-3xl">
-                <DialogTitle>{`Image ${index + 1}`}</DialogTitle>
-                {selectedImage && (
-                  <Image
-                    src={selectedImage}
-                    alt={`Image ${index + 1}`}
-                    width={800}
-                    height={600}
-                    className="rounded-lg object-cover"
-                    quality={100}
-                  />
-                )}
-              </DialogContent>
             </Dialog>
           ))}
 
           {/* Gambar ke-4 dengan More Info */}
           <Dialog open={isMoreInfoOpen} onOpenChange={setIsMoreInfoOpen}>
             <DialogTrigger asChild>
-              <div className="relative h-[70px] w-[100px] md:h-[90px] md:w-[130px] cursor-pointer rounded-lg overflow-hidden shadow-sm flex items-center justify-center bg-gray-200">
-                <Image
-                  src={boatData.images[3]}
-                  alt="More Info"
-                  fill
-                  className="object-cover opacity-50"
-                />
+              <motion.div 
+                className="relative h-[70px] w-[100px] md:h-[90px] md:w-[130px] cursor-pointer rounded-lg overflow-hidden shadow-sm flex items-center justify-center bg-gray-200"
+                whileHover={{ scale: 1.05 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
+                {boat.assets[3] && (
+                  <Image
+                    src={boat.assets[3].file_url.startsWith('http') 
+                      ? boat.assets[3].file_url 
+                      : `${API_URL}${boat.assets[3].file_url}`}
+                    alt="More Info"
+                    fill
+                    className="object-cover opacity-50"
+                  />
+                )}
                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                   <p className="text-white font-semibold">More Info</p>
                 </div>
-              </div>
+              </motion.div>
             </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-              <DialogTitle>More Images</DialogTitle>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {boatData.images.slice(4).map((image, index) => (
-                  <div
+              <DialogTitle className="text-gold">All Images</DialogTitle>
+              <motion.div 
+                className="grid grid-cols-2 md:grid-cols-3 gap-4"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+              >
+                {boat.assets.map((asset, index) => (
+                  <motion.div
                     key={index}
                     className="relative h-[150px] md:h-[200px] w-full cursor-pointer rounded-lg overflow-hidden shadow-sm"
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ type: "spring", stiffness: 300 }}
+                    onClick={() => setSelectedImage(asset.file_url.startsWith('http') 
+                      ? asset.file_url 
+                      : `${API_URL}${asset.file_url}`)}
                   >
                     <Image
-                      src={image}
-                      alt={`More Image ${index + 1}`}
+                      src={asset.file_url.startsWith('http') 
+                        ? asset.file_url 
+                        : `${API_URL}${asset.file_url}`}
+                      alt={`Boat Image ${index + 1}`}
                       fill
                       className="object-cover"
                       quality={100}
                     />
-                  </div>
+                  </motion.div>
                 ))}
-              </div>
+              </motion.div>
             </DialogContent>
           </Dialog>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* Section 2: Judul */}
-      <div className="text-center mb-6 bg-[#f8f9fa] p-3 rounded-lg shadow-sm">
-        <h1 className="text-sm md:text-xl font-bold text-gray-800">
-          {boatData.title}
+      <motion.div 
+        className="text-center mb-6 bg-gold/5 p-3 rounded-lg shadow-sm"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
+        <h1 className="text-sm md:text-xl font-bold text-gold">
+          {boat.boat_name}
         </h1>
-      </div>
+      </motion.div>
 
       {/* Section 3: Fasilitas dan Spesifikasi */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <motion.div 
+        className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+      >
         {/* Spesifikasi */}
-        <div className="bg-white p-3 rounded-lg shadow-sm">
-          <h2 className="text-base md:text-lg font-bold text-gray-800 mb-3">
+        <motion.div 
+          className="bg-white p-3 rounded-lg shadow-sm"
+          whileHover={{ scale: 1.02 }}
+          transition={{ type: "spring", stiffness: 300 }}
+        >
+          <h2 className="text-base md:text-lg font-bold text-gold mb-3">
             Boat Specification
           </h2>
           <ul className="space-y-1 text-xs md:text-sm">
-            {boatData.specifications.map((spec, index) => (
-              <li key={index} className="flex justify-between text-gray-600">
+            {specifications.map((spec, index) => (
+              <motion.li 
+                key={index} 
+                className="flex justify-between text-gray-600"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 * index }}
+              >
                 <span className="font-semibold">{spec.label}:</span>
                 <span>{spec.value}</span>
-              </li>
+              </motion.li>
             ))}
           </ul>
-        </div>
+        </motion.div>
 
         {/* Fasilitas */}
-        <div className="md:col-span-2 bg-white p-3 rounded-lg shadow-sm">
-          <h2 className="text-base md:text-lg font-bold text-gray-800 mb-3">
+        <motion.div 
+          className="md:col-span-2 bg-white p-3 rounded-lg shadow-sm"
+          whileHover={{ scale: 1.02 }}
+          transition={{ type: "spring", stiffness: 300 }}
+        >
+          <h2 className="text-base md:text-lg font-bold text-gold mb-3">
             Facilities
           </h2>
           <ul className="grid grid-cols-1 sm:grid-cols-2 gap-y-1 text-xs md:text-sm text-gray-600">
-            {boatData.facilities.map((facility, index) => (
-              <li key={index} className="list-disc list-inside">
+            {facilities.map((facility, index) => (
+              <motion.li 
+                key={index} 
+                className="list-disc list-inside"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 * index }}
+              >
                 {facility}
-              </li>
+              </motion.li>
             ))}
           </ul>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* Section 4: Cabin Information */}
-      <div className="bg-white p-3 rounded-lg shadow-sm mb-6">
-        <h2 className="text-base md:text-lg font-bold text-gray-800 mb-3">
+      <motion.div 
+        className="bg-white p-3 rounded-lg shadow-sm mb-6"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+        whileHover={{ scale: 1.02 }}
+      >
+        <h2 className="text-base md:text-lg font-bold text-gold mb-3">
           Cabin Information
         </h2>
-        <p className="text-xs md:text-sm text-gray-600 whitespace-pre-line">
-          {boatData.cabinInformation}
-        </p>
-      </div>
+        <ul className="space-y-2 text-xs md:text-sm text-gray-600">
+          {cabinInfo.map((cabin, index) => (
+            <motion.li 
+              key={index} 
+              className="flex justify-between"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 * index }}
+            >
+              <span className="font-semibold">{cabin.type}:</span>
+              <span>{cabin.count}</span>
+            </motion.li>
+          ))}
+        </ul>
+      </motion.div>
 
       {/* Section 5: Picture of Cabin */}
-      <div className="bg-white p-3 rounded-lg shadow-sm">
-        <h2 className="text-center text-xs md:text-sm font-bold text-gray-800 mb-3">
-          Picture of Cabin
-        </h2>
-        <Accordion type="single" collapsible className="w-full">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Bagian Kiri */}
-            <div className="space-y-3">
-              {boatData.cabinPictures.slice(0, 2).map((cabin, index) => (
-                <AccordionItem key={index} value={`cabin-left-${index}`}>
-                  <AccordionTrigger className="flex justify-between items-center bg-[#f8f9fa] p-2 rounded-lg shadow-sm">
-                    <div>
-                      <h3 className="p-2 text-xs md:text-sm font-bold text-gray-800">
-                        {cabin.title}
-                      </h3>
-                    </div>
-                    <FaChevronDown className="w-4 h-4 md:w-5 md:h-5 text-white transition-transform duration-300 rounded-full p-1 bg-yellow-500 data-[state=open]:rotate-180" />
-                  </AccordionTrigger>
-                  <AccordionContent className="p-2 bg-white rounded-lg shadow-sm">
-                    {/* Konten Kabin */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {/* Gambar */}
-                      <div className="relative h-[150px] md:h-[200px] w-full grid grid-rows-2">
-                        <div className="relative row-span-1 h-full">
-                          <Image
-                            src={cabin.images[0]}
-                            alt={`${cabin.title} Main`}
-                            fill
-                            className="rounded-t-lg object-cover"
-                          />
-                        </div>
-                        <div className="grid grid-cols-2 row-span-1 h-full">
-                          <div className="relative h-full">
-                            <Image
-                              src={cabin.images[1]}
-                              alt={`${cabin.title} Additional 1`}
-                              fill
-                              className="rounded-bl-lg object-cover"
-                            />
-                          </div>
-                          <div className="relative h-full">
-                            <Image
-                              src={cabin.images[2]}
-                              alt={`${cabin.title} Additional 2`}
-                              fill
-                              className="rounded-br-lg object-cover"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                      {/* Informasi */}
-                      <div className="flex flex-col justify-center space-y-2">
-                        <div className="flex items-center space-x-2">
-                          <FaUsers className="text-gray-600" />
-                          <p className="text-[10px] md:text-xs text-gray-600">
-                            <strong>Capacity:</strong> 2-4 Person
-                          </p>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <FaBed className="text-gray-600" />
-                          <p className="text-[10px] md:text-xs text-gray-600">
-                            <strong>Features:</strong> Queen Bed + Extra Bed +
-                            Private Balcony
-                          </p>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <FaBath className="text-gray-600" />
-                          <p className="text-[10px] md:text-xs text-gray-600">
-                            <strong>Bathroom:</strong> Private Bathroom
-                          </p>
-                        </div>
-                        {/* Badge */}
-                        <div className="flex flex-col space-y-1">
-                          {cabin.prices.map((price, priceIndex) => (
-                            <div
-                              key={priceIndex}
-                              className="flex items-center space-x-3"
-                            >
-                              <div
-                                className={`px-2 py-1 rounded-lg text-[10px] md:text-xs font-semibold flex items-center space-x-2 ${
-                                  price.label === "Add Person"
-                                    ? "bg-yellow-500 text-white"
-                                    : "bg-gray-200 text-gray-800"
-                                }`}
-                              >
-                                <FaUsers
-                                  className={
-                                    price.label === "Add Person"
-                                      ? "text-white"
-                                      : "text-gray-800"
-                                  }
-                                />
-                                <span>{price.label}</span>
-                              </div>
-                              <p className="text-[10px] md:text-xs text-gray-800 font-semibold">
-                                {price.price}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </div>
+      <motion.div
+        className="bg-white p-6 rounded-lg shadow-md mb-8"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6 }}
+      >
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-12"
+        >
+          <h2 className="text-4xl font-bold text-foreground mb-4">Picture Of Cabin</h2>
+          <p className="text-lg text-muted-foreground">Choose your perfect cabin</p>
+        </motion.div>
 
-            {/* Bagian Kanan */}
-            <div className="space-y-3">
-              {boatData.cabinPictures.slice(2).map((cabin, index) => (
-                <AccordionItem key={index + 2} value={`cabin-right-${index}`}>
-                  <AccordionTrigger className="flex justify-between items-center bg-[#f8f9fa] p-2 rounded-lg shadow-sm">
-                    <div>
-                      <h3 className="p-2 text-xs md:text-sm font-bold text-gray-800">
-                        {cabin.title}
-                      </h3>
-                    </div>
-                    <FaChevronDown className="w-4 h-4 md:w-5 md:h-5 text-white transition-transform duration-300 rounded-full p-1 bg-yellow-500 data-[state=open]:rotate-180" />
-                  </AccordionTrigger>
-                  <AccordionContent className="p-2 bg-white rounded-lg shadow-sm">
-                    {/* Konten Kabin */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {/* Gambar */}
-                      <div className="relative h-[150px] md:h-[200px] w-full grid grid-rows-2">
-                        <div className="relative row-span-1 h-full">
-                          <Image
-                            src={cabin.images[0]}
-                            alt={`${cabin.title} Main`}
-                            fill
-                            className="rounded-t-lg object-cover"
-                          />
-                        </div>
-                        <div className="grid grid-cols-2 row-span-1 h-full">
-                          <div className="relative h-full">
-                            <Image
-                              src={cabin.images[1]}
-                              alt={`${cabin.title} Additional 1`}
-                              fill
-                              className="rounded-bl-lg object-cover"
-                            />
-                          </div>
-                          <div className="relative h-full">
-                            <Image
-                              src={cabin.images[2]}
-                              alt={`${cabin.title} Additional 2`}
-                              fill
-                              className="rounded-br-lg object-cover"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                      {/* Informasi */}
-                      <div className="flex flex-col justify-center space-y-2">
-                        <div className="flex items-center space-x-2">
-                          <FaUsers className="text-gray-600" />
-                          <p className="text-[10px] md:text-xs text-gray-600">
-                            <strong>Capacity:</strong> 2-4 Person
-                          </p>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <FaBed className="text-gray-600" />
-                          <p className="text-[10px] md:text-xs text-gray-600">
-                            <strong>Features:</strong> Queen Bed + Extra Bed +
-                            Private Balcony
-                          </p>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <FaBath className="text-gray-600" />
-                          <p className="text-[10px] md:text-xs text-gray-600">
-                            <strong>Bathroom:</strong> Private Bathroom
-                          </p>
-                        </div>
-                        {/* Badge */}
-                        <div className="flex flex-col space-y-1">
-                          {cabin.prices.map((price, priceIndex) => (
-                            <div
-                              key={priceIndex}
-                              className="flex items-center space-x-3"
-                            >
-                              <div
-                                className={`px-2 py-1 rounded-lg text-[10px] md:text-xs font-semibold flex items-center space-x-2 ${
-                                  price.label === "Add Person"
-                                    ? "bg-yellow-500 text-white"
-                                    : "bg-gray-200 text-gray-800"
-                                }`}
-                              >
-                                <FaUsers
-                                  className={
-                                    price.label === "Add Person"
-                                      ? "text-white"
-                                      : "text-gray-800"
-                                  }
-                                />
-                                <span>{price.label}</span>
-                              </div>
-                              <p className="text-[10px] md:text-xs text-gray-800 font-semibold">
-                                {price.price}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </div>
-          </div>
-        </Accordion>
-      </div>
-
-      {/* Section 6: Boat Images */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {boatImages.map((boat, index) => (
-          <div
-            key={index}
-            className="relative group overflow-hidden rounded-lg shadow-lg cursor-pointer"
+        <Accordion 
+          type="single" 
+          collapsible 
+          className="w-full"
+          value={activeIndex}
+          onValueChange={setActiveIndex}
+        >
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-5"
           >
-            <Image
-              src={boat.image}
-              alt={boat.title}
-              layout="fill"
-              objectFit="cover"
-              className="rounded-lg transition-transform duration-300 group-hover:scale-110"
-            />
-            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-              <p className="text-white font-semibold text-lg">{boat.title}</p>
-            </div>
+            {/* Kolom Kiri */}
+            <motion.div variants={itemVariants} className="space-y-4">
+              {cabinsKiri.map((cabin) => (
+                <motion.div
+                  key={cabin.id}
+                  variants={itemVariants}
+                  whileHover="hover"
+                  className="bg-card rounded-lg shadow-md overflow-hidden"
+                >
+                  <AccordionItem value={`item-${cabin.id}`}>
+                    <AccordionTrigger className="text-lg font-semibold text-foreground flex justify-between items-center p-4 hover:bg-accent/50 transition-colors duration-200">
+                      <span>{cabin.cabin_name}</span>
+                      <motion.div
+                        animate={{ 
+                          rotate: activeIndex === `item-${cabin.id}` ? 180 : 0,
+                          scale: activeIndex === `item-${cabin.id}` ? 1.1 : 1
+                        }}
+                        transition={{ duration: 0.3 }}
+                        className="bg-gold rounded-full p-1"
+                      >
+                        <FaChevronDown className="w-6 h-6 text-white" />
+                      </motion.div>
+                    </AccordionTrigger>
+                    <AnimatePresence>
+                      {activeIndex === `item-${cabin.id}` && (
+                        <motion.div
+                          initial="hidden"
+                          animate="visible"
+                          exit="hidden"
+                          variants={contentVariants}
+                        >
+                          <AccordionContent className="p-4">
+                            <div className="grid grid-cols-2 gap-6">
+                              {/* Kolom Kiri - Gambar */}
+                              <div className="space-y-0">
+                                {/* Gambar Atas - 2 Column Merge */}
+                                <div className="relative w-full aspect-[16/9] mb-0">
+                                  {cabin.assets[0] && (
+                                    <Image
+                                      src={cabin.assets[0].file_url.startsWith('http') 
+                                        ? cabin.assets[0].file_url 
+                                        : `${API_URL}${cabin.assets[0].file_url}`}
+                                      alt={cabin.assets[0].title || `Cabin Image Main`}
+                                      fill
+                                      className="object-cover hover:opacity-90 transition-opacity cursor-pointer"
+                                      quality={100}
+                                      onClick={() => setSelectedImage(cabin.assets[0].file_url.startsWith('http') 
+                                        ? cabin.assets[0].file_url 
+                                        : `${API_URL}${cabin.assets[0].file_url}`)}
+                                    />
+                                  )}
+                                </div>
+                                {/* Gambar Bawah - 2 Column */}
+                                <div className="flex flex-wrap">
+                                  {cabin.assets.slice(1, 3).map((asset, index) => (
+                                    <motion.div
+                                      key={asset.id}
+                                      className="relative w-1/2 aspect-square cursor-pointer"
+                                      whileHover={{ scale: 1.02, zIndex: 10 }}
+                                      transition={{ type: "spring", stiffness: 300 }}
+                                      onClick={() => setSelectedImage(asset.file_url.startsWith('http') 
+                                        ? asset.file_url 
+                                        : `${API_URL}${asset.file_url}`)}
+                                    >
+                                      <Image
+                                        src={asset.file_url.startsWith('http') 
+                                          ? asset.file_url 
+                                          : `${API_URL}${asset.file_url}`}
+                                        alt={asset.title || `Cabin Image ${index + 1}`}
+                                        fill
+                                        className="object-cover hover:opacity-90 transition-opacity"
+                                        quality={100}
+                                      />
+                                    </motion.div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Kolom Kanan - Informasi */}
+                              <div className="space-y-6">
+                                {/* Icons and Info */}
+                                <div className="space-y-4">
+                                  <div className="flex items-center space-x-2">
+                                    <FaUsers className="text-gold text-xl" />
+                                    <span className="text-gray-600">{cabin.min_pax}-{cabin.max_pax} Person</span>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <FaBed className="text-gold text-xl" />
+                                    <span className="text-gray-600">{cabin.bed_type}</span>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <FaBath className="text-gold text-xl" />
+                                    <span className="text-gray-600">Private Bathroom</span>
+                                  </div>
+                                </div>
+
+                                {/* Pricing */}
+                                <div className="space-y-3">
+                                  <motion.div 
+                                    className="flex items-center justify-between bg-gold/5 p-4 rounded-lg"
+                                    whileHover={{ scale: 1.02 }}
+                                  >
+                                    <span className="text-gray-600">Add Person</span>
+                                    <span className="font-semibold">
+                                      IDR {parseInt(cabin.additional_price).toLocaleString('id-ID')}/pax
+                                    </span>
+                                  </motion.div>
+                                  <motion.div 
+                                    className="flex items-center justify-between bg-gold/5 p-4 rounded-lg"
+                                    whileHover={{ scale: 1.02 }}
+                                  >
+                                    <span className="text-gray-600">Min {cabin.min_pax} Pax</span>
+                                    <span className="font-semibold">
+                                      IDR {parseInt(cabin.base_price).toLocaleString('id-ID')}/pax
+                                    </span>
+                                  </motion.div>
+                                </div>
+                              </div>
+                            </div>
+                          </AccordionContent>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </AccordionItem>
+                </motion.div>
+              ))}
+            </motion.div>
+
+            {/* Kolom Kanan */}
+            <motion.div variants={itemVariants} className="space-y-4">
+              {cabinsKanan.map((cabin) => (
+                <motion.div
+                  key={cabin.id}
+                  variants={itemVariants}
+                  whileHover="hover"
+                  className="bg-card rounded-lg shadow-md overflow-hidden"
+                >
+                  <AccordionItem value={`item-${cabin.id}`}>
+                    <AccordionTrigger className="text-lg font-semibold text-foreground flex justify-between items-center p-4 hover:bg-accent/50 transition-colors duration-200">
+                      <span>{cabin.cabin_name}</span>
+                      <motion.div
+                        animate={{ 
+                          rotate: activeIndex === `item-${cabin.id}` ? 180 : 0,
+                          scale: activeIndex === `item-${cabin.id}` ? 1.1 : 1
+                        }}
+                        transition={{ duration: 0.3 }}
+                        className="bg-gold rounded-full p-1"
+                      >
+                        <FaChevronDown className="w-6 h-6 text-white" />
+                      </motion.div>
+                    </AccordionTrigger>
+                    <AnimatePresence>
+                      {activeIndex === `item-${cabin.id}` && (
+                        <motion.div
+                          initial="hidden"
+                          animate="visible"
+                          exit="hidden"
+                          variants={contentVariants}
+                        >
+                          <AccordionContent className="p-4">
+                            <div className="grid grid-cols-2 gap-6">
+                              {/* Kolom Kiri - Gambar */}
+                              <div className="space-y-0">
+                                {/* Gambar Atas - 2 Column Merge */}
+                                <div className="relative w-full aspect-[16/9] mb-0">
+                                  {cabin.assets[0] && (
+                                    <Image
+                                      src={cabin.assets[0].file_url.startsWith('http') 
+                                        ? cabin.assets[0].file_url 
+                                        : `${API_URL}${cabin.assets[0].file_url}`}
+                                      alt={cabin.assets[0].title || `Cabin Image Main`}
+                                      fill
+                                      className="object-cover hover:opacity-90 transition-opacity cursor-pointer"
+                                      quality={100}
+                                      onClick={() => setSelectedImage(cabin.assets[0].file_url.startsWith('http') 
+                                        ? cabin.assets[0].file_url 
+                                        : `${API_URL}${cabin.assets[0].file_url}`)}
+                                    />
+                                  )}
+                                </div>
+                                {/* Gambar Bawah - 2 Column */}
+                                <div className="flex flex-wrap">
+                                  {cabin.assets.slice(1, 3).map((asset, index) => (
+                                    <motion.div
+                                      key={asset.id}
+                                      className="relative w-1/2 aspect-square cursor-pointer"
+                                      whileHover={{ scale: 1.02, zIndex: 10 }}
+                                      transition={{ type: "spring", stiffness: 300 }}
+                                      onClick={() => setSelectedImage(asset.file_url.startsWith('http') 
+                                        ? asset.file_url 
+                                        : `${API_URL}${asset.file_url}`)}
+                                    >
+                                      <Image
+                                        src={asset.file_url.startsWith('http') 
+                                          ? asset.file_url 
+                                          : `${API_URL}${asset.file_url}`}
+                                        alt={asset.title || `Cabin Image ${index + 1}`}
+                                        fill
+                                        className="object-cover hover:opacity-90 transition-opacity"
+                                        quality={100}
+                                      />
+                                    </motion.div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Kolom Kanan - Informasi */}
+                              <div className="space-y-6">
+                                {/* Icons and Info */}
+                                <div className="space-y-4">
+                                  <div className="flex items-center space-x-2">
+                                    <FaUsers className="text-gold text-xl" />
+                                    <span className="text-gray-600">{cabin.min_pax}-{cabin.max_pax} Person</span>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <FaBed className="text-gold text-xl" />
+                                    <span className="text-gray-600">{cabin.bed_type}</span>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <FaBath className="text-gold text-xl" />
+                                    <span className="text-gray-600">Private Bathroom</span>
+                                  </div>
+                                </div>
+
+                                {/* Pricing */}
+                                <div className="space-y-3">
+                                  <motion.div 
+                                    className="flex items-center justify-between bg-gold/5 p-4 rounded-lg"
+                                    whileHover={{ scale: 1.02 }}
+                                  >
+                                    <span className="text-gray-600">Add Person</span>
+                                    <span className="font-semibold">
+                                      IDR {parseInt(cabin.additional_price).toLocaleString('id-ID')}/pax
+                                    </span>
+                                  </motion.div>
+                                  <motion.div 
+                                    className="flex items-center justify-between bg-gold/5 p-4 rounded-lg"
+                                    whileHover={{ scale: 1.02 }}
+                                  >
+                                    <span className="text-gray-600">Min {cabin.min_pax} Pax</span>
+                                    <span className="font-semibold">
+                                      IDR {parseInt(cabin.base_price).toLocaleString('id-ID')}/pax
+                                    </span>
+                                  </motion.div>
+                                </div>
+                              </div>
+                            </div>
+                          </AccordionContent>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </AccordionItem>
+                </motion.div>
+              ))}
+            </motion.div>
+          </motion.div>
+        </Accordion>
+      </motion.div>
+
+      {/* Image Preview Dialog */}
+      <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+        <DialogContent className="max-w-4xl">
+          <DialogTitle className="text-gold">Cabin Preview</DialogTitle>
+          <div className="relative w-full h-[60vh]">
+            {selectedImage && (
+              <Image
+                src={selectedImage}
+                alt="Cabin Preview"
+                fill
+                className="object-contain"
+                quality={100}
+              />
+            )}
           </div>
-        ))}
-      </div>
-    </div>
+        </DialogContent>
+      </Dialog>
+    </motion.div>
   );
 }

@@ -3,8 +3,9 @@ export interface TripPrice {
   trip_duration_id: number
   pax_min: number
   pax_max: number
-  price_per_pax: string
+  price_per_pax: number
   status: "Aktif" | "Non Aktif"
+  region: "Domestic" | "Overseas" | "Domestic & Overseas"
   created_at: string
   updated_at: string
 }
@@ -16,20 +17,16 @@ export interface TripDuration {
   duration_days: number
   duration_nights: number
   status: "Aktif" | "Non Aktif"
-  prices: {
-    pax_min: number
-    pax_max: number
-    price_per_pax: string
-    status: "Aktif" | "Non Aktif"
-  }[]
   created_at: string
   updated_at: string
+  itineraries: Itinerary[]
+  prices: TripPrice[]
   trip_prices: TripPrice[]
 }
 
 export interface Itinerary {
   id: number
-  trip_id: number
+  trip_duration_id: number
   day_number: number
   activities: string
   created_at: string
@@ -103,21 +100,24 @@ export interface Trip {
   include: string
   exclude: string
   note: string
-  duration: string | null
   start_time: string
   end_time: string
   meeting_point: string
   type: "Open Trip" | "Private Trip"
   status: "Aktif" | "Non Aktif"
   is_highlight: "Yes" | "No"
+  has_boat: boolean
+  has_hotel: boolean
+  is_hotel_requested: boolean
+  destination_count: number
   created_at: string
   updated_at: string
-  itineraries: Itinerary[]
-  flight_schedules: FlightSchedule[]
   trip_durations: TripDuration[]
+  flight_schedules: FlightSchedule[]
   additional_fees: AdditionalFee[]
   surcharges: Surcharge[]
   assets: TripAsset[]
+  boat_assets: TripAsset[]
 }
 
 export type TripResponse = Trip[] 

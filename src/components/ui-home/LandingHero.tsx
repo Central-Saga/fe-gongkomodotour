@@ -4,6 +4,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination, Navigation, EffectFade } from "swiper/modules";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 // Impor gaya Swiper
 import "swiper/css";
@@ -16,15 +17,24 @@ const customStyles = `
   .swiper-pagination-bullet {
     width: 18px;
     height: 18px;
-    background: #fbbf24;
+    background: var(--gold);
     opacity: 0.7;
     transition: all 0.3s ease;
   }
   .swiper-pagination-bullet-active {
     width: 25px;
     height: 25px;
-    background: #fbbf24;
+    background: var(--gold);
     opacity: 1;
+  }
+  .swiper-button-next,
+  .swiper-button-prev {
+    color: var(--gold) !important;
+    transition: all 0.3s ease;
+  }
+  .swiper-button-next:hover,
+  .swiper-button-prev:hover {
+    color: var(--gold-dark-10) !important;
   }
 `;
 
@@ -35,6 +45,26 @@ export default function LandingHero() {
     "/img/boat/luxury_phinisi.jpg",
     "/img/landingpage/hero-slide2.png",
   ];
+
+  const fadeInUp = {
+    initial: { opacity: 0, y: 60 },
+    animate: { 
+      opacity: 1, 
+      y: 0,
+      transition: {
+        duration: 0.8,
+        ease: "easeOut"
+      }
+    }
+  };
+
+  const staggerContainer = {
+    animate: {
+      transition: {
+        staggerChildren: 0.3
+      }
+    }
+  };
 
   return (
     <section className="relative h-[80vh] w-screen">
@@ -58,10 +88,21 @@ export default function LandingHero() {
               className="h-full w-full bg-cover bg-center flex items-center justify-start px-50"
               style={{ backgroundImage: `url(${slide})` }}
             >
-              <div className="absolute inset-0 bg-black/20"></div>
-              <div className="relative z-10 px-4 flex flex-col items-start gap-2">
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 1 }}
+                className="absolute inset-0 bg-black/20"
+              />
+              <motion.div 
+                variants={staggerContainer}
+                initial="initial"
+                animate="animate"
+                className="relative z-10 px-4 flex flex-col items-start gap-2"
+              >
                 {/* Baris pertama: GONG KOMODO */}
-                <h1
+                <motion.h1
+                  variants={fadeInUp}
                   className="text-white uppercase font-bold text-center"
                   style={{
                     fontSize: "clamp(3rem, 4vw, 2.5rem)",
@@ -69,10 +110,13 @@ export default function LandingHero() {
                   }}
                 >
                   GONG KOMODO
-                </h1>
+                </motion.h1>
                 {/* Baris kedua: TOUR dan tombol */}
-                <div className="flex items-center gap-6">
-                  <h1
+                <motion.div 
+                  variants={fadeInUp}
+                  className="flex items-center gap-6"
+                >
+                  <motion.h1
                     className="text-white uppercase font-bold text-center"
                     style={{
                       fontSize: "clamp(3rem, 4vw, 2.5rem)", // Reduced font size
@@ -80,21 +124,26 @@ export default function LandingHero() {
                     }}
                   >
                     TOUR
-                  </h1>
+                  </motion.h1>
                   <Link href="/trip">
-                    <Button
-                      className="bg-yellow-500 text-white hover:bg-[#f59e0b] rounded-full"
-                      style={{
-                        fontSize: "clamp(1rem, 2vw, 1.25rem)", // Reduced font size
-                        padding:
-                          "clamp(1rem, 2vw, 1rem) clamp(1.5rem, 3vw, 1.5rem)", // Reduced padding
-                      }}
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+
                     >
-                      Check Trip
-                    </Button>
+                      <Button
+                        className="bg-gold text-white hover:bg-gold-dark-10 rounded-full"
+                        style={{
+                          fontSize: "clamp(2rem, 2.75vw, 1.75rem)",
+                          padding: "clamp(2rem, 2.75vw, 1.5rem) clamp(2rem, 4.5vw, 2.75rem)",
+                        }}
+                      >
+                        Check Trip
+                      </Button>
+                    </motion.div>
                   </Link>
-                </div>
-              </div>
+                </motion.div>
+              </motion.div>
             </div>
           </SwiperSlide>
         ))}

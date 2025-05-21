@@ -45,7 +45,7 @@ import { ChevronDown, FileDown, ChevronLeft, ChevronRight, ChevronsLeft, Chevron
 import { useState } from "react"
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
-import { Trip, TripAsset } from "@/types/trips"
+import { Trip, TripAsset, FlightSchedule, TripPrice, AdditionalFee } from "@/types/trips"
 import {
   Tooltip,
   TooltipContent,
@@ -287,20 +287,25 @@ export function DataTable({
           <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm">
             <h4 className="font-semibold text-lg mb-4 text-gray-800 border-b pb-2">Itinerary</h4>
             <div className="space-y-6">
-              {trip.itineraries.sort((a, b) => a.day_number - b.day_number).map((itinerary, index) => (
-                <div key={index} className="bg-gray-50 p-3 sm:p-4 rounded-md">
-                  <div className="flex flex-col">
-                    <p className="font-medium text-gray-800 mb-2 text-base inline-flex items-center">
-                      <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-md mr-2">
-                        Hari {itinerary.day_number}
-                      </span>
-                    </p>
-                    <div className="bg-white p-3 rounded-md border border-gray-100">
-                      <div className="bg-gray-50 p-3 rounded-md overflow-auto">
-                        <div className="prose prose-sm max-w-none prose-headings:mt-2 prose-p:my-1 prose-ul:my-1 prose-li:my-0.5">
-                          <HtmlContent html={itinerary.activities} />
+              {trip.trip_durations.map((duration) => (
+                <div key={duration.id} className="space-y-4">
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <h5 className="font-medium text-gray-800 mb-2">
+                      {duration.duration_label} ({duration.duration_days} Hari {duration.duration_nights} Malam)
+                    </h5>
+                    <div className="space-y-4">
+                      {duration.itineraries.sort((a, b) => a.day_number - b.day_number).map((itinerary) => (
+                        <div key={itinerary.id} className="bg-white p-3 rounded-md border border-gray-100">
+                          <div className="flex items-start gap-3">
+                            <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-md text-sm font-medium">
+                              Hari {itinerary.day_number}
+                            </span>
+                            <div className="prose prose-sm max-w-none">
+                              <HtmlContent html={itinerary.activities} />
+                            </div>
+                          </div>
                         </div>
-                      </div>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -312,7 +317,7 @@ export function DataTable({
           <div className="bg-white p-6 rounded-lg shadow-sm">
             <h4 className="font-semibold text-lg mb-4 text-gray-800 border-b pb-2">Jadwal Penerbangan</h4>
             <div className="grid gap-4 md:grid-cols-2">
-              {trip.flight_schedules.map((schedule, index) => (
+              {trip.flight_schedules.map((schedule: FlightSchedule, index: number) => (
                 <div key={index} className="bg-gray-50 p-4 rounded-md">
                   <p className="font-medium text-gray-800 mb-3 text-base break-words">{schedule.route}</p>
                   <div className="grid grid-cols-2 gap-4">
@@ -354,8 +359,8 @@ export function DataTable({
           <div className="bg-white p-6 rounded-lg shadow-sm">
             <h4 className="font-semibold text-lg mb-4 text-gray-800 border-b pb-2">Durasi & Harga</h4>
             <div className="space-y-6">
-              {trip.trip_durations.map((duration, index) => (
-                <div key={index} className="bg-gray-50 p-4 rounded-md">
+              {trip.trip_durations.map((duration) => (
+                <div key={duration.id} className="bg-gray-50 p-4 rounded-md">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                     <div>
                       <p className="text-gray-600 font-medium mb-1">Label Durasi:</p>
@@ -388,9 +393,9 @@ export function DataTable({
                     <div>
                       <p className="font-medium text-gray-800 mb-3">Harga per Pax:</p>
                       <div className="space-y-3">
-                        {duration.trip_prices.map((price, priceIndex) => (
+                        {duration.trip_prices.map((price: TripPrice, priceIndex: number) => (
                           <div key={priceIndex} className="bg-white p-3 rounded-md border border-gray-100">
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                               <div>
                                 <p className="text-gray-600 text-sm">Min Pax:</p>
                                 <p className="font-medium">{price.pax_min}</p>
@@ -402,6 +407,16 @@ export function DataTable({
                               <div>
                                 <p className="text-gray-600 text-sm">Harga per Pax:</p>
                                 <p className="font-medium">{price.price_per_pax}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-600 text-sm">Region:</p>
+                                <Badge className={`${
+                                  price.region === "Domestic" ? "bg-blue-500" : 
+                                  price.region === "Overseas" ? "bg-purple-500" : 
+                                  "bg-indigo-500"
+                                } text-white`}>
+                                  {price.region}
+                                </Badge>
                               </div>
                               <div>
                                 <p className="text-gray-600 text-sm">Status:</p>
@@ -424,7 +439,7 @@ export function DataTable({
           <div className="bg-white p-6 rounded-lg shadow-sm">
             <h4 className="font-semibold text-lg mb-4 text-gray-800 border-b pb-2">Biaya Tambahan</h4>
             <div className="space-y-4">
-              {trip.additional_fees.map((fee, index) => (
+              {trip.additional_fees.map((fee: AdditionalFee, index: number) => (
                 <div key={index} className="bg-gray-50 p-4 rounded-md">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                     <div>

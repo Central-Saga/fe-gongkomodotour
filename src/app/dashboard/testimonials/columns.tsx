@@ -4,9 +4,16 @@ import { ColumnDef } from "@tanstack/react-table"
 import { Testimonial } from "@/types/testimonials"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ArrowUpDown, ChevronDown, ChevronRight, MoreHorizontal, Pencil, Trash, Star } from "lucide-react"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { MoreHorizontal, Star, Trash, Pencil, ChevronDown, ChevronRight, ArrowUpDown } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { formatDate } from "@/lib/utils"
 
 interface ColumnsProps {
   onDelete: (testimonial: Testimonial) => void;
@@ -28,11 +35,12 @@ const ActionsCell = ({ testimonial, onDelete }: { testimonial: Testimonial, onDe
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        <DropdownMenuLabel>Actions</DropdownMenuLabel>
         <DropdownMenuItem onClick={handleEdit}>
           <Pencil className="mr-2 h-4 w-4" />
           Edit
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onDelete(testimonial)}>
+        <DropdownMenuItem onClick={() => onDelete(testimonial)} className="text-red-600">
           <Trash className="mr-2 h-4 w-4" />
           Hapus
         </DropdownMenuItem>
@@ -99,98 +107,83 @@ export const columns = ({ onDelete }: ColumnsProps): ColumnDef<Testimonial>[] =>
   {
     id: "customer_name",
     accessorFn: (row) => row.customer.user.name,
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="px-0"
-      >
-        Nama Customer
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
-    cell: ({ row }) => {
-      const customer = row.original.customer
+    header: ({ column }) => {
       return (
-        <div className="min-w-[180px]">
-          {customer.user.name}
-        </div>
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Nama Customer
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
       )
     },
+    enableSorting: true,
   },
   {
     accessorKey: "rating",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="px-0"
-      >
-        Rating
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
-    cell: ({ row }) => {
-      const rating = row.getValue("rating") as number
+    header: ({ column }) => {
       return (
-        <div className="flex items-center gap-1">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Star
-              key={i}
-              className={`h-4 w-4 ${
-                i < rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
-              }`}
-            />
-          ))}
-        </div>
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Rating
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
       )
     },
+    enableSorting: true,
+    cell: ({ row }) => {
+      const rating = row.original.rating
+      return (
+        <div className="flex items-center">
+          <Star className="w-4 h-4 text-yellow-400 mr-1" />
+          <span>{rating}</span>
+        </div>
+      )
+    }
   },
   {
     accessorKey: "is_approved",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="px-0"
-      >
-        Status
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
-    cell: ({ row }) => {
-      const isApproved = row.getValue("is_approved") as boolean
+    header: ({ column }) => {
       return (
-        <div className="min-w-[100px]">
-          <Badge className={`${isApproved ? "bg-emerald-500" : "bg-red-500"} text-white`}>
-            {isApproved ? "Approved" : "Pending"}
-          </Badge>
-        </div>
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Status
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
       )
     },
+    enableSorting: true,
+    cell: ({ row }) => {
+      const isApproved = row.original.is_approved
+      return (
+        <Badge className={`${isApproved ? "bg-emerald-500" : "bg-red-500"} text-white`}>
+          {isApproved ? "Disetujui" : "Pending"}
+        </Badge>
+      )
+    }
   },
   {
-    accessorKey: "is_highlight",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="px-0"
-      >
-        Highlight
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
-    cell: ({ row }) => {
-      const isHighlight = row.getValue("is_highlight") as boolean
+    accessorKey: "created_at",
+    header: ({ column }) => {
       return (
-        <div className="min-w-[100px]">
-          <Badge className={`${isHighlight ? "bg-emerald-500" : "bg-red-500"} text-white`}>
-            {isHighlight ? "Yes" : "No"}
-          </Badge>
-        </div>
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Tanggal
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
       )
     },
+    enableSorting: true,
+    cell: ({ row }) => {
+      return formatDate(row.original.created_at)
+    }
   },
   {
     id: "actions",

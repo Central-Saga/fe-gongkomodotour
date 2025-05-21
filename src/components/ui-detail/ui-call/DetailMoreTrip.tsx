@@ -3,6 +3,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { motion } from "framer-motion";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 // Definisikan tipe untuk data tur
 interface TripData {
@@ -22,73 +25,97 @@ interface DetailMoreTripProps {
 
 export default function DetailMoreTrip({ trips, tripType }: DetailMoreTripProps) {
   return (
-    <section className="py-12 bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4">
-        <h2 className="text-3xl font-bold text-gray-800 mb-9 text-center">
-          More {tripType === "open-trip" ? "Open Trip" : "Private Trip"}
-        </h2>
-        <div className="flex justify-center">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {trips.slice(0, 3).map((trip, index) => ( // Hanya ambil 3 tur
-              <div
-                key={index}
-                className="bg-white rounded-lg shadow-md overflow-hidden group w-[350px] h-[320px] flex flex-col"
-              >
-                <div className="relative">
+    <section className="py-12 bg-white">
+      <div className="container mx-auto px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="text-center mb-12"
+        >
+          <h2 className="text-3xl font-bold mb-4 text-gray-800">
+            More {tripType === "open-trip" ? "Open Trip" : "Private Trip"}
+          </h2>
+          <p className="text-gray-600 mb-8 leading-relaxed max-w-2xl mx-auto">
+            Discover our selection of group travel packages, perfect for those who want to explore with other adventurers.
+          </p>
+        </motion.div>
+        
+        {/* Grid Layout */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {trips.slice(0, 3).map((trip, index) => (
+            <motion.div
+              key={trip.slug}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+              className="aspect-[5/3]"
+            >
+              <Card className="group relative h-full overflow-hidden">
+                <div className="absolute inset-0">
                   <Image
                     src={trip.image}
                     alt={trip.name}
-                    width={350}
-                    height={180}
-                    className="w-full h-48 object-cover"
+                    fill
+                    className="object-cover transition-transform duration-300 group-hover:scale-110"
+                    priority={index < 3}
+                    quality={100}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   />
-                  <span
-                    className={`absolute top-3 left-3 text-white text-xs font-semibold px-3 py-1 rounded ${
-                      tripType === "open-trip" ? "bg-green-500" : "bg-red-500"
-                    }`}
-                  >
-                    {trip.label}
-                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/70" />
                 </div>
-                <div className="p-4 flex-1 flex flex-col justify-center items-center">
-                  {/* Konten judul, durasi, dan harga yang akan disembunyikan saat hover */}
-                  <div className="text-center group-hover:hidden">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2">{trip.name}</h3>
-                    <div className="flex items-center justify-center space-x-4">
+                
+                <div className="absolute top-4 left-4">
+                  <Badge variant="secondary" className={`${tripType === "open-trip" ? "bg-green-500" : "bg-red-500"} hover:${tripType === "open-trip" ? "bg-green-600" : "bg-red-600"} text-white border-none`}>
+                    {trip.label}
+                  </Badge>
+                </div>
+
+                <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                  <div className="transform transition-transform duration-300 group-hover:-translate-y-4">
+                    <h3 className="text-xl font-semibold mb-2">{trip.name}</h3>
+                    <div className="flex items-center space-x-4">
                       <div className="flex items-center space-x-1">
                         <Image
                           src="/img/sun.png"
-                          alt="Sun Icon"
+                          alt="Duration"
                           width={16}
                           height={16}
-                          className="w-4 h-4"
+                          className="w-4 h-4 brightness-200 invert"
                         />
-                        <p className="text-gray-600 text-sm">{trip.duration}</p>
+                        <span className="text-sm">{trip.duration}</span>
                       </div>
                       <div className="flex items-center space-x-1">
                         <Image
                           src="/img/dollar.png"
-                          alt="Dollar Icon"
+                          alt="Price"
                           width={16}
                           height={16}
-                          className="w-4 h-4"
+                          className="w-4 h-4 brightness-200 invert"
                         />
-                        <p className="text-gray-600 text-sm">{trip.priceIDR}</p>
+                        <span className="text-sm">{trip.priceIDR}</span>
                       </div>
                     </div>
                   </div>
-                  {/* Tombol More Detail yang muncul saat hover */}
-                  <div className="hidden group-hover:flex items-center justify-center flex-1">
-                    <Link href={`/detail-paket/${tripType}?id=${trip.slug}`}>
-                      <button className="bg-yellow-500 text-white px-6 py-2 rounded-lg hover:bg-yellow-600 transition-colors duration-300">
-                        More Detail
-                      </button>
+                  
+                  <div className="h-0 opacity-0 group-hover:h-auto group-hover:opacity-100 group-hover:mt-4 transition-all duration-300">
+                    <Link
+                      href={`/detail-paket/${tripType}?id=${trip.slug}`}
+                      className="block w-full"
+                    >
+                      <motion.button 
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="w-full bg-gold text-white py-2 rounded-lg hover:bg-gold-dark transition-colors duration-300"
+                      >
+                        View Details
+                      </motion.button>
                     </Link>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              </Card>
+            </motion.div>
+          ))}
         </div>
       </div>
     </section>

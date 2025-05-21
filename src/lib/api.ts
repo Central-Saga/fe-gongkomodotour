@@ -77,7 +77,7 @@ interface RequestOptions {
 
 // Generic API request function
 export const apiRequest = async <T>(
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE',
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',
   url: string,
   data?: Record<string, unknown> | FormData,
   options?: RequestOptions

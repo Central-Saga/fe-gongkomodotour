@@ -1,46 +1,75 @@
-import React from "react";
+"use client"
+import React, { useEffect, useState } from "react";
 import Gallery from "@/components/ui-gallery/Gallery";
-
-const galleryData = [
-  { image: "/img/gallery4.jpg", title: "Lunch On Boat" },
-  { image: "/img/gallery2.jpg", title: "Padar Island" },
-  { image: "/img/gallery6.jpg", title: "Wairing Hill" },
-  { image: "/img/gallery4.jpg", title: "Video Paket apa" },
-  { image: "/img/gallery5.jpg", title: "Komodo Island" },
-  { image: "/img/gallery6.jpg", title: "Long Pink Beach" },
-  { image: "/img/gallery7.jpg", title: "Padar Island" },
-  { image: "/img/gallery8.jpg", title: "Video Paket apa" },
-  { image: "/img/gallery9.jpg", title: "Komodo Island" },
-  { image: "/img/gallery4.jpg", title: "Long Pink Beach" },
-  { image: "/img/gallery2.jpg", title: "Video Paket apa" },
-  { image: "/img/gallery6.jpg", title: "Kalong Island" },
-  { image: "/img/gallery4.jpg", title: "Padar Island" },
-  { image: "/img/gallery2.jpg", title: "Video Paket apa" },
-  { image: "/img/gallery6.jpg", title: "Kalong Island" },
-  { image: "/img/gallery4.jpg", title: "Padar Island" },
-];
+import { motion } from "framer-motion";
+import { Gallery as GalleryType, GalleryResponse } from "@/types/galleries";
+import { apiRequest } from "@/lib/api";
 
 export default function GalleryPage() {
+  const [galleryData, setGalleryData] = useState<GalleryType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchGalleryData = async () => {
+      try {
+        const response = await apiRequest<GalleryResponse>(
+          "GET",
+          "/api/landing-page/gallery"
+        );
+        setGalleryData(response.data);
+      } catch (error) {
+        console.error("Error fetching gallery data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchGalleryData();
+  }, []);
+
+  const formattedGalleryData = galleryData.map((gallery) => ({
+    image: gallery.assets?.[0]?.file_url || "/img/default-gallery.jpg",
+    title: gallery.title,
+    description: gallery.description || 'No Description',
+    category: gallery.category || 'Uncategorized',
+  }));
+
   return (
     <main className="gallery-page bg-gray-100">
       <section className="text-center py-10">
-        <h1 className="text-4xl font-bold text-gray-800 mb-4">
-          All About Our Gallery Foto & Video Gong Komodo Tour
-        </h1>
-        <p className="text-gray-600 max-w-3xl mx-auto">
-          Bayangkan diri Anda berdiri di puncak gunung dengan udara segar
-          mengelilingi, atau berjalan di tepi pantai dengan ombak yang
-          berkejaran. Setiap foto dan video yang kami ambil selama tour bulan
-          ini adalah jendela menuju momen-momen menakjubkan yang bikin kamu
-          ingin langsung packing dan ikut merasakannya! Dari sudut pandang yang
-          tak terduga hingga detail-detail kecil yang bikin terpana, yuk intip
-          cerita seru di balik setiap frame perjalanan kami. Siapa tahu, ini
-          bisa jadi inspirasi untuk petualanganmu berikutnya! 🌟
-        </p>
+        <motion.h1 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="text-4xl font-bold text-gray-800 mb-4"
+        >
+          Our Gallery: Photos & Videos from Gong Komodo Tour
+        </motion.h1>
+        <motion.p 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="text-gray-600 max-w-3xl mx-auto"
+        >
+          Discover the beauty of Komodo through our stunning collection of photos and videos. 
+          From breathtaking landscapes to unforgettable moments, each image tells a unique story 
+          of adventure and exploration. Let these visuals inspire your next journey to Komodo!
+        </motion.p>
       </section>
 
-      {/* Panggil Komponen Gallery */}
-      <Gallery data={galleryData} />
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.4 }}
+      >
+        {isLoading ? (
+          <div className="text-center py-10">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+          </div>
+        ) : (
+          <Gallery data={formattedGalleryData} />
+        )}
+      </motion.div>
     </main>
   );
 }
