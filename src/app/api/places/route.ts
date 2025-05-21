@@ -26,10 +26,10 @@ export async function GET() {
     }
 
     return NextResponse.json(data);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error:', error);
     return NextResponse.json(
-      { error: 'Terjadi kesalahan saat mengambil data' },
+      { error: 'Terjadi kesalahan saat mengambil data', detail: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }
