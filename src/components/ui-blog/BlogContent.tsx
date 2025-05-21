@@ -165,6 +165,44 @@ const BlogContent = () => {
             Reset
           </button>
         </div>
+      </div>
+
+      {/* Latest Post Section */}
+      <div className="latest-post py-12">
+        <h2 className="text-2xl font-bold mb-6">Latest Post</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {blogPosts.slice(0, 3).map((post) => (
+            <Link
+              key={post.id}
+              href={`/detail-blog?id=${post.id}`}
+              className="group"
+            >
+              <div className="post-card border rounded-lg shadow-md p-4 flex flex-col h-full cursor-pointer transition-transform duration-300 group-hover:scale-105">
+                <img
+                  src={post.image}
+                  alt={post.title}
+                  className="w-full h-48 object-cover rounded-md mb-2"
+                />
+                <h3 className="text-lg font-semibold mt-4">{post.title}</h3>
+                <p className="text-sm text-gray-600 mt-2 flex-grow">
+                  {post.description.slice(0, 100)}...
+                </p>
+                <div className="flex justify-between items-center mt-auto text-sm text-gray-500">
+                  <div className="flex items-center gap-1">
+                    <FaUser className="w-4 h-4" />
+                    <span>Uploaded by: {post.author}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <FaRegCalendarAlt className="w-4 h-4" />
+                    <span>{post.date}</span>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+        
       </motion.div>
 
       {/* Search Results Section */}
@@ -184,6 +222,42 @@ const BlogContent = () => {
             initial="hidden"
             animate="show"
           >
+            View All
+          </Link>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {blogPosts
+            .filter((post) => post.category === "visiting-flores")
+            .slice(0, 3)
+            .map((post) => (
+              <Link
+                key={post.id}
+                href={`/detail-blog?id=${post.id}`}
+                className="group"
+              >
+                <div className="post-card border rounded-lg shadow-md p-4 flex flex-col h-full cursor-pointer transition-transform duration-300 group-hover:scale-105">
+                  <img
+                    src={post.image}
+                    alt={post.title}
+                    className="w-full h-48 object-cover rounded-md mb-2"
+                  />
+                  <h3 className="text-lg font-semibold mt-4">{post.title}</h3>
+                  <p className="text-sm text-gray-600 mt-2 flex-grow">
+                    {post.description.slice(0, 100)}...
+                  </p>
+                  <div className="flex justify-between items-center mt-auto text-sm text-gray-500">
+                    <div className="flex items-center gap-1">
+                      <FaUser className="w-4 h-4" />
+                      <span>Uploaded by: {post.author}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <FaRegCalendarAlt className="w-4 h-4" />
+                      <span>{post.date}</span>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+
             {formattedFilteredPosts.map((post) => (
               <motion.div 
                 key={post.id}
@@ -235,6 +309,44 @@ const BlogContent = () => {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5, duration: 0.8 }}
           >
+            View All
+          </Link>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {blogPosts
+            .filter((post) => post.category === "traveling-tips")
+            .slice(0, 3)
+            .map((post) => (
+              <Link
+                key={post.id}
+                href={`/detail-blog?id=${post.id}`}
+                className="group"
+              >
+                <div className="post-card border rounded-lg shadow-md p-4 flex flex-col h-full cursor-pointer transition-transform duration-300 group-hover:scale-105">
+                  <img
+                    src={post.image}
+                    alt={post.title}
+                    className="w-full h-48 object-cover rounded-md mb-2"
+                  />
+                  <h3 className="text-lg font-semibold mt-4">{post.title}</h3>
+                  <p className="text-sm text-gray-600 mt-2 flex-grow">
+                    {post.description.slice(0, 100)}...
+                  </p>
+                  <div className="flex justify-between items-center mt-4 text-sm text-gray-500">
+                    <div className="flex items-center gap-1">
+                      <FaUser className="w-4 h-4" />
+                      <span>Uploaded by: {post.author}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <FaRegCalendarAlt className="w-4 h-4" />
+                      <span>{post.date}</span>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ))}
+        </div>
+      </div>
             <h2 className="text-2xl font-bold mb-6">Latest Post</h2>
             <motion.div 
               className="grid grid-cols-1 md:grid-cols-3 gap-6"

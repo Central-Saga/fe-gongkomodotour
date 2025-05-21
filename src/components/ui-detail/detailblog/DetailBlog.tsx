@@ -36,17 +36,12 @@ const DetailBlogUI: React.FC<DetailBlogProps> = ({ blog }) => {
       <p className="text-lg text-gray-800 mb-12">{blog.description}</p>
 
       {/* Sub-Gambar, Sub-Judul, dan Sub-Deskripsi */}
-      {blog.subImage && blog.subTitle && (
+      {blog.subTitle && (
         <div className="sub-section py-5 border-t border-gray-200">
           <h2 className="text-2xl font-bold mb-4">{blog.subTitle}</h2>
           {blog.subDescription && (
             <p className="text-lg text-gray-800 mb-6">{blog.subDescription}</p>
           )}
-          <img
-            src={blog.subImage}
-            alt={blog.subTitle}
-            className="w-full h-64 object-cover rounded-md mb-6"
-          />
         </div>
       )}
       {blog.subTitle && (
@@ -62,30 +57,33 @@ const DetailBlogUI: React.FC<DetailBlogProps> = ({ blog }) => {
       <h2 className="text-2xl font-bold mb-4">Latest Post Article</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {latestPosts.map((post) => (
-          <div
+          <a
             key={post.id}
-            className="latest-post-card p-4 border rounded-md shadow-lg flex flex-col h-full"
+            href={`/detail-blog?id=${post.id}`}
+            className="group"
           >
-            <img
-              src={post.image}
-              alt={post.title}
-              className="w-full h-40 object-cover object-center rounded-md mb-4"
-            />
-            <h3 className="text-lg font-semibold mb-2">{post.title}</h3>
-            <p className="text-sm text-gray-800 flex-grow">
-              {post.description.slice(0, 100)}...
-            </p>
-            <div className="text-gray-600 text-sm mt-auto flex justify-between items-center">
-              <span className="flex items-center space-x-1">
-                <FaUser className="w-4 h-4" />
-                <span>{post.author}</span>
-              </span>
-              <span className="flex items-center space-x-1">
-                <FaRegCalendarAlt className="w-4 h-4" />
-                <span>{post.date}</span>
-              </span>
+            <div className="latest-post-card p-4 border rounded-md shadow-lg flex flex-col h-full cursor-pointer transition-transform duration-300 group-hover:scale-105">
+              <img
+                src={post.image}
+                alt={post.title}
+                className="w-full h-40 object-cover object-center rounded-md mb-4"
+              />
+              <h3 className="text-lg font-semibold mb-2">{post.title}</h3>
+              <p className="text-sm text-gray-800 flex-grow">
+                {post.description.slice(0, 100)}...
+              </p>
+              <div className="text-gray-600 text-sm mt-auto flex justify-between items-center">
+                <span className="flex items-center space-x-1">
+                  <FaUser className="w-4 h-4" />
+                  <span>{post.author}</span>
+                </span>
+                <span className="flex items-center space-x-1">
+                  <FaRegCalendarAlt className="w-4 h-4" />
+                  <span>{post.date}</span>
+                </span>
+              </div>
             </div>
-          </div>
+          </a>
         ))}
       </div>
     </div>
