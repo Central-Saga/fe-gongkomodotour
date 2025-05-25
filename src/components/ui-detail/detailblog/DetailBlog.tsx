@@ -39,7 +39,8 @@ const DetailBlog: React.FC<DetailBlogProps> = ({ blogId }) => {
         const sortedPosts = posts
           .sort(
             (a, b) =>
-              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+              new Date(b.created_at).getTime() -
+              new Date(a.created_at).getTime()
           )
           .slice(0, 3);
         setLatestPosts(sortedPosts);
