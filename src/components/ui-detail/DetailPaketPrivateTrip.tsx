@@ -13,8 +13,15 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { format } from "date-fns";
+import { format, getDay } from "date-fns";
 import { FlightSchedule } from "@/types/trips";
+
+// Function untuk disable hari Senin-Kamis
+const disabledDays = (date: Date) => {
+  const day = getDay(date);
+  // 0 = Minggu, 1 = Senin, ..., 5 = Jumat, 6 = Sabtu
+  return day >= 1 && day <= 4; // Disable Senin(1) sampai Kamis(4)
+};
 
 // Definisikan tipe untuk data paket
 interface PackageData {
@@ -73,6 +80,12 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const router = useRouter();
+
+  const disabledDays = (date: Date) => {
+    const day = getDay(date);
+    // 0 = Minggu, 1 = Senin, ..., 5 = Jumat, 6 = Sabtu
+    return day >= 1 && day <= 4; // Disable Senin(1) sampai Kamis(4)
+  };
 
   const handleBookNow = (packageId: string) => {
     if (selectedDate) {
@@ -267,11 +280,14 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
+                {" "}
                 <Calendar
                   mode="single"
                   selected={selectedDate}
                   onSelect={setSelectedDate}
+                  disabled={disabledDays}
                   initialFocus
+                  className="rounded-md border"
                 />
               </PopoverContent>
             </Popover>

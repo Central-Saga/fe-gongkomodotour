@@ -11,8 +11,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/ui/dialog";
-import { format } from "date-fns";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { format, getDay } from "date-fns";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
@@ -35,12 +40,12 @@ interface PackageData {
   destination: string;
   daysTrip: string;
   description: string;
-  itinerary: { 
+  itinerary: {
     durationId: number;
     durationLabel: string;
-    days: { 
-      day: string; 
-      activities: string;  // Changed to string to handle HTML content
+    days: {
+      day: string;
+      activities: string; // Changed to string to handle HTML content
     }[];
   }[];
   information: string;
@@ -49,8 +54,8 @@ interface PackageData {
   privateGuide?: string;
   images: string[];
   destinations?: number;
-  include?: string[];  // Changed to handle HTML content
-  exclude?: string[];  // Changed to handle HTML content
+  include?: string[]; // Changed to handle HTML content
+  exclude?: string[]; // Changed to handle HTML content
   session?: {
     highSeason: { period: string; price: string };
     peakSeason: { period: string; price: string };
@@ -66,6 +71,13 @@ interface PackageData {
   destination_count: number;
 }
 
+// Function untuk disable hari Senin-Kamis
+const disabledDays = (date: Date) => {
+  const day = getDay(date);
+  // 0 = Minggu, 1 = Senin, ..., 5 = Jumat, 6 = Sabtu
+  return day >= 1 && day <= 4; // Disable Senin(1) sampai Kamis(4)
+};
+
 interface DetailPaketOpenTripProps {
   data: PackageData;
 }
@@ -76,7 +88,9 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
     searchParams.get("mainImage") || data.mainImage || "/img/default-image.png"; // Pastikan fallback default tetap ada
   const [activeTab, setActiveTab] = useState("description");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [selectedDurationId, setSelectedDurationId] = useState<number>(data.itinerary[0]?.durationId || 0);
+  const [selectedDurationId, setSelectedDurationId] = useState<number>(
+    data.itinerary[0]?.durationId || 0
+  );
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const router = useRouter();
 
@@ -104,7 +118,7 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
   return (
     <div className="py-4 px-4">
       {/* Section 1: Gambar */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
@@ -154,7 +168,17 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
                       onClick={() => setSelectedImage(null)}
                       className="absolute top-4 right-4 text-white bg-black/50 p-2 rounded-full hover:bg-black/80 transition-colors duration-200"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
                       </svg>
@@ -210,7 +234,17 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
                           onClick={() => setSelectedImage(null)}
                           className="absolute top-4 right-4 text-white bg-black/50 p-2 rounded-full hover:bg-black/80 transition-colors duration-200"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
                             <line x1="18" y1="6" x2="6" y2="18"></line>
                             <line x1="6" y1="6" x2="18" y2="18"></line>
                           </svg>
@@ -263,14 +297,17 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
       </motion.div>
 
       {/* Section 2: Judul dan Rating */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
         className="mb-4 bg-[#f5f5f5] p-6 rounded-lg shadow-xl"
       >
         <div className="flex items-center mb-2">
-          <Badge variant="secondary" className="bg-green-500 hover:bg-green-600 text-white border-none text-base px-6 py-2">
+          <Badge
+            variant="secondary"
+            className="bg-green-500 hover:bg-green-600 text-white border-none text-base px-6 py-2"
+          >
             Open Trip
           </Badge>
         </div>
@@ -281,7 +318,7 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
       </motion.div>
 
       {/* Section 3: Destination Info */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.4 }}
@@ -290,7 +327,7 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 w-full">
             {/* Meeting Point */}
-            <motion.div 
+            <motion.div
               whileHover={{ scale: 1.02 }}
               transition={{ type: "spring", stiffness: 300 }}
               className="flex items-center space-x-4"
@@ -311,7 +348,7 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
             </motion.div>
 
             {/* Destinations */}
-            <motion.div 
+            <motion.div
               whileHover={{ scale: 1.02 }}
               transition={{ type: "spring", stiffness: 300 }}
               className="flex items-center space-x-4"
@@ -327,12 +364,14 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
               </div>
               <div className="flex flex-col">
                 <span className="text-gold font-semibold">Destinations</span>
-                <span className="text-gray-600">{data.destinations} Places</span>
+                <span className="text-gray-600">
+                  {data.destinations} Places
+                </span>
               </div>
             </motion.div>
 
             {/* Duration */}
-            <motion.div 
+            <motion.div
               whileHover={{ scale: 1.02 }}
               transition={{ type: "spring", stiffness: 300 }}
               className="flex items-center space-x-4"
@@ -364,10 +403,12 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
+                {" "}
                 <Calendar
                   mode="single"
                   selected={selectedDate}
                   onSelect={setSelectedDate}
+                  disabled={disabledDays}
                   initialFocus
                 />
               </PopoverContent>
@@ -391,7 +432,7 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
       </motion.div>
 
       {/* Section 4: Navigation Tabs */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.6 }}
@@ -458,7 +499,9 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <h1 className="text-3xl font-bold text-gray-800 mb-2">Description</h1>
+              <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                Description
+              </h1>
               <div className="w-[150px] h-[3px] bg-gold mb-6"></div>
               <p className="text-gray-600">{data.description}</p>
             </motion.div>
@@ -473,7 +516,9 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
               <Tabs
                 defaultValue={selectedDurationId.toString()}
                 className="w-full"
-                onValueChange={(value) => setSelectedDurationId(parseInt(value))}
+                onValueChange={(value) =>
+                  setSelectedDurationId(parseInt(value))
+                }
               >
                 <TabsList className="mb-6 bg-transparent flex flex-wrap gap-2 h-auto p-0">
                   {data.itinerary.map((duration) => (
@@ -488,21 +533,23 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
                 </TabsList>
 
                 {data.itinerary.map((duration) => (
-                  <TabsContent 
-                    key={duration.durationId} 
+                  <TabsContent
+                    key={duration.durationId}
                     value={duration.durationId.toString()}
                     className="space-y-6 mt-2"
                   >
                     {duration.days.map((day, index) => (
-                      <motion.div 
-                        key={index} 
+                      <motion.div
+                        key={index}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3, delay: index * 0.1 }}
                         className="bg-white rounded-lg p-6 shadow-sm border border-gray-100"
                       >
-                        <h3 className="text-lg font-semibold mb-4 text-gold">{day.day}</h3>
-                        <div 
+                        <h3 className="text-lg font-semibold mb-4 text-gold">
+                          {day.day}
+                        </h3>
+                        <div
                           className="text-gray-600 text-sm [&_ol]:list-decimal [&_ul]:list-disc [&_ol]:pl-5 [&_ul]:pl-5 [&_ol]:space-y-2 [&_ul]:space-y-2 [&_p]:my-0 [&_li]:pl-2 [&_li]:relative [&_li]:leading-normal"
                           dangerouslySetInnerHTML={{ __html: day.activities }}
                         />
@@ -531,9 +578,11 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
                     <h2 className="text-xl font-bold text-gray-800 mb-4">
                       Include
                     </h2>
-                    <div 
+                    <div
                       className="text-gray-600 text-sm [&_ol]:list-decimal [&_ul]:list-disc [&_ol]:pl-5 [&_ul]:pl-5 [&_ol]:space-y-2 [&_ul]:space-y-2 [&_p]:my-0 [&_li]:pl-2 [&_li]:relative [&_li]:leading-normal"
-                      dangerouslySetInnerHTML={{ __html: data.include?.join('') || '' }}
+                      dangerouslySetInnerHTML={{
+                        __html: data.include?.join("") || "",
+                      }}
                     />
                   </div>
 
@@ -543,7 +592,8 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
                       Flight Information
                     </h2>
                     <div className="space-y-6">
-                      {data.flightSchedules && data.flightSchedules.length > 0 ? (
+                      {data.flightSchedules &&
+                      data.flightSchedules.length > 0 ? (
                         data.flightSchedules.map((schedule, index) => (
                           <div key={index}>
                             <h3 className="text-gold text-xl font-semibold mb-4">
@@ -551,18 +601,22 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
                             </h3>
                             <div className="grid grid-cols-2 gap-8">
                               <div>
-                                <p className="text-gray-600 font-medium mb-2">Departure</p>
+                                <p className="text-gray-600 font-medium mb-2">
+                                  Departure
+                                </p>
                                 <p className="text-gray-500">
-                                  {schedule.etd_text === "-" 
-                                    ? `${schedule.etd_time.slice(0, -3)} WITA` 
+                                  {schedule.etd_text === "-"
+                                    ? `${schedule.etd_time.slice(0, -3)} WITA`
                                     : schedule.etd_text}
                                 </p>
                               </div>
                               <div>
-                                <p className="text-gray-600 font-medium mb-2">Arrival</p>
+                                <p className="text-gray-600 font-medium mb-2">
+                                  Arrival
+                                </p>
                                 <p className="text-gray-500">
-                                  {schedule.eta_text === "-" 
-                                    ? `${schedule.eta_time.slice(0, -3)} WITA` 
+                                  {schedule.eta_text === "-"
+                                    ? `${schedule.eta_time.slice(0, -3)} WITA`
                                     : schedule.eta_text}
                                 </p>
                               </div>
@@ -586,9 +640,11 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
                     <h2 className="text-xl font-bold text-gray-800 mb-4">
                       Exclude
                     </h2>
-                    <div 
+                    <div
                       className="text-gray-600 text-sm [&_ol]:list-decimal [&_ul]:list-disc [&_ol]:pl-5 [&_ul]:pl-5 [&_ol]:space-y-2 [&_ul]:space-y-2 [&_p]:my-0 [&_li]:pl-2 [&_li]:relative [&_li]:leading-normal"
-                      dangerouslySetInnerHTML={{ __html: data.exclude?.join('') || '' }}
+                      dangerouslySetInnerHTML={{
+                        __html: data.exclude?.join("") || "",
+                      }}
                     />
                   </div>
 
@@ -636,10 +692,7 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
               <div className="w-[80px] h-[3px] bg-[#CFB53B] mb-6"></div>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 max-w-8xl mx-auto items-center mb-6">
                 {data.boatImages?.map((boat, index) => (
-                  <Link
-                    key={index}
-                    href={`/detail-boat?id=${boat.id}`}
-                  >
+                  <Link key={index} href={`/detail-boat?id=${boat.id}`}>
                     <div className="relative group overflow-hidden rounded-lg shadow-lg cursor-pointer">
                       {/* Gambar Boat */}
                       <div className="relative h-[300px] w-full">
