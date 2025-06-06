@@ -5,9 +5,12 @@ import DetailPaketPrivateTrip from "@/components/ui-detail/DetailPaketPrivateTri
 import DetailFAQ from "@/components/ui-detail/ui-call/DetailFAQ";
 import DetailReview from "@/components/ui-detail/ui-call/DetailReview";
 import DetailMoreTrip from "@/components/ui-detail/ui-call/DetailMoreTrip";
-import DetailBlog from "@/components/ui-detail/ui-call/DetailBlog"; // Impor DetailBlog
-import { useSearchParams } from "next/navigation";
+import DetailBlog from "@/components/ui-detail/ui-call/DetailBlog";
 import Link from "next/link";
+
+interface DetailPrivateTripProps {
+  packageId: string | null;
+}
 
 // Definisikan tipe untuk data paket
 interface PackageData {
@@ -35,9 +38,11 @@ interface PackageData {
     guideFee1: string;
     guideFee2: string;
   };
-  boatImages?: { image: string; title: string }[]; // Tambahkan properti ini
+  boatImages?: { image: string; title: string }[];
+  mainImage?: string;
 }
 
+// Data dummy untuk private trip
 const privateTripData: PackageData[] = [
   {
     id: "stunning-flores-overland",
@@ -319,52 +324,7 @@ const privateTripData: PackageData[] = [
   },
 ];
 
-// Data dummy untuk FAQ di halaman detail paket
-const detailFaqs = [
-  { question: "Pertanyaan 1", answer: "Jawaban untuk Pertanyaan 1." },
-  { question: "Pertanyaan 2", answer: "Jawaban untuk Pertanyaan 2." },
-  { question: "Pertanyaan 3", answer: "Jawaban untuk Pertanyaan 3." },
-  { question: "Pertanyaan 4", answer: "Jawaban untuk Pertanyaan 4." },
-  { question: "Pertanyaan 5", answer: "Jawaban untuk Pertanyaan 5." },
-];
-
-// Data dummy untuk ulasan
-const reviews = [
-  {
-    judul: "Review Title",
-    nama: "Reviewer Name",
-    tanggal: "Date",
-    komentar: "Review body",
-    gambar: "/img/pic-testi.jpg",
-    rating: 5,
-  },
-  {
-    judul: "Review Title",
-    nama: "Reviewer Name",
-    tanggal: "Date",
-    komentar: "Review body",
-    gambar: "/img/pic-testi.jpg",
-    rating: 5,
-  },
-  {
-    judul: "Review Title",
-    nama: "Reviewer Name",
-    tanggal: "Date",
-    komentar: "Review body",
-    gambar: "/img/pic-testi.jpg",
-    rating: 5,
-  },
-  {
-    judul: "Review Title",
-    nama: "Reviewer Name",
-    tanggal: "Date",
-    komentar: "Review body",
-    gambar: "/img/pic-testi.jpg",
-    rating: 5,
-  },
-];
-
-// Data untuk More Private Trip
+// Data dummy untuk more private trips
 const morePrivateTrips = [
   {
     image: "/img/komodoprivate.png",
@@ -400,36 +360,11 @@ const morePrivateTrips = [
   },
 ];
 
-// Data dummy untuk Latest Post
-const blogPosts = [
-  {
-    title: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-    image: "/img/imgsmall-1.png",
-    slug: "lorem-ipsum-1",
-  },
-  {
-    title: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-    image: "/img/imgsmall-2.png",
-    slug: "lorem-ipsum-2",
-  },
-  {
-    title: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-    image: "/img/imgsmall-3.png",
-    slug: "lorem-ipsum-3",
-  },
-  {
-    title: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-    image: "/img/imgsmall-4.png",
-    slug: "lorem-ipsum-4",
-  },
-];
+export default function DetailPrivateTrip({ packageId }: DetailPrivateTripProps) {
+  const selectedPackageId = packageId || "explore-waerebo"; // Default ke "explore-waerebo" jika id tidak ada
+  console.log("Package ID:", selectedPackageId); // Log untuk memeriksa packageId
 
-export default function DetailPrivateTrip() {
-  const searchParams = useSearchParams();
-  const packageId = searchParams.get("id") || "explore-waerebo"; // Default ke "explore-waerebo" jika id tidak ada
-  console.log("Package ID:", packageId); // Log untuk memeriksa packageId
-
-  const selectedPackage = privateTripData.find((pkg) => pkg.id === packageId);
+  const selectedPackage = privateTripData.find((pkg) => pkg.id === selectedPackageId);
   console.log("Selected Package Data:", selectedPackage); // Log untuk memeriksa data paket yang dipilih
 
   // Jika paket tidak ditemukan, tampilkan pesan error atau redirect
@@ -457,11 +392,11 @@ export default function DetailPrivateTrip() {
       <DetailPaketPrivateTrip data={selectedPackage} />
 
       {/* Review Section */}
-      <DetailReview reviews={reviews} />
+      <DetailReview tripId={parseInt(selectedPackage.id)} />
 
       {/* More Private Trip Section */}
       <DetailMoreTrip
-        trips={morePrivateTrips.filter((trip) => trip.slug !== packageId)}
+        trips={morePrivateTrips.filter((trip) => trip.slug !== selectedPackage.id)}
         tripType="private-trip"
       />
 
@@ -469,11 +404,11 @@ export default function DetailPrivateTrip() {
       <div className="px-4 py-12 md:flex md:space-x-6">
         {/* Latest Post */}
         <div className="md:w-1/2 mb-6 md:mb-0">
-          <DetailBlog posts={blogPosts} />
+          <DetailBlog />
         </div>
         {/* FAQ */}
         <div className="md:w-1/2">
-          <DetailFAQ faqs={detailFaqs} />
+          <DetailFAQ />
         </div>
       </div>
     </div>

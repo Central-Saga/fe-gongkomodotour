@@ -52,9 +52,7 @@ const formSchema = z.object({
     .min(10, { message: "Phone number must be at least 10 digits." })
     .regex(/^\d+$/, { message: "Phone number must contain only digits." }),
   nasionality: z.string().min(1, { message: "Please select a nationality." }),
-  region: z.enum(["domestic", "overseas"], {
-    message: "Please select your region.",
-  }),
+  region: z.string(),
 }).refine((data) => data.password === data.password_confirmation, {
   message: "Passwords don't match",
   path: ["password_confirmation"],
@@ -90,7 +88,7 @@ export default function RegisterPage() {
   }, [selectedNationality, form]);
 
   // Handle form submission
-  const onSubmit = async (values) => {
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       setIsSubmitting(true);
 

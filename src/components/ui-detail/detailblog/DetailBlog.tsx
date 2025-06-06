@@ -1,6 +1,7 @@
 import React from "react";
 import { BlogPost, blogPosts } from "@/components/ui-blog/data-blog/blogpost";
 import { FaUser, FaRegCalendarAlt, FaTag } from "react-icons/fa";
+import Image from "next/image";
 
 interface DetailBlogProps {
   blog: BlogPost | null | undefined;
@@ -17,11 +18,14 @@ const DetailBlogUI: React.FC<DetailBlogProps> = ({ blog }) => {
     <div className="detail-blog px-4 md:px-16 lg:px-24 py-12">
       {/* Judul dan Gambar Utama */}
       <h1 className="text-4xl font-bold mb-6">{blog.title}</h1>
-      <img
-        src={blog.image}
-        alt={blog.title}
-        className="w-full h-96 object-cover rounded-md mb-6"
-      />
+      <div className="relative w-full h-[400px]">
+        <Image
+          src={blog.image}
+          alt={blog.title}
+          fill
+          className="object-cover rounded-lg"
+        />
+      </div>
       <div className="text-gray-600 mb-4 flex items-center space-x-4">
         <span className="flex items-center space-x-2">
           <FaUser className="w-4 h-4" /> <span>Upload By {blog.author}</span>
@@ -42,11 +46,14 @@ const DetailBlogUI: React.FC<DetailBlogProps> = ({ blog }) => {
           {blog.subDescription && (
             <p className="text-lg text-gray-800 mb-6">{blog.subDescription}</p>
           )}
-          <img
-            src={blog.subImage}
-            alt={blog.subTitle}
-            className="w-full h-64 object-cover rounded-md mb-6"
-          />
+          <div className="relative w-full h-[300px]">
+            <Image
+              src={blog.subImage}
+              alt={blog.subTitle}
+              fill
+              className="object-cover rounded-full"
+            />
+          </div>
         </div>
       )}
       {blog.subTitle && (
@@ -66,11 +73,14 @@ const DetailBlogUI: React.FC<DetailBlogProps> = ({ blog }) => {
             key={post.id}
             className="latest-post-card p-4 border rounded-md shadow-lg flex flex-col h-full"
           >
-            <img
-              src={post.image}
-              alt={post.title}
-              className="w-full h-40 object-cover object-center rounded-md mb-4"
-            />
+            <div className="relative w-full h-[200px]">
+              <Image
+                src={post.image}
+                alt={post.title}
+                fill
+                className="object-cover rounded-lg"
+              />
+            </div>
             <h3 className="text-lg font-semibold mb-2">{post.title}</h3>
             <p className="text-sm text-gray-800 flex-grow">
               {post.description.slice(0, 100)}...

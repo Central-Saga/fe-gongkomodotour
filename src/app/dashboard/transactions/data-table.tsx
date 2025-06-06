@@ -50,6 +50,7 @@ import { Transaction } from "@/types/transactions"
 import { toast } from "sonner"
 import { apiRequest } from "@/lib/api"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
+import Image from "next/image"
 
 interface DataTableProps<TData> {
   columns: ColumnDef<TData, string>[]
@@ -338,12 +339,14 @@ export function DataTable({
             <div className="bg-white p-4 rounded-lg shadow-sm">
               <h4 className="font-semibold text-lg mb-4 text-gray-800 border-b pb-2">Bukti Pembayaran</h4>
               <div className="flex justify-center">
-                <img 
-                  src={transaction.payment_proof} 
-                  alt="Bukti Pembayaran" 
-                  className="max-w-full h-auto rounded-lg shadow-md"
-                  style={{ maxHeight: '400px' }}
-                />
+                <div className="relative w-full max-w-2xl h-[400px]">
+                  <Image 
+                    src={transaction.payment_proof} 
+                    alt="Bukti Pembayaran" 
+                    fill
+                    className="object-contain rounded-lg shadow-md"
+                  />
+                </div>
               </div>
             </div>
           )}

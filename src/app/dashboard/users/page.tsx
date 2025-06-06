@@ -5,10 +5,13 @@ import { User, ApiResponse } from '@/types/user';
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import * as z from "zod";
-import { formSchema } from "./user-form";
+import { createFormSchema } from "./user-form";
 import { columns } from './columns';
 import { UserDialog } from './user-dialog';
 import { DataTable } from './data-table';
+
+type FormData = z.infer<typeof createFormSchema>
+type FormDataWithoutPassword = Omit<FormData, 'password' | 'password_confirmation'>
 
 export default function UserPages() {
   const [data, setData] = useState<User[]>([]);
@@ -63,7 +66,7 @@ export default function UserPages() {
     }
   };
 
-  const handleSubmit = async (data: z.infer<typeof formSchema>) => {
+  const handleSubmit = async (data: FormData | FormDataWithoutPassword) => {
     try {
       setIsSubmitting(true);
       if (selectedUser) {

@@ -2,8 +2,9 @@
 
 import { useSearchParams } from "next/navigation";
 import Payment from "@/components/ui-payment/page";
+import { Suspense } from "react";
 
-export default function PaymentPage() {
+function PaymentContent() {
   const searchParams = useSearchParams();
   const packageId = searchParams.get("packageId");
   const packageType = searchParams.get("type");
@@ -13,11 +14,19 @@ export default function PaymentPage() {
 
   return (
     <Payment
+      bookingId={bookingId}
       packageId={packageId}
       packageType={packageType}
       date={date}
       tripCount={tripCount}
-      bookingId={bookingId}
     />
+  );
+}
+
+export default function PaymentPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <PaymentContent />
+    </Suspense>
   );
 }

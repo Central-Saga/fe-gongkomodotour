@@ -953,7 +953,7 @@ export default function CreateTripPage() {
                               variant="ghost"
                               size="sm"
                               onClick={() => {
-                                const currentSchedules = form.getValues("flight_schedules")
+                                const currentSchedules = form.getValues("flight_schedules") || [];
                                 form.setValue("flight_schedules", 
                                   currentSchedules.filter((_, i) => i !== index)
                                 )

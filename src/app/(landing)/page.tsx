@@ -40,7 +40,7 @@ export default function Home() {
       title: gallery.title,
       description: gallery.description || 'No Description',
       category: gallery.category || 'Uncategorized',
-      assets: gallery.assets
+      assets: gallery.assets ?? []
     }));
 
   return (

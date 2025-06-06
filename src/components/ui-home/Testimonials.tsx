@@ -3,6 +3,7 @@
 import { Star, Quote } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import Image from "next/image";
 
 interface GoogleReview {
   author_name: string;
@@ -10,21 +11,6 @@ interface GoogleReview {
   text: string;
   time: number;
   profile_photo_url: string;
-}
-
-function AvatarWithFallback({ src, alt }: { src: string; alt: string }) {
-  const [imgError, setImgError] = useState(false);
-  const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2);
-  return !imgError && src ? (
-    <img
-      src={src}
-      alt={alt}
-      className="w-10 h-10 object-cover rounded-full"
-      onError={() => setImgError(true)}
-    />
-  ) : (
-    <span className="text-yellow-500 font-bold text-lg">{getInitials(alt)}</span>
-  );
 }
 
 export default function Testimoni() {
@@ -253,7 +239,12 @@ export default function Testimoni() {
                     className="relative w-12 h-12 rounded-full bg-white border-2 border-yellow-400 flex items-center justify-center overflow-hidden shadow-md"
                     style={{ minWidth: 48, minHeight: 48 }}
                   >
-                    <AvatarWithFallback src={review.profile_photo_url} alt={review.author_name} />
+                    <Image
+                      src={review.profile_photo_url}
+                      alt={review.author_name}
+                      fill
+                      className="object-cover rounded-full"
+                    />
                   </motion.div>
                   <div className="flex flex-col justify-center">
                     <p className="text-xs font-medium text-gray-800">

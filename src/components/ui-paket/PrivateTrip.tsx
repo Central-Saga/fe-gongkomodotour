@@ -54,14 +54,14 @@ export default function PrivateTrip() {
         // Apply sorting
         if (sortBy === "high-low") {
           privateTrips.sort((a, b) => {
-            const priceA = parseInt(a.trip_durations?.[0]?.trip_prices?.[0]?.price_per_pax || "0");
-            const priceB = parseInt(b.trip_durations?.[0]?.trip_prices?.[0]?.price_per_pax || "0");
+            const priceA = parseInt(String(a.trip_durations?.[0]?.trip_prices?.[0]?.price_per_pax || "0"));
+            const priceB = parseInt(String(b.trip_durations?.[0]?.trip_prices?.[0]?.price_per_pax || "0"));
             return priceB - priceA;
           });
         } else if (sortBy === "low-high") {
           privateTrips.sort((a, b) => {
-            const priceA = parseInt(a.trip_durations?.[0]?.trip_prices?.[0]?.price_per_pax || "0");
-            const priceB = parseInt(b.trip_durations?.[0]?.trip_prices?.[0]?.price_per_pax || "0");
+            const priceA = parseInt(String(a.trip_durations?.[0]?.trip_prices?.[0]?.price_per_pax || "0"));
+            const priceB = parseInt(String(b.trip_durations?.[0]?.trip_prices?.[0]?.price_per_pax || "0"));
             return priceA - priceB;
           });
         }
@@ -170,9 +170,9 @@ export default function PrivateTrip() {
                   <SelectValue placeholder="Duration" />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableDurations.map((duration) => (
-                    <SelectItem key={duration} value={duration}>
-                      {duration}
+                  {availableDurations.map((durationLabel) => (
+                    <SelectItem key={durationLabel} value={durationLabel}>
+                      {durationLabel}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -247,7 +247,7 @@ export default function PrivateTrip() {
                               className="w-4 h-4 brightness-200 invert"
                             />
                             <span className="text-sm">
-                              {trip.trip_durations?.[0]?.duration_label || trip.duration || "Custom Duration"}
+                              {trip.trip_durations?.[0]?.duration_label || "Custom Duration"}
                             </span>
                           </div>
                           {trip.trip_durations?.[0]?.trip_prices?.[0]?.price_per_pax && (
@@ -260,7 +260,7 @@ export default function PrivateTrip() {
                                 className="w-4 h-4 brightness-200 invert"
                               />
                               <span className="text-sm">
-                                IDR {parseInt(trip.trip_durations[0].trip_prices[0].price_per_pax).toLocaleString('id-ID')}/pax
+                                IDR {parseInt(String(trip.trip_durations[0].trip_prices[0].price_per_pax)).toLocaleString('id-ID')}/pax
                               </span>
                             </div>
                           )}

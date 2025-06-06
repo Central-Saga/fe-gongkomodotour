@@ -13,6 +13,10 @@ import autoTable from 'jspdf-autotable';
 
 interface PaymentProps {
   bookingId: string | null;
+  packageId: string | null;
+  packageType: string | null;
+  date: string | null;
+  tripCount: string | null;
 }
 
 interface TripPrice {
@@ -190,6 +194,10 @@ interface JsPdfWithAutoTable {
 
 export default function Payment({
   bookingId,
+  packageId,
+  packageType,
+  date,
+  tripCount,
 }: PaymentProps) {
   const [isUploaded, setIsUploaded] = useState(false);
   const [bookingData, setBookingData] = useState<BookingData | null>(null);
@@ -231,8 +239,14 @@ export default function Payment({
       }
     };
 
-    fetchBookingData();
-  }, [bookingId]);
+    // Jika tidak ada bookingId, gunakan packageId dan properti lainnya
+    if (!bookingId && packageId) {
+      // TODO: Implementasi logika untuk membuat booking baru dengan packageId
+      console.log('Creating new booking with:', { packageId, packageType, date, tripCount });
+    } else {
+      fetchBookingData();
+    }
+  }, [bookingId, packageId, packageType, date, tripCount]);
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);

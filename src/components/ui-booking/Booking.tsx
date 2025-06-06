@@ -247,7 +247,7 @@ export default function Booking() {
     });
 
     return applicableFees;
-  }, [selectedPackage?.additional_fees, selectedDate, selectedDurationDays, tripCount, userRegion]);
+  }, [selectedPackage, selectedDate, selectedDurationDays, tripCount, userRegion]);
 
   const calculateTotalBoatCapacity = (boat: Boat) => {
     return boat.cabin
