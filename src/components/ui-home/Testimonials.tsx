@@ -1,47 +1,66 @@
 "use client";
 
-import { Star } from "lucide-react";
+import { Star, Quote } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { apiRequest } from "@/lib/api";
-import { Testimonial } from "@/types/testimonials";
+import Image from "next/image";
+
+interface GoogleReview {
+  author_name: string;
+  rating: number;
+  text: string;
+  time: number;
+  profile_photo_url: string;
+}
 
 export default function Testimoni() {
-  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [reviews, setReviews] = useState<GoogleReview[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
   const [currentIndex, setCurrentIndex] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [showFull, setShowFull] = useState<number | null>(null);
 
   useEffect(() => {
-    const fetchTestimonials = async () => {
+    const fetchGoogleReviews = async () => {
       try {
-        const response = await apiRequest<{ data: Testimonial[] }>(
-          'GET',
-          '/api/landing-page/testimonials'
-        );
-        // Filter testimonial yang sudah disetujui dan di-highlight
-        const approvedAndHighlightedTestimonials = response.data.filter(
-          (testimonial) => testimonial.is_approved && testimonial.is_highlight
-        );
-        setTestimonials(approvedAndHighlightedTestimonials);
+        const response = await fetch('/api/places');
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Response data:', data);
+
+        if (data.error) {
+          throw new Error(data.error);
+        }
+
+        if (data.result && data.result.reviews) {
+          setReviews(data.result.reviews);
+        } else {
+          throw new Error('Tidak ada review yang ditemukan');
+        }
       } catch (error) {
-        console.error('Error fetching testimonials:', error);
+        console.error('Error detail:', error);
+        setError(error instanceof Error ? error.message : 'Terjadi kesalahan saat mengambil review');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchTestimonials();
+    fetchGoogleReviews();
   }, []);
 
   useEffect(() => {
     intervalRef.current = setInterval(() => {
       if (scrollContainerRef.current) {
-        const nextIndex = (currentIndex + 1) % testimonials.length;
+        const nextIndex = (currentIndex + 1) % reviews.length;
         const scrollAmount = nextIndex * 358; // 350px card width + 8px gap
         scrollContainerRef.current.scrollTo({
           left: scrollAmount,
@@ -56,7 +75,7 @@ export default function Testimoni() {
         clearInterval(intervalRef.current);
       }
     };
-  }, [currentIndex, testimonials.length]);
+  }, [currentIndex, reviews.length]);
 
   // Fungsi untuk menangani drag dengan klik kiri
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -85,7 +104,7 @@ export default function Testimoni() {
     }
     intervalRef.current = setInterval(() => {
       if (scrollContainerRef.current) {
-        const nextIndex = (currentIndex + 1) % testimonials.length;
+        const nextIndex = (currentIndex + 1) % reviews.length;
         const scrollAmount = nextIndex * 358;
         scrollContainerRef.current.scrollTo({
           left: scrollAmount,
@@ -104,20 +123,20 @@ export default function Testimoni() {
     scrollContainerRef.current.scrollLeft = scrollLeft - walk;
   };
 
-  // Fungsi untuk mendapatkan inisial dari nama
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(part => part[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
   if (loading) {
     return (
       <div className="py-20 bg-cover bg-center w-full flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="py-20 bg-cover bg-center w-full flex items-center justify-center">
+        <div className="bg-white/90 p-4 rounded-lg shadow-lg">
+          <p className="text-red-600">Error: {error}</p>
+        </div>
       </div>
     );
   }
@@ -158,67 +177,91 @@ export default function Testimoni() {
           onMouseUp={handleMouseUp}
           onMouseMove={handleMouseMove}
         >
-          {testimonials.map((testimonial, index) => (
-            <motion.div
-              key={testimonial.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              whileHover={{ scale: 1.02 }}
-              className="min-w-[350px] bg-white/90 backdrop-blur-sm p-8 rounded-lg shadow-xl flex-shrink-0"
-              style={{ scrollSnapAlign: "center" }}
-            >
-              <motion.div 
-                className="flex items-center mb-4"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
+          {reviews.map((review, index) => {
+            const isLong = review.text.length > 250;
+            const displayText = showFull === index || !isLong ? review.text : review.text.slice(0, 250) + '...';
+            return (
+              <motion.div
+                key={review.time}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                whileHover={{ scale: 1.02 }}
+                className="min-w-[320px] max-w-[500px] w-full bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-2xl flex-shrink-0 flex flex-col justify-between relative"
+                style={{ scrollSnapAlign: "center" }}
               >
-                {[...Array(5)].map((_, i) => (
+                <Quote className="absolute top-6 left-6 w-8 h-8 text-yellow-400 opacity-30 z-10" />
+                <motion.div 
+                  className="flex items-center mb-4 pl-10"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  {[...Array(5)].map((_, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, scale: 0 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: i * 0.1 }}
+                    >
+                      <Star
+                        className={`w-5 h-5 ${
+                          i < review.rating
+                            ? "text-yellow-400 fill-yellow-400"
+                            : "text-gray-300"
+                        }`}
+                      />
+                    </motion.div>
+                  ))}
+                </motion.div>
+                <p className="text-gray-700 mb-4 text-lg leading-relaxed" style={{minHeight: '72px'}}>
+                  {displayText}
+                  {isLong && showFull !== index && (
+                    <button
+                      className="ml-2 text-blue-600 hover:underline text-sm"
+                      onClick={() => setShowFull(index)}
+                    >
+                      Lihat Selengkapnya
+                    </button>
+                  )}
+                  {isLong && showFull === index && (
+                    <button
+                      className="ml-2 text-blue-600 hover:underline text-sm"
+                      onClick={() => setShowFull(null)}
+                    >
+                      Sembunyikan
+                    </button>
+                  )}
+                </p>
+                <div className="flex items-center mt-4 gap-3">
                   <motion.div
-                    key={i}
-                    initial={{ opacity: 0, scale: 0 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: i * 0.1 }}
+                    whileHover={{ scale: 1.1 }}
+                    className="relative w-12 h-12 rounded-full bg-white border-2 border-yellow-400 flex items-center justify-center overflow-hidden shadow-md"
+                    style={{ minWidth: 48, minHeight: 48 }}
                   >
-                    <Star
-                      className={`w-5 h-5 ${
-                        i < testimonial.rating
-                          ? "text-yellow-400 fill-yellow-400"
-                          : "text-gray-300"
-                      }`}
+                    <Image
+                      src={review.profile_photo_url}
+                      alt={review.author_name}
+                      fill
+                      className="object-cover rounded-full"
                     />
                   </motion.div>
-                ))}
-              </motion.div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-3">
-                {testimonial.trip?.name || "Trip"}
-              </h3>
-              <p className="text-gray-600 mb-4 line-clamp-3">
-                {testimonial.review}
-              </p>
-              <div className="flex items-center mt-4">
-                <motion.div
-                  whileHover={{ scale: 1.1 }}
-                  className="relative w-10 h-10 rounded-full bg-yellow-500 flex items-center justify-center text-white font-bold mr-3"
-                >
-                  {getInitials(testimonial.customer.user.name)}
-                </motion.div>
-                <div>
-                  <p className="text-xs font-medium text-gray-800">
-                    {testimonial.customer.user.name}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {new Date(testimonial.created_at).toLocaleDateString('id-ID', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
-                  </p>
+                  <div className="flex flex-col justify-center">
+                    <p className="text-xs font-medium text-gray-800">
+                      {review.author_name}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {new Date(review.time * 1000).toLocaleDateString('id-ID', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </motion.section>

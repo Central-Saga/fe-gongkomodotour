@@ -5,6 +5,7 @@ export interface TripPrice {
   pax_max: number
   price_per_pax: number
   status: "Aktif" | "Non Aktif"
+  region: "Domestic" | "Overseas" | "Domestic & Overseas"
   created_at: string
   updated_at: string
 }
@@ -106,8 +107,9 @@ export interface Trip {
   status: "Aktif" | "Non Aktif"
   is_highlight: "Yes" | "No"
   has_boat: boolean
+  has_hotel: boolean
+  is_hotel_requested: boolean
   destination_count: number
-  region: "Domestic" | "Overseas" | "Domestic & Overseas"
   created_at: string
   updated_at: string
   trip_durations: TripDuration[]

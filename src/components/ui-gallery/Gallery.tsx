@@ -86,7 +86,7 @@ const Gallery: React.FC<GalleryProps> = ({ data }) => {
                 {truncateText(item.description || 'No Description', 60)}
               </p>
               {item.category && (
-                <span className="text-gold text-xs text-center block mt-2 bg-black/40 px-3 py-1 rounded-full inline-block border border-gold/30">
+                <span className="text-gold text-xs text-center mt-2 bg-black/40 px-3 py-1 rounded-full inline-block border border-gold/30">
                   {item.category}
                 </span>
               )}

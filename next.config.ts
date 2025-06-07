@@ -15,6 +15,7 @@ const nextConfig: NextConfig = {
         pathname: '/storage/**',
       }
     ],
+    domains: ['localhost'],
   },
 };
 

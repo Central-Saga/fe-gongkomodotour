@@ -93,13 +93,10 @@ export default function AboutUsPage() {
         >
           <div className="bg-white p-8 md:p-12 rounded-xl shadow-lg flex flex-col md:flex-row items-center gap-8 hover:shadow-xl transition-shadow duration-300">
             <div className="flex-1">
-              <h2 className="text-3xl font-bold text-gray-800 mb-4">About Us</h2>
-              <p className="text-lg text-gray-600 leading-relaxed">
-                Gong Komodo Tour is a trusted travel service provider based in Indonesia, 
-                specializing in exotic destinations such as Komodo Island and Flores. 
-                We are committed to delivering unforgettable travel experiences with the best service. 
-                Our team consists of experienced local guides ready to accompany you in exploring 
-                the natural beauty and culture of our destinations.
+              <h2 className="text-4xl font-bold text-gray-800 mb-6 text-center md:text-left">Tentang Kami</h2>
+              <div className="h-1 w-20 bg-gold mx-auto md:mx-0 mb-6"></div>
+              <p className="text-lg text-gray-600 leading-relaxed text-justify">
+                GONG KOMODO TOUR merupakan perusahaan yang bergerak di bidang jasa perjalanan wisata yang telah berdiri sejak tahun 2016. Saat ini kami melayani paket perjalanan wisata untuk Indonesia bagian Timur yang meliputi Flores (Labuan Bajo, Ruteng, Ende, Maumere, Larantuka) & Sumba. Kami berkomitmen untuk memberikan perjalanan wisata yang tak terlupakan dengan pelayanan terbaik. Adapun tagline yang merupakan identitas dari perusahaan kami yaitu &quot;ENDLESS DISCOVERIES TO THE EAST&quot;. Tagline tersebut memberikan arti bahwa, masih sangat banyak permata indah yang tersembunyi dan belum terjamah oleh para wisatawan di daerah Indonesia Timur. Selain memasarkan potensi pariwisata yang terdapat di Indonesia Timur ke mata dunia, perusahaan kami juga bertujuan untuk mensejahterakan masyarakat setempat dengan mengasah kemampuan mereka sebagai pemandu lokal berpengalaman yang siap melayani Anda menjelajahi keindahan alam dan budaya khususnya di daerah Indonesia Timur.
               </p>
             </div>
             <div className="flex-shrink-0">
@@ -121,7 +118,7 @@ export default function AboutUsPage() {
       </section>
 
       {/* Vision & Mission Section */}
-      <section className="py-20 px-4 md:px-8 relative">
+      <section className="py-20 px-4 md:px-8 relative bg-gray-50">
         <div className="w-full mx-auto relative overflow-visible">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             {/* Left Column: Image */}
@@ -135,13 +132,15 @@ export default function AboutUsPage() {
               <motion.div
                 whileHover={{ scale: 1.02 }}
                 transition={{ duration: 0.3 }}
+                className="relative"
               >
+                <div className="absolute inset-0 bg-gold/20 rounded-xl transform rotate-3"></div>
                 <Image
                   src="/img/mantaabout.png"
                   alt="Manta Ray"
                   width={900}
                   height={500}
-                  className="rounded-xl shadow-lg object-cover h-auto"
+                  className="rounded-xl shadow-lg object-cover h-auto relative z-10"
                 />
               </motion.div>
             </MotionDiv>
@@ -157,12 +156,13 @@ export default function AboutUsPage() {
                 whileHover={{ scale: 1.02 }}
                 className="bg-white p-8 rounded-xl shadow-lg w-full flex items-center gap-6 border-l-4 border-gold hover:shadow-xl transition-all duration-300"
               >
-                <Eye className="w-12 h-12 text-gold flex-shrink-0" />
+                <div className="bg-gold/10 p-4 rounded-full">
+                  <Eye className="w-12 h-12 text-gold flex-shrink-0" />
+                </div>
                 <div className="flex-1">
-                  <h2 className="text-2xl font-semibold text-gray-800 mb-3">Our Vision</h2>
-                  <p className="text-gray-600 leading-relaxed">
-                    To become a leading travel service provider in Indonesia known for quality, 
-                    reliability, and extraordinary travel experiences.
+                  <h2 className="text-3xl font-bold text-gray-800 mb-4">Visi</h2>
+                  <p className="text-gray-600 leading-relaxed text-lg">
+                    Menjadi perusahaan travel agent terpercaya yang menjadi pilihan pelanggan dengan memberikan kualitas, keandalan dan pengalaman perjalanan yang tak terlupakan.
                   </p>
                 </div>
               </motion.div>
@@ -170,13 +170,45 @@ export default function AboutUsPage() {
                 whileHover={{ scale: 1.02 }}
                 className="bg-white p-8 rounded-xl shadow-lg w-full flex items-center gap-6 border-l-4 border-gold hover:shadow-xl transition-all duration-300"
               >
-                <Target className="w-12 h-12 text-gold flex-shrink-0" />
+                <div className="bg-gold/10 p-4 rounded-full">
+                  <Target className="w-12 h-12 text-gold flex-shrink-0" />
+                </div>
                 <div className="flex-1">
-                  <h2 className="text-2xl font-semibold text-gray-800 mb-3">Our Mission</h2>
-                  <p className="text-gray-600 leading-relaxed">
-                    To provide safe, enjoyable, and memorable travel experiences with a focus 
-                    on preserving nature and local culture.
-                  </p>
+                  <h2 className="text-3xl font-bold text-gray-800 mb-4">Misi</h2>
+                  <ul className="space-y-3 text-gray-600 leading-relaxed text-lg">
+                    <li className="flex items-start gap-2">
+                      <span className="text-gold font-bold">1.</span>
+                      Memberikan pengalaman perjalanan yang tak terlupakan bagi para pelanggan
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-gold font-bold">2.</span>
+                      Memperkenalkan destinasi wisata baru yang belum terjamah kepada kacamata dunia
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-gold font-bold">3.</span>
+                      Memastikan bahwa seluruh kegiatan perusahaan mampu menghasilkan nilai tambah, tidak hanya dari aspek pariwisata namun juga kesejahteraan masyarakat lokal di setiap daerahnya
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-gold font-bold">4.</span>
+                      Mengelola perusahaan berdasarkan prinsip Good Corporate Governance
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-gold font-bold">5.</span>
+                      Memberikan pelayanan yang prima, professional dan inovatif guna memberikan kepuasan terhadap pelanggan
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-gold font-bold">6.</span>
+                      Menyediakan berbagai macam pilihan paket perjalanan yang sesuai dengan kebutuhan dan anggaran pelanggan
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-gold font-bold">7.</span>
+                      Memberikan layanan yang ramah dan profesional untuk memastikan kenyamanan pelanggan selama perjalanan trip
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-gold font-bold">8.</span>
+                      Memastikan keselamatan dan keamanan para pelanggan selama perjalanan trip
+                    </li>
+                  </ul>
                 </div>
               </motion.div>
             </MotionDiv>

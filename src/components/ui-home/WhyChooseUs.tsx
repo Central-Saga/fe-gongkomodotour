@@ -137,7 +137,7 @@ export default function WhyChooseUs() {
           >
             <div className="relative w-full h-full min-h-[400px]">
               <Image
-                src="/img/whychooseus.png"
+                src="/img/whychooseus.jpg"
                 alt="Professional team of Gong Komodo Tour ready to serve your journey"
                 layout="fill"
                 objectFit="cover"
@@ -149,7 +149,7 @@ export default function WhyChooseUs() {
                 whileInView={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
                 viewport={{ once: true }}
-                className="absolute inset-0 bg-black/40 flex items-center justify-start rounded-r-none"
+                className="absolute inset-0 bg-black/10 flex items-center justify-start rounded-r-none"
               >
                 <motion.h2 
                   initial={{ opacity: 0, y: 30 }}

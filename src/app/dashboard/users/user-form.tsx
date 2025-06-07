@@ -25,7 +25,7 @@ import { Role, ApiResponse } from "@/types/role"
 import { apiRequest } from "@/lib/api"
 import { useEffect, useState } from "react"
 
-const baseSchema = z.object({
+export const baseSchema = z.object({
   name: z.string().min(2, {
     message: "Name must be at least 2 characters.",
   }),
@@ -40,7 +40,7 @@ const baseSchema = z.object({
   }),
 })
 
-const createFormSchema = baseSchema.extend({
+export const createFormSchema = baseSchema.extend({
   password: z.string().min(8, {
     message: "Password must be at least 8 characters.",
   }),
@@ -52,9 +52,7 @@ const createFormSchema = baseSchema.extend({
   path: ["password_confirmation"],
 })
 
-export const formSchema = createFormSchema;
-
-const editFormSchema = baseSchema.extend({
+export const editFormSchema = baseSchema.extend({
   password: z.string().min(8, {
     message: "Password must be at least 8 characters.",
   }).optional().or(z.literal('')),
@@ -72,6 +70,7 @@ const editFormSchema = baseSchema.extend({
 })
 
 type FormData = z.infer<typeof createFormSchema>
+type EditFormData = z.infer<typeof editFormSchema>
 type FormDataWithoutPassword = Omit<FormData, 'password' | 'password_confirmation'>
 
 interface UserFormProps {
@@ -100,7 +99,7 @@ export function UserForm({ initialData, onSubmit, isLoading }: UserFormProps) {
     fetchRoles();
   }, []);
 
-  const form = useForm<FormData>({
+  const form = useForm<EditFormData>({
     resolver: zodResolver(isEditing ? editFormSchema : createFormSchema),
     defaultValues: {
       name: initialData?.name || "",
@@ -112,13 +111,18 @@ export function UserForm({ initialData, onSubmit, isLoading }: UserFormProps) {
     },
   })
 
-  const handleSubmit = (data: FormData) => {
+  const handleSubmit = (data: EditFormData) => {
     if (isEditing && !data.password) {
       // Jika dalam mode edit dan password kosong, hapus field password dari data
-      const { password: _password, password_confirmation: _confirmation, ...dataWithoutPassword } = data;
-      onSubmit(dataWithoutPassword);
+      const dataWithoutPassword = {
+        name: data.name,
+        email: data.email,
+        status: data.status,
+        role: data.role
+      };
+      onSubmit(dataWithoutPassword as FormDataWithoutPassword);
     } else {
-      onSubmit(data);
+      onSubmit(data as FormData);
     }
   };
 

@@ -6,12 +6,13 @@ import { apiRequest } from "@/lib/api";
 import { Boat } from "@/types/boats";
 import DetailBoat from "@/components/ui-detail/boat/DetailBoat";
 import Link from "next/link";
+import { Suspense } from "react";
 
 interface BoatResponse {
   data: Boat;
 }
 
-export default function DetailBoatPage() {
+function DetailBoatContent() {
   const searchParams = useSearchParams();
   const boatId = searchParams.get("id");
   const [boat, setBoat] = useState<Boat | null>(null);
@@ -75,4 +76,12 @@ export default function DetailBoatPage() {
   }
 
   return <DetailBoat boat={boat} />;
+}
+
+export default function DetailBoatPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <DetailBoatContent />
+    </Suspense>
+  );
 }

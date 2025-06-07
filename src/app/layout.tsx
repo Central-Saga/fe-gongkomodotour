@@ -1,27 +1,26 @@
 // src/app/layout.tsx
-import type { Metadata } from 'next';
-import { Poppins } from 'next/font/google';
-import './globals.css';
-import { Toaster } from 'sonner';
+import { Inter } from 'next/font/google'
+import './globals.css'
+import { Toaster } from 'sonner'
 
-const poppins = Poppins({ subsets: ['latin'], weight: ['400', '500', '600', '700'] });
+const inter = Inter({ subsets: ['latin'] })
 
-export const metadata: Metadata = {
+export const metadata = {
   title: 'Gong Komodo Tour & Travel',
-  description: 'Jelajahi keindahan Pulau Komodo dan sekitarnya bersama kami',
-};
+  description: 'Jelajahi keindahan Pulau Komodo dan sekitarnya bersama kami'
+}
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: {
+  children: React.ReactNode
+}) {
   return (
     <html lang="id">
-      <body className={poppins.className}>
+      <body className={inter.className}>
         {children}
         <Toaster />
       </body>
     </html>
-  );
+  )
 }

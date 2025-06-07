@@ -1,159 +1,119 @@
-import { useRef, useState, useEffect } from "react";
-import { Star } from "lucide-react";
+"use client";
+
+import { useEffect, useState } from "react";
+import Image from "next/image";
 import { apiRequest } from "@/lib/api";
-import { Testimonial } from "@/types/testimonials";
+
+interface Review {
+  user_image: string;
+  user_name: string;
+  rating: number;
+  comment: string;
+  date: string;
+}
+
+interface ApiResponse {
+  data: Review[];
+}
 
 interface DetailReviewProps {
   tripId: number;
 }
 
 export default function DetailReview({ tripId }: DetailReviewProps) {
-  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
-  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchTestimonials = async () => {
+    const fetchReviews = async () => {
       try {
-        const response = await apiRequest<{ data: Testimonial[] }>(
-          'GET',
-          '/api/landing-page/testimonials'
-        );
-        // Filter testimonial yang terkait dengan trip dan sudah disetujui
-        const tripTestimonials = response.data.filter(
-          (testimonial) => testimonial.trip_id === tripId && testimonial.is_approved
-        );
-        setTestimonials(tripTestimonials);
-      } catch (error) {
-        console.error('Error fetching testimonials:', error);
+        setLoading(true);
+        const response = await apiRequest<ApiResponse>('GET', `/api/landing-page/trips/${tripId}/reviews`);
+        if (response?.data) {
+          setReviews(response.data);
+        }
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching reviews:", err);
+        setError("Failed to load reviews");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchTestimonials();
+    fetchReviews();
   }, [tripId]);
-
-  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!scrollContainerRef.current) return;
-    if (e.button !== 0) return; // Hanya klik kiri yang memicu drag
-    setIsDragging(true);
-    setStartX(e.pageX - scrollContainerRef.current.offsetLeft);
-    setScrollLeft(scrollContainerRef.current.scrollLeft);
-    scrollContainerRef.current.style.cursor = "grabbing";
-  };
-
-  const handleMouseLeave = () => {
-    setIsDragging(false);
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.style.cursor = "grab";
-    }
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.style.cursor = "grab";
-    }
-  };
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!isDragging || !scrollContainerRef.current) return;
-    e.preventDefault();
-    const x = e.pageX - scrollContainerRef.current.offsetLeft;
-    const walk = (x - startX) * 2; // Mengatur kecepatan drag
-    scrollContainerRef.current.scrollLeft = scrollLeft - walk;
-  };
-
-  // Fungsi untuk mendapatkan inisial dari nama
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(part => part[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
 
   if (loading) {
     return (
-      <section className="py-16 px-4 md:px-8 bg-[#f5f5f5]">
-        <div className="flex justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-        </div>
-      </section>
-    );
-  }
-
-  if (testimonials.length === 0) {
-    return (
-      <section className="py-16 px-4 md:px-8 bg-[#f5f5f5]">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-800 mb-6">Review</h2>
-          <p className="text-gray-600">Belum ada review untuk trip ini.</p>
-        </div>
-      </section>
-    );
-  }
-
-  return (
-    <section className="py-16 px-4 md:px-8 bg-[#f5f5f5]">
-      <div className="">
-        <h2 className="text-3xl font-bold text-gray-800 mb-6">Review</h2>
-        <div
-          ref={scrollContainerRef}
-          className="flex gap-6 overflow-x-auto scrollbar-hide select-none"
-          style={{ scrollBehavior: "smooth", cursor: "grab" }}
-          onMouseDown={handleMouseDown}
-          onMouseLeave={handleMouseLeave}
-          onMouseUp={handleMouseUp}
-          onMouseMove={handleMouseMove}
-        >
-          {testimonials.map((testimonial) => (
-            <div
-              key={testimonial.id}
-              className="bg-white p-4 rounded-lg shadow-2xl hover:shadow-lg transition-shadow duration-300 flex-shrink-0"
-              style={{
-                minWidth: "400px",
-                boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-              }}
-            >
-              <div className="flex items-center mb-2">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`w-5 h-5 ${
-                      i < testimonial.rating
-                        ? "text-yellow-400 fill-yellow-400"
-                        : "text-gray-300"
-                    }`}
-                  />
-                ))}
-              </div>
-              <h3 className="text-lg font-semibold text-gray-800">{testimonial.trip?.name}</h3>
-              <p className="text-gray-600 mt-2">{testimonial.review}</p>
-              <div className="flex items-center mt-4">
-                <div className="relative w-10 h-10 rounded-full bg-yellow-500 flex items-center justify-center text-white font-bold mr-3">
-                  {getInitials(testimonial.customer.user.name)}
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-800">{testimonial.customer.user.name}</p>
-                  <p className="text-sm text-gray-500">
-                    {new Date(testimonial.created_at).toLocaleDateString('id-ID', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
-                  </p>
+      <div className="container mx-auto px-4 py-8">
+        <div className="animate-pulse space-y-4">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="bg-gray-100 p-4 rounded-lg">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
+                <div className="flex-1">
+                  <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2 mt-2"></div>
                 </div>
               </div>
             </div>
           ))}
         </div>
       </div>
-    </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-600">
+          {error}
+        </div>
+      </div>
+    );
+  }
+
+  if (reviews.length === 0) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center text-gray-500">
+          Belum ada review untuk trip ini
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <h2 className="text-2xl font-bold mb-6">Reviews</h2>
+      <div className="grid gap-6">
+        {reviews.map((review, index) => (
+          <div key={index} className="review-card p-4 border rounded-lg shadow-sm">
+            <div className="flex items-center mb-4">
+              <div className="relative w-12 h-12 mr-4">
+                <Image
+                  src={review.user_image}
+                  alt={review.user_name}
+                  fill
+                  className="object-cover rounded-full"
+                />
+              </div>
+              <div>
+                <h4 className="font-semibold">{review.user_name}</h4>
+                <div className="flex items-center">
+                  {[...Array(5)].map((_, i) => (
+                    <span key={i} className={`text-${i < review.rating ? 'yellow' : 'gray'}-400`}>★</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <p className="text-gray-600">{review.comment}</p>
+            <p className="text-sm text-gray-400 mt-2">{review.date}</p>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

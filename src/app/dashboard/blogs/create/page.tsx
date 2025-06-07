@@ -39,7 +39,7 @@ const blogSchema = z.object({
   title: z.string().min(1, "Judul harus diisi"),
   content: z.string().min(1, "Konten harus diisi"),
   status: z.enum(["published", "draft"]),
-  category: z.enum(["tips", "travel"])
+  category: z.enum(["trips", "travel", "tips"])
 })
 
 export default function CreateBlogPage() {
@@ -255,6 +255,7 @@ export default function CreateBlogPage() {
                             <SelectContent>
                               <SelectItem value="trips">Trips</SelectItem>
                               <SelectItem value="travel">Travel</SelectItem>
+                              <SelectItem value="tips">Tips</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />

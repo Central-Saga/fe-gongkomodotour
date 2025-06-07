@@ -1,18 +1,31 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
-import { Trip } from "@/types/trips"
-import { Badge } from "@/components/ui/badge"
+import { Transaction } from "@/types/transactions"
 import { Button } from "@/components/ui/button"
-import { ArrowUpDown, ChevronDown, ChevronRight, MoreHorizontal, Trash, Pencil } from "lucide-react"
+import { ArrowUpDown, ChevronDown, ChevronRight, MoreHorizontal, Trash } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
-interface ColumnsProps {
-  onDelete: (trip: Trip) => void;
-  onEdit: (trip: Trip) => void;
+const ActionsCell = () => {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="h-8 w-8 p-0">
+          <span className="sr-only">Buka menu</span>
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem>
+          <Trash className="mr-2 h-4 w-4" />
+          Hapus
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
 }
 
-export const columns = ({ onDelete, onEdit }: ColumnsProps): ColumnDef<Trip>[] => [
+export const columns = (): ColumnDef<Transaction>[] => [
   {
     id: "expander",
     header: () => null,
@@ -68,41 +81,61 @@ export const columns = ({ onDelete, onEdit }: ColumnsProps): ColumnDef<Trip>[] =
     enableHiding: false,
   },
   {
-    accessorKey: "name",
+    id: "customer_name",
+    accessorFn: (row) => row.booking.customer_name,
     header: ({ column }) => (
       <Button
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         className="px-0"
       >
-        Nama Trip
+        Nama Customer
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
+    cell: ({ row }) => (
+      <div className="min-w-[180px]">{row.original.booking.customer_name}</div>
+    ),
   },
   {
-    accessorKey: "type",
+    accessorKey: "bank_type",
     header: ({ column }) => (
       <Button
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         className="px-0"
       >
-        Tipe Trip
+        Bank
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
+    cell: ({ row }) => (
+      <div className="min-w-[120px]">{row.getValue("bank_type")}</div>
+    ),
+  },
+  {
+    accessorKey: "total_amount",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        className="px-0"
+      >
+        Total Pembayaran
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
     cell: ({ row }) => {
-      const type = row.getValue("type") as string
+      const amount = parseFloat(row.getValue("total_amount"))
       return (
-        <Badge className={`${type === "Open Trip" ? "bg-yellow-500" : "bg-blue-500"} text-white`}>
-          {type}
-        </Badge>
+        <div className="min-w-[150px]">
+          Rp {amount.toLocaleString('id-ID')}
+        </div>
       )
     },
   },
   {
-    accessorKey: "status",
+    accessorKey: "payment_status",
     header: ({ column }) => (
       <Button
         variant="ghost"
@@ -114,60 +147,25 @@ export const columns = ({ onDelete, onEdit }: ColumnsProps): ColumnDef<Trip>[] =
       </Button>
     ),
     cell: ({ row }) => {
-      const status = row.getValue("status") as string
+      const status = row.getValue("payment_status") as string
       return (
-        <Badge className={`${status === "Aktif" ? "bg-emerald-500" : "bg-red-500"} text-white`}>
-          {status}
-        </Badge>
-      )
-    },
-  },
-  {
-    accessorKey: "is_highlight",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="px-0"
-      >
-        Highlight
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
-    cell: ({ row }) => {
-      const isHighlight = row.getValue("is_highlight") as "Yes" | "No"
-      return (
-        <Badge className={`${isHighlight === "Yes" ? "bg-yellow-500" : "bg-gray-500"} text-white`}>
-          {isHighlight}
-        </Badge>
+        <div className="min-w-[150px]">
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+            status === "Pembayaran Berhasil" ? "bg-green-100 text-green-800" :
+            status === "Menunggu Pembayaran" ? "bg-yellow-100 text-yellow-800" :
+            "bg-red-100 text-red-800"
+          }`}>
+            {status}
+          </span>
+        </div>
       )
     },
   },
   {
     id: "actions",
     header: () => null,
-    cell: ({ row }) => {
-      const trip = row.original;
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Buka menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onEdit(trip)}>
-              <Pencil className="mr-2 h-4 w-4" />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onDelete(trip)}>
-              <Trash className="mr-2 h-4 w-4" />
-              Hapus
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
+    cell: () => {
+      return <ActionsCell />;
     },
     enableHiding: false,
   },

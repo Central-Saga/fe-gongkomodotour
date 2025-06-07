@@ -395,7 +395,7 @@ export function DataTable({
                       <div className="space-y-3">
                         {duration.trip_prices.map((price: TripPrice, priceIndex: number) => (
                           <div key={priceIndex} className="bg-white p-3 rounded-md border border-gray-100">
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                               <div>
                                 <p className="text-gray-600 text-sm">Min Pax:</p>
                                 <p className="font-medium">{price.pax_min}</p>
@@ -407,6 +407,16 @@ export function DataTable({
                               <div>
                                 <p className="text-gray-600 text-sm">Harga per Pax:</p>
                                 <p className="font-medium">{price.price_per_pax}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-600 text-sm">Region:</p>
+                                <Badge className={`${
+                                  price.region === "Domestic" ? "bg-blue-500" : 
+                                  price.region === "Overseas" ? "bg-purple-500" : 
+                                  "bg-indigo-500"
+                                } text-white`}>
+                                  {price.region}
+                                </Badge>
                               </div>
                               <div>
                                 <p className="text-gray-600 text-sm">Status:</p>

@@ -48,6 +48,7 @@ interface TripDuration {
     pax_max: number;
     price_per_pax: number;
     status: "Aktif" | "Non Aktif";
+    region: "Domestic" | "Overseas" | "Domestic & Overseas";
   }[];
 }
 
@@ -57,7 +58,6 @@ const tripSchema = z.object({
   type: z.enum(["Open Trip", "Private Trip"]),
   status: z.enum(["Aktif", "Non Aktif"]),
   is_highlight: z.enum(["Yes", "No"]),
-  region: z.enum(["Domestic", "Overseas", "Domestic & Overseas"]),
   include: z.string().min(1, "Include harus diisi"),
   exclude: z.string().min(1, "Exclude harus diisi"),
   note: z.string().optional(),
@@ -65,6 +65,7 @@ const tripSchema = z.object({
   start_time: z.string().min(1, "Waktu mulai harus diisi"),
   end_time: z.string().min(1, "Waktu selesai harus diisi"),
   has_boat: z.boolean(),
+  has_hotel: z.boolean(),
   destination_count: z.number().min(0, "Jumlah destinasi harus diisi"),
   trip_durations: z.array(z.object({
     duration_label: z.string().min(1, "Label durasi harus diisi"),
@@ -79,7 +80,8 @@ const tripSchema = z.object({
       pax_min: z.number().min(1, "Minimal pax harus diisi"),
       pax_max: z.number().min(1, "Maksimal pax harus diisi"),
       price_per_pax: z.number().min(0, "Harga per pax harus diisi"),
-      status: z.enum(["Aktif", "Non Aktif"])
+      status: z.enum(["Aktif", "Non Aktif"]),
+      region: z.enum(["Domestic", "Overseas", "Domestic & Overseas"])
     }))
   })),
   flight_schedules: z.array(z.object({
@@ -127,7 +129,6 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
       type: "Open Trip",
       status: "Aktif",
       is_highlight: "No",
-      region: "Domestic",
       include: "",
       exclude: "",
       note: "",
@@ -135,6 +136,7 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
       start_time: "",
       end_time: "",
       has_boat: false,
+      has_hotel: false,
       destination_count: 0,
       trip_durations: [{
         duration_label: "",
@@ -146,7 +148,8 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
           pax_min: 1,
           pax_max: 1,
           price_per_pax: 0,
-          status: "Aktif"
+          status: "Aktif",
+          region: "Domestic"
         }]
       }],
       flight_schedules: [],
@@ -191,12 +194,14 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
                 pax_min: Number(price.pax_min),
                 pax_max: Number(price.pax_max),
                 price_per_pax: Number(price.price_per_pax) || 0,
-                status: price.status
+                status: price.status,
+                region: price.region
               })) || [{
                 pax_min: 1,
                 pax_max: 1,
                 price_per_pax: 0,
-                status: "Aktif"
+                status: "Aktif",
+                region: "Domestic"
               }]
             })),
             additional_fees: response.data.additional_fees?.map(fee => ({
@@ -400,14 +405,15 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
           pax_min: 1,
           pax_max: 1,
           price_per_pax: 0,
-          status: "Aktif"
+          status: "Aktif",
+          region: "Domestic"
         }]
       }
     ])
   }
 
   const handleAddFlightSchedule = () => {
-    const currentSchedules = form.getValues("flight_schedules") || [];
+    const currentSchedules = form.getValues("flight_schedules") ?? [];
     form.setValue("flight_schedules", [
       ...currentSchedules,
       {
@@ -537,29 +543,6 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
 
                     <FormField
                       control={form.control}
-                      name="region"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Region</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Pilih region" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="Domestic">Domestic</SelectItem>
-                              <SelectItem value="Overseas">Overseas</SelectItem>
-                              <SelectItem value="Domestic & Overseas">Domestic & Overseas</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
                       name="meeting_point"
                       render={({ field }) => (
                         <FormItem>
@@ -630,6 +613,31 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Menggunakan Kapal</FormLabel>
+                          <Select 
+                            onValueChange={(value) => field.onChange(value === "true")} 
+                            value={field.value ? "true" : "false"}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Pilih status" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="true">Ya</SelectItem>
+                              <SelectItem value="false">Tidak</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="has_hotel"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Menggunakan Hotel</FormLabel>
                           <Select 
                             onValueChange={(value) => field.onChange(value === "true")} 
                             value={field.value ? "true" : "false"}
@@ -910,7 +918,8 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
                                     pax_min: currentPrices.length > 0 ? currentPrices[currentPrices.length - 1].pax_max + 1 : 1,
                                     pax_max: currentPrices.length > 0 ? currentPrices[currentPrices.length - 1].pax_max + 2 : 2,
                                     price_per_pax: 0,
-                                    status: "Aktif"
+                                    status: "Aktif",
+                                    region: "Domestic"
                                   }
                                 ])
                               }}
@@ -922,7 +931,7 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
 
                           <div className="space-y-4">
                             {duration.prices.map((_, pIndex) => (
-                              <div key={pIndex} className="grid grid-cols-5 gap-4 p-4 bg-white rounded-lg items-end">
+                              <div key={pIndex} className="grid grid-cols-6 gap-4 p-4 bg-white rounded-lg items-end">
                                 <FormField
                                   control={form.control}
                                   name={`trip_durations.${dIndex}.prices.${pIndex}.pax_min`}
@@ -998,6 +1007,28 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
                                     </FormItem>
                                   )}
                                 />
+                                <FormField
+                                  control={form.control}
+                                  name={`trip_durations.${dIndex}.prices.${pIndex}.region`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Region</FormLabel>
+                                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl>
+                                          <SelectTrigger>
+                                            <SelectValue placeholder="Pilih region" />
+                                          </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                          <SelectItem value="Domestic">Domestic</SelectItem>
+                                          <SelectItem value="Overseas">Overseas</SelectItem>
+                                          <SelectItem value="Domestic & Overseas">Domestic & Overseas</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
 
                                 {pIndex > 0 && (
                                   <FormItem className="flex flex-col justify-center">
@@ -1056,7 +1087,7 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
                               variant="ghost"
                               size="sm"
                               onClick={() => {
-                                const currentSchedules = form.getValues("flight_schedules")
+                                const currentSchedules = form.getValues("flight_schedules") || [];
                                 form.setValue("flight_schedules", 
                                   currentSchedules.filter((_, i) => i !== index)
                                 )
@@ -1501,7 +1532,19 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
                               <FormItem>
                                 <FormLabel>Start Date</FormLabel>
                                 <FormControl>
-                                  <Input type="date" {...field} />
+                                  <Input 
+                                    type="date" 
+                                    {...field}
+                                    value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
+                                    onChange={(e) => {
+                                      const date = e.target.value;
+                                      if (date) {
+                                        field.onChange(new Date(date).toISOString().split('T')[0]);
+                                      } else {
+                                        field.onChange('');
+                                      }
+                                    }}
+                                  />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -1514,7 +1557,19 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
                               <FormItem>
                                 <FormLabel>End Date</FormLabel>
                                 <FormControl>
-                                  <Input type="date" {...field} />
+                                  <Input 
+                                    type="date" 
+                                    {...field}
+                                    value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
+                                    onChange={(e) => {
+                                      const date = e.target.value;
+                                      if (date) {
+                                        field.onChange(new Date(date).toISOString().split('T')[0]);
+                                      } else {
+                                        field.onChange('');
+                                      }
+                                    }}
+                                  />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>

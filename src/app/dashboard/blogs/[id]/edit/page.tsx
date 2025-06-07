@@ -41,7 +41,7 @@ const blogSchema = z.object({
   title: z.string().min(1, "Judul harus diisi"),
   content: z.string().min(1, "Konten harus diisi"),
   status: z.enum(["published", "draft"]),
-  category: z.enum(["trips", "travel"])
+  category: z.enum(["trips", "travel", "tips"])
 })
 
 interface EditBlogPageProps {

@@ -8,24 +8,21 @@ import {
 } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { User } from "@/types/user"
-import { UserForm, formSchema } from "./user-form"
+import { UserForm, createFormSchema } from "./user-form"
 import * as z from "zod"
+
+type FormData = z.infer<typeof createFormSchema>
+type FormDataWithoutPassword = Omit<FormData, 'password' | 'password_confirmation'>
 
 interface UserDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   initialData?: User
-  onSubmit: (data: z.infer<typeof formSchema>) => void
-  isLoading?: boolean
+  onSubmit: (data: FormData | FormDataWithoutPassword) => Promise<void>
+  isLoading: boolean
 }
 
-export function UserDialog({
-  open,
-  onOpenChange,
-  initialData,
-  onSubmit,
-  isLoading,
-}: UserDialogProps) {
+export function UserDialog({ open, onOpenChange, initialData, onSubmit, isLoading }: UserDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] p-0">
