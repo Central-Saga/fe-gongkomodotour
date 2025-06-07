@@ -1,4 +1,4 @@
 ---
 deployment:
   tasks:
-    - export PATH=/home/gongkomo/nodevenv/fe-gongkomodotour/18/bin:$PATH
+    - export PATH=/home/gongkomo/nodevenv/fe-gongkomodotour/22/bin:$PATH
