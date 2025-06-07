@@ -1,0 +1,11 @@
+---
+deployment:
+  tasks:
+    # PATH ini tetap sama, karena menunjuk ke lingkungan Node.js Anda
+    - export PATH=/home/gongkomo/nodevenv/fe-gongkomodotour/18/bin:$PATH
+    
+    # Gunakan yarn untuk install dependencies (ini akan membaca file yarn.lock)
+    - yarn install
+    
+    # Gunakan yarn untuk build project
+    - yarn run build
