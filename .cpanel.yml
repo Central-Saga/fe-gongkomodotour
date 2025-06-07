@@ -2,6 +2,3 @@
 deployment:
   tasks:
     - export PATH=/home/gongkomo/nodevenv/fe-gongkomodotour/22/bin:$PATH
-    - cd /home/gongkomo/fe-gongkomodotour
-    - yarn install
-    - yarn build
