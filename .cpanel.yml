@@ -1,4 +1,6 @@
 ---
 deployment:
   tasks:
-    - /bin/echo "Deployment test successful"
+    - export PATH=/home/gongkomo/nodevenv/fe-gongkomodotour/18/bin:$PATH
+    - yarn install 
+    - yarn run build
