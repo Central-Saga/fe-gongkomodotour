@@ -9,13 +9,3 @@ deployment:
     
     # 3. Aktifkan Node.js virtual environment
     - source /home/gongkomo/nodevenv/fe-gongkomodotour/22/bin/activate
-    
-    # 4. Masuk ke direktori aplikasi untuk menjalankan perintah selanjutnya
-    - cd $DEPLOYPATH
-    
-    # 5. Install dependencies dan build project
-    - yarn install
-    - yarn build
-    
-    # 6. Restart aplikasi Node.js (cara command-line)
-    - /usr/bin/touch tmp/restart.txt
