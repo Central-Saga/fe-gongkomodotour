@@ -1,6 +1,5 @@
 "use client";
 
-import { getDay } from "date-fns";
 import DetailPaketOpenTrip from "@/components/ui-detail/DetailPaketOpenTrip";
 import DetailFAQ from "@/components/ui-detail/ui-call/DetailFAQ";
 import DetailReview from "@/components/ui-detail/ui-call/DetailReview";

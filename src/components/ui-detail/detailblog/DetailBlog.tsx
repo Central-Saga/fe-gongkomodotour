@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { FaUser, FaRegCalendarAlt, FaTag } from "react-icons/fa";
 import { apiRequest } from "@/lib/api";
 import { Blog } from "@/types/blog";
+import Image from "next/image";
 
 interface DetailBlogProps {
   blogId: string;
@@ -70,11 +71,14 @@ const DetailBlog: React.FC<DetailBlogProps> = ({ blogId }) => {
   return (
     <div className="detail-blog px-4 md:px-16 lg:px-24 py-12">
       <h1 className="text-4xl font-bold mb-6">{blog.title}</h1>
-      <img
-        src={blog.assets?.[0]?.file_url || "/img/placeholder-image.png"}
-        alt={blog.title}
-        className="w-full h-96 object-cover rounded-md mb-6"
-      />
+      <div className="relative w-full h-96 mb-6">
+        <Image
+          src={blog.assets?.[0]?.file_url || "/img/placeholder-image.png"}
+          alt={blog.title}
+          fill
+          className="object-cover rounded-md"
+        />
+      </div>
       <div className="text-gray-600 mb-4 flex items-center space-x-4">
         <span className="flex items-center space-x-2">
           <FaUser className="w-4 h-4" />{" "}
@@ -101,11 +105,14 @@ const DetailBlog: React.FC<DetailBlogProps> = ({ blogId }) => {
             className="group"
           >
             <div className="latest-post-card p-4 border rounded-md shadow-lg flex flex-col h-full cursor-pointer transition-transform duration-300 group-hover:scale-105">
-              <img
-                src={post.assets?.[0]?.file_url || "/img/placeholder-image.png"}
-                alt={post.title}
-                className="w-full h-40 object-cover object-center rounded-md mb-4"
-              />
+              <div className="relative w-full h-40 mb-4">
+                <Image
+                  src={post.assets?.[0]?.file_url || "/img/placeholder-image.png"}
+                  alt={post.title}
+                  fill
+                  className="object-cover object-center rounded-md"
+                />
+              </div>
               <h3 className="text-lg font-semibold mb-2">{post.title}</h3>
               <p className="text-sm text-gray-800 flex-grow">
                 {post.content.slice(0, 100)}...

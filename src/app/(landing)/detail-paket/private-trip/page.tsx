@@ -3,12 +3,9 @@
 
 import DetailPrivateTrip from "@/components/ui-detail/intermediary/DetailPrivateTrip";
 import { Suspense } from "react";
-import { useSearchParams } from "next/navigation";
 
 function DetailPrivateTripContent() {
-  const searchParams = useSearchParams();
-  const packageId = searchParams.get("id");
-  return <DetailPrivateTrip packageId={packageId} />;
+  return <DetailPrivateTrip />;
 }
 
 export default function PrivateTripPage() {

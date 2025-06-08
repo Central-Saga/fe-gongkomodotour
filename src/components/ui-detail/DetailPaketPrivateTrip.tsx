@@ -81,12 +81,6 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const router = useRouter();
 
-  const disabledDays = (date: Date) => {
-    const day = getDay(date);
-    // 0 = Minggu, 1 = Senin, ..., 5 = Jumat, 6 = Sabtu
-    return day >= 1 && day <= 4; // Disable Senin(1) sampai Kamis(4)
-  };
-
   const handleBookNow = (packageId: string) => {
     if (selectedDate) {
       router.push(
