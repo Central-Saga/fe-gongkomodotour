@@ -1,5 +1,6 @@
 "use client";
 
+import { getDay } from "date-fns";
 import DetailPaketOpenTrip from "@/components/ui-detail/DetailPaketOpenTrip";
 import DetailFAQ from "@/components/ui-detail/ui-call/DetailFAQ";
 import DetailReview from "@/components/ui-detail/ui-call/DetailReview";
@@ -12,7 +13,7 @@ import { apiRequest } from "@/lib/api";
 import { Trip, FlightSchedule } from "@/types/trips";
 import { Boat } from "@/types/boats";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 interface ApiResponse {
   data: Trip;
@@ -95,43 +96,56 @@ export default function DetailOpenTrip() {
 
       try {
         console.log("Fetching trip details for ID:", packageId);
-        const response = await apiRequest<ApiResponse>('GET', `/api/landing-page/trips/${packageId}`);
+        const response = await apiRequest<ApiResponse>(
+          "GET",
+          `/api/landing-page/trips/${packageId}`
+        );
         console.log("API Response:", response);
-        
+
         if (!response?.data) {
           throw new Error("Data trip tidak valid");
         }
-        
+
         setSelectedPackage(response.data);
 
         // Fetch similar trips
-        const similarResponse = await apiRequest<SimilarTripsResponse>('GET', '/api/landing-page/trips?status=1&type=open');
+        const similarResponse = await apiRequest<SimilarTripsResponse>(
+          "GET",
+          "/api/landing-page/trips?status=1&type=open"
+        );
         if (similarResponse?.data) {
           const similarTripsData = similarResponse.data
             .filter((trip: Trip) => trip.id !== response.data.id) // Exclude current trip
             .slice(0, 3) // Take only 3 trips
             .map((trip: Trip) => ({
-              image: trip.assets?.[0]?.file_url 
+              image: trip.assets?.[0]?.file_url
                 ? `${API_URL}${trip.assets[0].file_url}`
-                : '/img/default-trip.jpg',
+                : "/img/default-trip.jpg",
               label: trip.type || "Open Trip",
               name: trip.name || "Trip Name",
-              duration: trip.trip_durations?.[0]?.duration_label || "Custom Duration",
-              priceIDR: trip.trip_durations?.[0]?.trip_prices?.[0]?.price_per_pax 
-                ? `IDR ${parseInt(String(trip.trip_durations[0].trip_prices[0].price_per_pax)).toLocaleString('id-ID')}/pax`
+              duration:
+                trip.trip_durations?.[0]?.duration_label || "Custom Duration",
+              priceIDR: trip.trip_durations?.[0]?.trip_prices?.[0]
+                ?.price_per_pax
+                ? `IDR ${parseInt(
+                    String(trip.trip_durations[0].trip_prices[0].price_per_pax)
+                  ).toLocaleString("id-ID")}/pax`
                 : "Price not available",
-              slug: trip.id?.toString() || ""
+              slug: trip.id?.toString() || "",
             }));
           setSimilarTrips(similarTripsData);
         }
 
         // Fetch boats data
-        const boatsResponse = await apiRequest<BoatResponse>('GET', '/api/landing-page/boats');
+        const boatsResponse = await apiRequest<BoatResponse>(
+          "GET",
+          "/api/landing-page/boats"
+        );
         if (boatsResponse?.data) {
           setBoats(boatsResponse.data);
         }
       } catch (error) {
-        console.error('Error fetching trip details:', error);
+        console.error("Error fetching trip details:", error);
         setError("Gagal memuat detail trip");
       } finally {
         setLoading(false);
@@ -171,75 +185,128 @@ export default function DetailOpenTrip() {
   const transformedData: PackageData = {
     id: selectedPackage.id?.toString() || "",
     title: selectedPackage.name || "Nama Trip",
-    price: selectedPackage.trip_durations?.[0]?.trip_prices?.[0]?.price_per_pax 
-      ? `IDR ${selectedPackage.trip_durations[0].trip_prices[0].price_per_pax.toLocaleString('id-ID')}/pax`
+    price: selectedPackage.trip_durations?.[0]?.trip_prices?.[0]?.price_per_pax
+      ? `IDR ${selectedPackage.trip_durations[0].trip_prices[0].price_per_pax.toLocaleString(
+          "id-ID"
+        )}/pax`
       : "Harga belum tersedia",
-    meetingPoint: selectedPackage.meeting_point || "Meeting point belum ditentukan",
+    meetingPoint:
+      selectedPackage.meeting_point || "Meeting point belum ditentukan",
     destination: selectedPackage.name || "Destinasi",
-    daysTrip: selectedPackage.trip_durations?.[0]?.duration_label || "Custom Duration",
+    daysTrip:
+      selectedPackage.trip_durations?.[0]?.duration_label || "Custom Duration",
     description: selectedPackage.note || "Deskripsi belum tersedia",
-    itinerary: selectedPackage.trip_durations?.map(duration => ({
-      durationId: duration.id,
-      durationLabel: duration.duration_label,
-      days: duration.itineraries?.map(itinerary => ({
-        day: `Day ${itinerary.day_number}`,
-        activities: itinerary.activities.split('\n').filter(activity => activity.trim()).join('<br>')
-      })) || []
-    })) || [],
-    trip_durations: selectedPackage.trip_durations?.map(duration => ({
-      id: duration.id,
-      duration_label: duration.duration_label,
-      itineraries: duration.itineraries?.map(itinerary => ({
-        day: `Day ${itinerary.day_number}`,
-        activities: itinerary.activities.split('\n').filter(activity => activity.trim()).join('<br>')
-      })) || []
-    })) || [],
+    itinerary:
+      selectedPackage.trip_durations?.map((duration) => ({
+        durationId: duration.id,
+        durationLabel: duration.duration_label,
+        days:
+          duration.itineraries?.map((itinerary) => ({
+            day: `Day ${itinerary.day_number}`,
+            activities: itinerary.activities
+              .split("\n")
+              .filter((activity) => activity.trim())
+              .join("<br>"),
+          })) || [],
+      })) || [],
+    trip_durations:
+      selectedPackage.trip_durations?.map((duration) => ({
+        id: duration.id,
+        duration_label: duration.duration_label,
+        itineraries:
+          duration.itineraries?.map((itinerary) => ({
+            day: `Day ${itinerary.day_number}`,
+            activities: itinerary.activities
+              .split("\n")
+              .filter((activity) => activity.trim())
+              .join("<br>"),
+          })) || [],
+      })) || [],
     information: selectedPackage.note || "Informasi belum tersedia",
     boat: "Speed Boat", // Sesuaikan dengan data yang ada
     groupSize: "10-15 people", // Sesuaikan dengan data yang ada
-    images: selectedPackage.assets?.map(asset => `${API_URL}${asset.file_url}`) || [],
+    images:
+      selectedPackage.assets?.map((asset) => `${API_URL}${asset.file_url}`) ||
+      [],
     destinations: selectedPackage.destination_count || 0,
-    include: selectedPackage.include?.split('\n').filter(item => item.trim()) || [],
-    exclude: selectedPackage.exclude?.split('\n').filter(item => item.trim()) || [],
-    mainImage: selectedPackage.assets?.[0]?.file_url 
+    include:
+      selectedPackage.include?.split("\n").filter((item) => item.trim()) || [],
+    exclude:
+      selectedPackage.exclude?.split("\n").filter((item) => item.trim()) || [],
+    mainImage: selectedPackage.assets?.[0]?.file_url
       ? `${API_URL}${selectedPackage.assets[0].file_url}`
       : "/img/default-image.png",
     flightSchedules: selectedPackage.flight_schedules || [],
     has_boat: selectedPackage.has_boat || false,
     destination_count: selectedPackage.destination_count || 0,
     flightInfo: {
-      guideFee1: selectedPackage.additional_fees?.find(fee => 
-        fee.fee_category === "Guide Fee" && fee.unit === "per_day_guide"
-      )?.price?.toString() || "0",
-      guideFee2: selectedPackage.additional_fees?.find(fee => 
-        fee.fee_category === "Guide Fee" && fee.unit === "per_5pax"
-      )?.price?.toString() || "0"
+      guideFee1:
+        selectedPackage.additional_fees
+          ?.find(
+            (fee) =>
+              fee.fee_category === "Guide Fee" && fee.unit === "per_day_guide"
+          )
+          ?.price?.toString() || "0",
+      guideFee2:
+        selectedPackage.additional_fees
+          ?.find(
+            (fee) => fee.fee_category === "Guide Fee" && fee.unit === "per_5pax"
+          )
+          ?.price?.toString() || "0",
     },
     session: {
       highSeason: {
-        period: selectedPackage.surcharges?.find(s => s.season === "High Season") 
-          ? `${selectedPackage.surcharges.find(s => s.season === "High Season")?.start_date} ~ ${selectedPackage.surcharges.find(s => s.season === "High Season")?.end_date}`
+        period: selectedPackage.surcharges?.find(
+          (s) => s.season === "High Season"
+        )
+          ? `${
+              selectedPackage.surcharges.find((s) => s.season === "High Season")
+                ?.start_date
+            } ~ ${
+              selectedPackage.surcharges.find((s) => s.season === "High Season")
+                ?.end_date
+            }`
           : "Not specified",
-        price: selectedPackage.surcharges?.find(s => s.season === "High Season") 
-          ? `IDR ${parseInt(selectedPackage.surcharges.find(s => s.season === "High Season")?.surcharge_price?.toString() || "0").toLocaleString('id-ID')}/pax`
-          : "Not specified"
+        price: selectedPackage.surcharges?.find(
+          (s) => s.season === "High Season"
+        )
+          ? `IDR ${parseInt(
+              selectedPackage.surcharges
+                .find((s) => s.season === "High Season")
+                ?.surcharge_price?.toString() || "0"
+            ).toLocaleString("id-ID")}/pax`
+          : "Not specified",
       },
       peakSeason: {
-        period: selectedPackage.surcharges?.find(s => s.season === "Peak Season") 
-          ? `${selectedPackage.surcharges.find(s => s.season === "Peak Season")?.start_date} ~ ${selectedPackage.surcharges.find(s => s.season === "Peak Season")?.end_date}`
+        period: selectedPackage.surcharges?.find(
+          (s) => s.season === "Peak Season"
+        )
+          ? `${
+              selectedPackage.surcharges.find((s) => s.season === "Peak Season")
+                ?.start_date
+            } ~ ${
+              selectedPackage.surcharges.find((s) => s.season === "Peak Season")
+                ?.end_date
+            }`
           : "Not specified",
-        price: selectedPackage.surcharges?.find(s => s.season === "Peak Season") 
-          ? `IDR ${parseInt(selectedPackage.surcharges.find(s => s.season === "Peak Season")?.surcharge_price?.toString() || "0").toLocaleString('id-ID')}/pax`
-          : "Not specified"
-      }
+        price: selectedPackage.surcharges?.find(
+          (s) => s.season === "Peak Season"
+        )
+          ? `IDR ${parseInt(
+              selectedPackage.surcharges
+                .find((s) => s.season === "Peak Season")
+                ?.surcharge_price?.toString() || "0"
+            ).toLocaleString("id-ID")}/pax`
+          : "Not specified",
+      },
     },
-    boatImages: boats.flatMap(boat => 
-      boat.assets.map(asset => ({
-        image: asset.file_url.startsWith('http') 
-          ? asset.file_url 
+    boatImages: boats.flatMap((boat) =>
+      boat.assets.map((asset) => ({
+        image: asset.file_url.startsWith("http")
+          ? asset.file_url
           : `${API_URL}${asset.file_url}`,
         title: boat.boat_name,
-        id: boat.id.toString()
+        id: boat.id.toString(),
       }))
     ),
   };
@@ -253,10 +320,7 @@ export default function DetailOpenTrip() {
       <DetailReview tripId={selectedPackage.id} />
 
       {/* More Open Trip Section */}
-      <DetailMoreTrip
-        trips={similarTrips}
-        tripType="open-trip"
-      />
+      <DetailMoreTrip trips={similarTrips} tripType="open-trip" />
 
       {/* Section Latest Post dan FAQ */}
       <div className="px-4 py-12 md:flex md:space-x-6">

@@ -7,7 +7,7 @@ import Link from "next/link";
 import { apiRequest } from "@/lib/api";
 import { Blog } from "@/types/blog";
 import { motion } from "framer-motion";
-        
+
 const BlogContent = () => {
   const [allPosts, setAllPosts] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -17,9 +17,11 @@ const BlogContent = () => {
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const response = await apiRequest<{ data: Blog[] }>("GET", "/api/landing-page/blogs?status=1");
+        const response = await apiRequest<{ data: Blog[] }>(
+          "GET",
+          "/api/landing-page/blogs?status=1"
+        );
         const posts = Array.isArray(response.data) ? response.data : [];
-        // Debug log removed to prevent leaking internal information
         setAllPosts(posts);
       } catch (error) {
         console.error("Error fetching posts:", error);
@@ -27,70 +29,48 @@ const BlogContent = () => {
         setLoading(false);
       }
     };
-
     fetchPosts();
   }, []);
 
+  // Format blog data with proper image URLs
+  const formatBlogData = (posts: Blog[]) => {
+    return posts.map((post) => ({
+      ...post,
+      assets: post.assets?.map((asset) => ({
+        ...asset,
+        file_url: asset.file_url.startsWith("http")
+          ? asset.file_url
+          : `${process.env.NEXT_PUBLIC_API_URL}${asset.file_url}`,
+      })),
+    }));
+  };
+
   // Filter posts based on search and category
-  const filteredPosts = allPosts.filter(post => {
-    const matchesSearch = searchQuery === "" || 
+  const filteredPosts = allPosts.filter((post) => {
+    const matchesSearch =
+      searchQuery === "" ||
       post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       post.content.toLowerCase().includes(searchQuery.toLowerCase());
-      
-    const matchesCategory = selectedCategory === "all" || 
-      post.category === selectedCategory;
-    
+    const matchesCategory =
+      selectedCategory === "all" || post.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
   // Get latest 3 posts
   const latestPosts = [...allPosts]
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    )
     .slice(0, 3);
 
   // Get posts by category
-  const travelPosts = allPosts.filter(post => {
-    console.log('Checking post for travel:', {
-      id: post.id,
-      category: post.category,
-      title: post.title
-    });
-    return post.category === "travel";
-  }).slice(0, 3);
-
-  const tipsPosts = allPosts.filter(post => {
-    console.log('Checking post for tips:', {
-      id: post.id,
-      category: post.category,
-      title: post.title
-    });
-    return post.category === "tips";
-  }).slice(0, 3);
-
-  console.log('Final travel posts:', travelPosts.map(post => ({
-    id: post.id,
-    category: post.category,
-    title: post.title
-  })));
-  
-  console.log('Final tips posts:', tipsPosts.map(post => ({
-    id: post.id,
-    category: post.category,
-    title: post.title
-  })));
-
-  // Format blog data with proper image URLs
-  const formatBlogData = (posts: Blog[]) => {
-    return posts.map(post => ({
-      ...post,
-      assets: post.assets?.map(asset => ({
-        ...asset,
-        file_url: asset.file_url.startsWith('http') 
-          ? asset.file_url 
-          : `${process.env.NEXT_PUBLIC_API_URL}${asset.file_url}`
-      }))
-    }));
-  };
+  const travelPosts = allPosts
+    .filter((post) => post.category === "travel")
+    .slice(0, 3);
+  const tipsPosts = allPosts
+    .filter((post) => post.category === "tips")
+    .slice(0, 3);
 
   const formattedLatestPosts = formatBlogData(latestPosts);
   const formattedTravelPosts = formatBlogData(travelPosts);
@@ -103,21 +83,21 @@ const BlogContent = () => {
       opacity: 1,
       transition: {
         staggerChildren: 0.3,
-        duration: 0.8
-      }
-    }
+        duration: 0.8,
+      },
+    },
   };
 
   const itemVariants = {
     hidden: { opacity: 0, y: 30 },
-    show: { 
-      opacity: 1, 
+    show: {
+      opacity: 1,
       y: 0,
       transition: {
         duration: 0.8,
-        ease: "easeOut"
-      }
-    }
+        ease: "easeOut",
+      },
+    },
   };
 
   if (loading) {
@@ -154,8 +134,9 @@ const BlogContent = () => {
           >
             <option value="all">All Categories</option>
             <option value="travel">Travel</option>
+            <option value="tips">Tips</option>
           </select>
-          <button 
+          <button
             className="p-3 bg-gold text-white rounded-md w-full md:w-auto md:px-6 focus:outline-none active:opacity-100 hover:bg-gold-dark-10 transition-colors duration-300"
             onClick={() => {
               setSearchQuery("");
@@ -169,52 +150,62 @@ const BlogContent = () => {
 
       {/* Search Results Section */}
       {(searchQuery || selectedCategory !== "all") && (
-        <motion.div 
+        <motion.div
           className="search-results py-12"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8 }}
         >
           <h2 className="text-2xl font-bold mb-6">
-            Search Results {selectedCategory !== "all" ? `in ${selectedCategory}` : ""}
+            Search Results{" "}
+            {selectedCategory !== "all" ? `in ${selectedCategory}` : ""}
           </h2>
-          <motion.div 
+          <motion.div
             className="grid grid-cols-1 md:grid-cols-3 gap-6"
             variants={containerVariants}
             initial="hidden"
             animate="show"
           >
             {formattedFilteredPosts.map((post) => (
-              <motion.div 
+              <Link
                 key={post.id}
-                variants={itemVariants}
-                className="post-card border rounded-lg shadow-md p-4 flex flex-col h-full"
+                href={`/detail-blog?id=${post.id}`}
+                className="group"
               >
-                {post.assets?.[0] && (
-                  <div className="relative h-64 w-full">
-                    <Image
-                      src={post.assets[0].file_url}
-                      alt={post.title}
-                      fill
-                      className="object-cover rounded-md transition-transform duration-300 hover:scale-105"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      unoptimized
-                    />
+                <motion.div
+                  variants={itemVariants}
+                  className="post-card border rounded-lg shadow-md p-4 flex flex-col h-full cursor-pointer transition-transform duration-300 group-hover:scale-105"
+                >
+                  {post.assets?.[0] && (
+                    <div className="relative h-64 w-full">
+                      <Image
+                        src={post.assets[0].file_url}
+                        alt={post.title}
+                        fill
+                        className="object-cover rounded-md transition-transform duration-300 hover:scale-105"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        unoptimized
+                      />
+                    </div>
+                  )}
+                  <h3 className="text-lg font-semibold mt-4">{post.title}</h3>
+                  <p className="text-sm text-gray-600 mt-2 flex-grow line-clamp-3">
+                    {post.content}
+                  </p>
+                  <div className="flex justify-between items-center mt-4 text-sm text-gray-500">
+                    <div className="flex items-center gap-1">
+                      <FaUser className="w-4 h-4" />
+                      <span>Uploaded by: {post.author?.name}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <FaRegCalendarAlt className="w-4 h-4" />
+                      <span>
+                        {new Date(post.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
                   </div>
-                )}
-                <h3 className="text-lg font-semibold mt-4">{post.title}</h3>
-                <p className="text-sm text-gray-600 mt-2 flex-grow line-clamp-3">{post.content}</p>
-                <div className="flex justify-between items-center mt-4 text-sm text-gray-500">
-                  <div className="flex items-center gap-1">
-                    <FaUser className="w-4 h-4" />
-                    <span>Uploaded by: {post.author?.name}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <FaRegCalendarAlt className="w-4 h-4" />
-                    <span>{new Date(post.created_at).toLocaleDateString()}</span>
-                  </div>
-                </div>
-              </motion.div>
+                </motion.div>
+              </Link>
             ))}
             {formattedFilteredPosts.length === 0 && (
               <div className="col-span-3 text-center py-8">
@@ -229,56 +220,65 @@ const BlogContent = () => {
       {!searchQuery && selectedCategory === "all" && (
         <>
           {/* Latest Post Section */}
-          <motion.div 
+          <motion.div
             className="latest-post py-12"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5, duration: 0.8 }}
           >
             <h2 className="text-2xl font-bold mb-6">Latest Post</h2>
-            <motion.div 
+            <motion.div
               className="grid grid-cols-1 md:grid-cols-3 gap-6"
               variants={containerVariants}
               initial="hidden"
               animate="show"
             >
               {formattedLatestPosts.map((post) => (
-                <motion.div 
+                <Link
                   key={post.id}
-                  variants={itemVariants}
-                  className="post-card border rounded-lg shadow-md p-4 flex flex-col h-full"
+                  href={`/detail-blog?id=${post.id}`}
+                  className="group"
                 >
-                  {post.assets?.[0] && (
-                    <div className="relative h-64 w-full">
-                      <Image
-                        src={post.assets[0].file_url}
-                        alt={post.title}
-                        fill
-                        className="object-cover rounded-md transition-transform duration-300 hover:scale-105"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        unoptimized
-                      />
+                  <motion.div
+                    variants={itemVariants}
+                    className="post-card border rounded-lg shadow-md p-4 flex flex-col h-full cursor-pointer transition-transform duration-300 group-hover:scale-105"
+                  >
+                    {post.assets?.[0] && (
+                      <div className="relative h-64 w-full">
+                        <Image
+                          src={post.assets[0].file_url}
+                          alt={post.title}
+                          fill
+                          className="object-cover rounded-md transition-transform duration-300 hover:scale-105"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          unoptimized
+                        />
+                      </div>
+                    )}
+                    <h3 className="text-lg font-semibold mt-4">{post.title}</h3>
+                    <p className="text-sm text-gray-600 mt-2 flex-grow line-clamp-3">
+                      {post.content}
+                    </p>
+                    <div className="flex justify-between items-center mt-4 text-sm text-gray-500">
+                      <div className="flex items-center gap-1">
+                        <FaUser className="w-4 h-4" />
+                        <span>Uploaded by: {post.author?.name}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <FaRegCalendarAlt className="w-4 h-4" />
+                        <span>
+                          {new Date(post.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
                     </div>
-                  )}
-                  <h3 className="text-lg font-semibold mt-4">{post.title}</h3>
-                  <p className="text-sm text-gray-600 mt-2 flex-grow line-clamp-3">{post.content}</p>
-                  <div className="flex justify-between items-center mt-4 text-sm text-gray-500">
-                    <div className="flex items-center gap-1">
-                      <FaUser className="w-4 h-4" />
-                      <span>Uploaded by: {post.author?.name}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <FaRegCalendarAlt className="w-4 h-4" />
-                      <span>{new Date(post.created_at).toLocaleDateString()}</span>
-                    </div>
-                  </div>
-                </motion.div>
+                  </motion.div>
+                </Link>
               ))}
             </motion.div>
           </motion.div>
 
           {/* Travel Section */}
-          <motion.div 
+          <motion.div
             className="traveling-flores py-12"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -286,53 +286,65 @@ const BlogContent = () => {
           >
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold">Travel</h2>
-              <Link href="/blog/viewall/travel" className="text-gold font-semibold hover:text-gold-dark-10 transition-colors duration-300">
+              <Link
+                href="/blog/viewall/travel"
+                className="text-gold font-semibold hover:text-gold-dark-10 transition-colors duration-300"
+              >
                 View All
               </Link>
             </div>
-            <motion.div 
+            <motion.div
               className="grid grid-cols-1 md:grid-cols-3 gap-6"
               variants={containerVariants}
               initial="hidden"
               animate="show"
             >
               {formattedTravelPosts.map((post) => (
-                <motion.div 
+                <Link
                   key={post.id}
-                  variants={itemVariants}
-                  className="post-card border rounded-lg shadow-md p-4 flex flex-col h-full"
+                  href={`/detail-blog?id=${post.id}`}
+                  className="group"
                 >
-                  {post.assets?.[0] && (
-                    <div className="relative h-64 w-full">
-                      <Image
-                        src={post.assets[0].file_url}
-                        alt={post.title}
-                        fill
-                        className="object-cover rounded-md transition-transform duration-300 hover:scale-105"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        unoptimized
-                      />
+                  <motion.div
+                    variants={itemVariants}
+                    className="post-card border rounded-lg shadow-md p-4 flex flex-col h-full cursor-pointer transition-transform duration-300 group-hover:scale-105"
+                  >
+                    {post.assets?.[0] && (
+                      <div className="relative h-64 w-full">
+                        <Image
+                          src={post.assets[0].file_url}
+                          alt={post.title}
+                          fill
+                          className="object-cover rounded-md transition-transform duration-300 hover:scale-105"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          unoptimized
+                        />
+                      </div>
+                    )}
+                    <h3 className="text-lg font-semibold mt-4">{post.title}</h3>
+                    <p className="text-sm text-gray-600 mt-2 flex-grow line-clamp-3">
+                      {post.content}
+                    </p>
+                    <div className="flex justify-between items-center mt-4 text-sm text-gray-500">
+                      <div className="flex items-center gap-1">
+                        <FaUser className="w-4 h-4" />
+                        <span>Uploaded by: {post.author?.name}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <FaRegCalendarAlt className="w-4 h-4" />
+                        <span>
+                          {new Date(post.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
                     </div>
-                  )}
-                  <h3 className="text-lg font-semibold mt-4">{post.title}</h3>
-                  <p className="text-sm text-gray-600 mt-2 flex-grow line-clamp-3">{post.content}</p>
-                  <div className="flex justify-between items-center mt-4 text-sm text-gray-500">
-                    <div className="flex items-center gap-1">
-                      <FaUser className="w-4 h-4" />
-                      <span>Uploaded by: {post.author?.name}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <FaRegCalendarAlt className="w-4 h-4" />
-                      <span>{new Date(post.created_at).toLocaleDateString()}</span>
-                    </div>
-                  </div>
-                </motion.div>
+                  </motion.div>
+                </Link>
               ))}
             </motion.div>
           </motion.div>
 
           {/* Tips Section */}
-          <motion.div 
+          <motion.div
             className="traveling-tips py-12"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -340,47 +352,59 @@ const BlogContent = () => {
           >
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold">Tips</h2>
-              <Link href="/blog/viewall/tips" className="text-gold font-semibold hover:text-gold-dark-10 transition-colors duration-300">
+              <Link
+                href="/blog/viewall/tips"
+                className="text-gold font-semibold hover:text-gold-dark-10 transition-colors duration-300"
+              >
                 View All
               </Link>
             </div>
-            <motion.div 
+            <motion.div
               className="grid grid-cols-1 md:grid-cols-3 gap-6"
               variants={containerVariants}
               initial="hidden"
               animate="show"
             >
               {formattedTipsPosts.map((post) => (
-                <motion.div 
+                <Link
                   key={post.id}
-                  variants={itemVariants}
-                  className="post-card border rounded-lg shadow-md p-4 flex flex-col h-full"
+                  href={`/detail-blog?id=${post.id}`}
+                  className="group"
                 >
-                  {post.assets?.[0] && (
-                    <div className="relative h-64 w-full">
-                      <Image
-                        src={post.assets[0].file_url}
-                        alt={post.title}
-                        fill
-                        className="object-cover rounded-md transition-transform duration-300 hover:scale-105"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        unoptimized
-                      />
+                  <motion.div
+                    variants={itemVariants}
+                    className="post-card border rounded-lg shadow-md p-4 flex flex-col h-full cursor-pointer transition-transform duration-300 group-hover:scale-105"
+                  >
+                    {post.assets?.[0] && (
+                      <div className="relative h-64 w-full">
+                        <Image
+                          src={post.assets[0].file_url}
+                          alt={post.title}
+                          fill
+                          className="object-cover rounded-md transition-transform duration-300 hover:scale-105"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          unoptimized
+                        />
+                      </div>
+                    )}
+                    <h3 className="text-lg font-semibold mt-4">{post.title}</h3>
+                    <p className="text-sm text-gray-600 mt-2 flex-grow line-clamp-3">
+                      {post.content}
+                    </p>
+                    <div className="flex justify-between items-center mt-4 text-sm text-gray-500">
+                      <div className="flex items-center gap-1">
+                        <FaUser className="w-4 h-4" />
+                        <span>Uploaded by: {post.author?.name}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <FaRegCalendarAlt className="w-4 h-4" />
+                        <span>
+                          {new Date(post.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
                     </div>
-                  )}
-                  <h3 className="text-lg font-semibold mt-4">{post.title}</h3>
-                  <p className="text-sm text-gray-600 mt-2 flex-grow line-clamp-3">{post.content}</p>
-                  <div className="flex justify-between items-center mt-4 text-sm text-gray-500">
-                    <div className="flex items-center gap-1">
-                      <FaUser className="w-4 h-4" />
-                      <span>Uploaded by: {post.author?.name}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <FaRegCalendarAlt className="w-4 h-4" />
-                      <span>{new Date(post.created_at).toLocaleDateString()}</span>
-                    </div>
-                  </div>
-                </motion.div>
+                  </motion.div>
+                </Link>
               ))}
             </motion.div>
           </motion.div>

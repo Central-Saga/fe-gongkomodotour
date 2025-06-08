@@ -6,13 +6,32 @@ import DetailFAQ from "@/components/ui-detail/ui-call/DetailFAQ";
 import DetailReview from "@/components/ui-detail/ui-call/DetailReview";
 import DetailMoreTrip from "@/components/ui-detail/ui-call/DetailMoreTrip";
 import DetailBlog from "@/components/ui-detail/ui-call/DetailBlog";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { useState, useEffect } from "react";
+import { apiRequest } from "@/lib/api";
+import { Trip, FlightSchedule } from "@/types/trips";
+import { Boat } from "@/types/boats";
 
-interface DetailPrivateTripProps {
-  packageId: string | null;
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+interface ApiResponse {
+  data: Trip;
 }
 
-// Definisikan tipe untuk data paket
+interface SimilarTripsResponse {
+  data: Trip[];
+}
+
+interface TripData {
+  image: string;
+  label: string;
+  name: string;
+  duration: string;
+  priceIDR: string;
+  slug: string;
+}
+
 interface PackageData {
   id: string;
   title: string;
@@ -21,7 +40,11 @@ interface PackageData {
   destination: string;
   daysTrip: string;
   description: string;
-  itinerary: string[];
+  itinerary: {
+    durationId: number;
+    durationLabel: string;
+    days: { day: string; activities: string }[];
+  }[];
   information: string;
   boat: string;
   groupSize?: string;
@@ -38,341 +61,113 @@ interface PackageData {
     guideFee1: string;
     guideFee2: string;
   };
-  boatImages?: { image: string; title: string }[];
+  boatImages?: { image: string; title: string; id: string }[];
   mainImage?: string;
+  flightSchedules?: FlightSchedule[];
+  has_boat: boolean;
+  destination_count: number;
+  trip_durations: {
+    id: number;
+    duration_label: string;
+    itineraries: { day: string; activities: string }[];
+  }[];
 }
 
-// Data dummy untuk private trip
-const privateTripData: PackageData[] = [
-  {
-    id: "stunning-flores-overland",
-    title: "Stunning Flores Overland",
-    price: "IDR 3.000.000/pax",
-    meetingPoint: "Ende",
-    destination: "Flores",
-    daysTrip: "5 Days 4 Nights",
-    description:
-      "Explore the stunning landscapes of Flores with visits to traditional villages and volcanic lakes. Enjoy guided tours throughout your trip.",
-    itinerary: [
-      "Day 1: Arrival in Ende and hotel check-in",
-      "Day 2: Visit Kelimutu National Park",
-      "Day 3: Explore traditional villages",
-      "Day 4: Scenic drive to Bajawa",
-      "Day 5: Return to Ende and departure",
-    ],
-    include: [
-      "Transportasi dengan mobil Innova",
-      "Pemandu lokal",
-      "1 malam menginap di Waretbo Village",
-      "Makan selama perjalanan (makan siang, makan malam, sarapan)",
-      "Kopi & teh",
-      "Biaya masuk dan donasi ke desa",
-    ],
-    exclude: [
-      "Tiket pesawat",
-      "Akomodasi hotel di Labuan Bajo",
-      "Biaya pribadi",
-      "Trip insurance",
-      "Porter dan tips",
-    ],
-    session: {
-      highSeason: {
-        period:
-          "1 June ~ 31 August 2025; 1-10 October 2025; 14–20 February 2026; 17–24 March 2026",
-        price: "IDR 300.000/pax",
-      },
-      peakSeason: {
-        period: "25 March ~ 5 April 2025 & 20 December 2025 ~ 5 January 2026",
-        price: "IDR 300.000/pax",
-      },
-    },
-    flightInfo: {
-      guideFee1:
-        "ENGLISH SPEAKING GUIDE FEE (1 - 5 Pax): IDR 650.000 / Day / Guide",
-      guideFee2:
-        "ENGLISH SPEAKING GUIDE FEE (6 - 10 Pax): IDR 850.000 / Day / Guide",
-    },
-    boat: "No boat used",
-    groupSize: "8-12 people",
-    information:
-      "This package includes guided tours, transportation, and meals throughout the trip.",
-    images: [
-      "/img/benavillage.png",
-      "/img/gallery2.jpg",
-      "/img/gallery4.jpg",
-      "/img/gallery5.jpg",
-      "/img/gallery6.jpg",
-      "/img/gallery7.jpg",
-      "/img/gallery8.jpg",
-      "/img/gallery9.jpg",
-      "/img/gallery2.jpg",
-      "/img/gallery1.jpg",
-      "/img/gallery2.jpg",
-      "/img/gallery4.jpg",
-    ],
-    destinations: 5,
-    boatImages: [
-      { image: "/img/boat/boat-dlx-lmb2.jpg", title: "Luxury Boat 1" },
-      { image: "/img/boat/boat-dlx-mv.jpg", title: "Luxury Boat 2" },
-      { image: "/img/boat/boat-zm.jpg", title: "Luxury Boat 3" },
-      { image: "/img/boat/boat-zn-phinisi.jpg", title: "Luxury Boat 4" },
-      { image: "/img/boat/boat-alf.jpg", title: "Luxury Boat 5" },
-      { image: "/img/boat/bg-luxury.jpg", title: "Luxury Boat 6" },
-    ],
-  },
-  {
-    id: "full-day-trip-speed-boat",
-    title: "Full Day Trip by Speed Boat",
-    price: "IDR 2.500.000/pax",
-    meetingPoint: "Labuan Bajo",
-    destination: "Komodo National Park",
-    daysTrip: "1 Day",
-    description:
-      "Experience a full day of adventure exploring the Komodo National Park by speed boat. Visit iconic islands and enjoy snorkeling in crystal-clear waters.",
-    itinerary: [
-      "Morning: Departure from Labuan Bajo",
-      "Visit Kelor Island for trekking and snorkeling",
-      "Explore Manjarite for underwater beauty",
-      "Lunch on the boat",
-      "Visit Komodo Island to see Komodo dragons",
-      "Afternoon: Return to Labuan Bajo",
-    ],
-    include: [
-      "Speed boat transportation",
-      "Lunch and snacks",
-      "Snorkeling equipment",
-      "Entrance fees to Komodo National Park",
-      "Tour guide",
-    ],
-    exclude: ["Personal expenses", "Travel insurance", "Tips for the crew"],
-    session: {
-      highSeason: {
-        period: "1 June ~ 31 August 2025",
-        price: "IDR 300.000/pax",
-      },
-      peakSeason: {
-        period: "25 December 2025 ~ 5 January 2026",
-        price: "IDR 500.000/pax",
-      },
-    },
-    flightInfo: {
-      guideFee1:
-        "ENGLISH SPEAKING GUIDE FEE (1 - 5 Pax): IDR 650.000 / Day / Guide",
-      guideFee2:
-        "ENGLISH SPEAKING GUIDE FEE (6 - 10 Pax): IDR 850.000 / Day / Guide",
-    },
-    boat: "Speed Boat",
-    groupSize: "10-15 people",
-    information:
-      "This package includes a full-day guided tour with speed boat transportation.",
-    images: [
-      "/img/imgsmall-1.png",
-      "/img/gallery2.jpg",
-      "/img/gallery4.jpg",
-      "/img/gallery5.jpg",
-      "/img/gallery6.jpg",
-      "/img/gallery7.jpg",
-      "/img/gallery8.jpg",
-      "/img/gallery9.jpg",
-      "/img/gallery2.jpg",
-      "/img/gallery1.jpg",
-      "/img/gallery2.jpg",
-      "/img/gallery4.jpg",
-    ],
-    destinations: 3,
-    boatImages: [
-      { image: "/img/boat/boat-dlx-lmb2.jpg", title: "Luxury Boat 1" },
-      { image: "/img/boat/boat-dlx-mv.jpg", title: "Luxury Boat 2" },
-      { image: "/img/boat/boat-zm.jpg", title: "Luxury Boat 3" },
-      { image: "/img/boat/boat-zn-phinisi.jpg", title: "Luxury Boat 4" },
-      { image: "/img/boat/boat-alf.jpg", title: "Luxury Boat 5" },
-      { image: "/img/boat/bg-luxury.jpg", title: "Luxury Boat 6" },
-    ],
-  },
-  {
-    id: "sailing-komodo-tour",
-    title: "Sailing Komodo Tour",
-    price: "IDR 14.500.000/pax",
-    meetingPoint: "Labuan Bajo",
-    destination: "Komodo National Park",
-    daysTrip: "3 Days 2 Nights",
-    description:
-      "Sail through the beautiful Komodo National Park, visiting pristine beaches, snorkeling spots, and the famous Komodo dragons.",
-    itinerary: [
-      "Day 1: Departure from Labuan Bajo, visit Kelor Island and Rinca Island",
-      "Day 2: Explore Pink Beach and Komodo Island",
-      "Day 3: Snorkeling at Manta Point and return to Labuan Bajo",
-    ],
-    include: [
-      "Sailing boat accommodation",
-      "Meals and drinks",
-      "Snorkeling equipment",
-      "Entrance fees to Komodo National Park",
-      "Tour guide",
-    ],
-    exclude: ["Personal expenses", "Travel insurance", "Tips for the crew"],
-    session: {
-      highSeason: {
-        period: "1 June ~ 31 August 2025",
-        price: "IDR 500.000/pax",
-      },
-      peakSeason: {
-        period: "25 December 2025 ~ 5 January 2026",
-        price: "IDR 700.000/pax",
-      },
-    },
-    flightInfo: {
-      guideFee1:
-        "ENGLISH SPEAKING GUIDE FEE (1 - 5 Pax): IDR 650.000 / Day / Guide",
-      guideFee2:
-        "ENGLISH SPEAKING GUIDE FEE (6 - 10 Pax): IDR 850.000 / Day / Guide",
-    },
-    boat: "Sailing Boat",
-    groupSize: "8-12 people",
-    information:
-      "This package includes a 3-day sailing adventure with full board meals.",
-    images: [
-      "/img/komodoisland.png",
-      "/img/komodoprivate.png",
-      "/img/gallery2.jpg",
-      "/img/gallery4.jpg",
-      "/img/gallery5.jpg",
-      "/img/gallery6.jpg",
-      "/img/gallery7.jpg",
-      "/img/gallery8.jpg",
-      "/img/gallery9.jpg",
-      "/img/gallery2.jpg",
-      "/img/gallery1.jpg",
-      "/img/gallery2.jpg",
-      "/img/gallery4.jpg",
-    ],
-    destinations: 4,
-    boatImages: [
-      { image: "/img/boat/boat-dlx-lmb2.jpg", title: "Luxury Boat 1" },
-      { image: "/img/boat/boat-dlx-mv.jpg", title: "Luxury Boat 2" },
-      { image: "/img/boat/boat-zm.jpg", title: "Luxury Boat 3" },
-      { image: "/img/boat/boat-zn-phinisi.jpg", title: "Luxury Boat 4" },
-      { image: "/img/boat/boat-alf.jpg", title: "Luxury Boat 5" },
-      { image: "/img/boat/bg-luxury.jpg", title: "Luxury Boat 6" },
-    ],
-  },
-  {
-    id: "explore-waerebo",
-    title: "Explore Waerebo",
-    price: "IDR 2.500.000/pax",
-    meetingPoint: "Ruteng",
-    destination: "Waerebo Village",
-    daysTrip: "2 Days 1 Night",
-    description:
-      "Discover the traditional Waerebo Village, nestled in the mountains of Flores. Experience the unique culture and hospitality of the locals.",
-    itinerary: [
-      "Day 1: Drive from Ruteng to Denge Village, trek to Waerebo Village",
-      "Day 2: Morning exploration of Waerebo, return to Ruteng",
-    ],
-    include: [
-      "Transportation from Ruteng",
-      "1-night accommodation in Waerebo Village",
-      "Meals during the trip",
-      "Local guide",
-      "Entrance fees",
-    ],
-    exclude: ["Personal expenses", "Travel insurance", "Tips for the guide"],
-    session: {
-      highSeason: {
-        period: "1 June ~ 31 August 2025",
-        price: "IDR 200.000/pax",
-      },
-      peakSeason: {
-        period: "25 December 2025 ~ 5 January 2026",
-        price: "IDR 300.000/pax",
-      },
-    },
-    flightInfo: {
-      guideFee1:
-        "ENGLISH SPEAKING GUIDE FEE (1 - 5 Pax): IDR 650.000 / Day / Guide",
-      guideFee2:
-        "ENGLISH SPEAKING GUIDE FEE (6 - 10 Pax): IDR 850.000 / Day / Guide",
-    },
-    boat: "No boat used",
-    groupSize: "5-10 people",
-    information:
-      "This package includes a guided trek to Waerebo Village with meals and accommodation.",
-    images: [
-      "/img/waerebovillage.png",
-      "/img/imgsmall-1.png",
-      "/img/gallery2.jpg",
-      "/img/gallery4.jpg",
-      "/img/gallery5.jpg",
-      "/img/gallery6.jpg",
-      "/img/gallery7.jpg",
-      "/img/gallery8.jpg",
-      "/img/gallery9.jpg",
-      "/img/gallery2.jpg",
-      "/img/gallery1.jpg",
-      "/img/gallery2.jpg",
-      "/img/gallery4.jpg",
-    ],
-    destinations: 1,
-    boatImages: [
-      { image: "/img/boat/boat-dlx-lmb2.jpg", title: "Luxury Boat 1" },
-      { image: "/img/boat/boat-dlx-mv.jpg", title: "Luxury Boat 2" },
-      { image: "/img/boat/boat-zm.jpg", title: "Luxury Boat 3" },
-      { image: "/img/boat/boat-zn-phinisi.jpg", title: "Luxury Boat 4" },
-      { image: "/img/boat/boat-alf.jpg", title: "Luxury Boat 5" },
-      { image: "/img/boat/bg-luxury.jpg", title: "Luxury Boat 6" },
-    ],
-  },
-];
+interface BoatResponse {
+  data: Boat[];
+}
 
-// Data dummy untuk more private trips
-const morePrivateTrips = [
-  {
-    image: "/img/komodoprivate.png",
-    label: "Private Trip",
-    name: "Explore Waerebo",
-    duration: "3D/2N",
-    priceIDR: "IDR 4.000.000/pax",
-    slug: "explore-waerebo",
-  },
-  {
-    image: "/img/komodoprivate.png",
-    label: "Private Trip",
-    name: "Full Day Trip by Speed Boat",
-    duration: "1D",
-    priceIDR: "IDR 5.000.000/pax",
-    slug: "full-day-trip-speed-boat",
-  },
-  {
-    image: "/img/komodoprivate.png",
-    label: "Private Trip",
-    name: "Sunset Trip - By Speed Boat",
-    duration: "1D",
-    priceIDR: "IDR 12.000.000/pax",
-    slug: "sunset-trip-by-speed-boat",
-  },
-  {
-    image: "/img/komoprivate.png",
-    label: "Private Trip",
-    name: "Luxury Komodo Tour",
-    duration: "3D/2N",
-    priceIDR: "IDR 20.000.000/pax",
-    slug: "luxury-komodo-tour",
-  },
-];
+export default function DetailPrivateTrip() {
+  const searchParams = useSearchParams();
+  const packageId = searchParams.get("id");
+  const [selectedPackage, setSelectedPackage] = useState<Trip | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [similarTrips, setSimilarTrips] = useState<TripData[]>([]);
+  const [boats, setBoats] = useState<Boat[]>([]);
 
-export default function DetailPrivateTrip({ packageId }: DetailPrivateTripProps) {
-  const selectedPackageId = packageId || "explore-waerebo"; // Default ke "explore-waerebo" jika id tidak ada
-  console.log("Package ID:", selectedPackageId); // Log untuk memeriksa packageId
+  useEffect(() => {
+    const fetchTripDetails = async () => {
+      if (!packageId) {
+        setError("ID paket tidak ditemukan");
+        setLoading(false);
+        return;
+      }
 
-  const selectedPackage = privateTripData.find((pkg) => pkg.id === selectedPackageId);
-  console.log("Selected Package Data:", selectedPackage); // Log untuk memeriksa data paket yang dipilih
+      try {
+        console.log("Fetching trip details for ID:", packageId);
+        const response = await apiRequest<ApiResponse>(
+          "GET",
+          `/api/landing-page/trips/${packageId}`
+        );
+        console.log("API Response:", response);
 
-  // Jika paket tidak ditemukan, tampilkan pesan error atau redirect
-  if (!selectedPackage) {
+        if (!response?.data) {
+          throw new Error("Data trip tidak valid");
+        }
+
+        setSelectedPackage(response.data);
+
+        // Fetch similar trips (private trips)
+        const similarResponse = await apiRequest<SimilarTripsResponse>(
+          "GET",
+          "/api/landing-page/trips?status=1&type=private"
+        );
+        if (similarResponse?.data) {
+          const similarTripsData = similarResponse.data
+            .filter((trip: Trip) => trip.id !== response.data.id)
+            .slice(0, 3)
+            .map((trip: Trip) => ({
+              image: trip.assets?.[0]?.file_url
+                ? `${API_URL}${trip.assets[0].file_url}`
+                : "/img/default-trip.jpg",
+              label: trip.type || "Private Trip",
+              name: trip.name || "Trip Name",
+              duration:
+                trip.trip_durations?.[0]?.duration_label || "Custom Duration",
+              priceIDR: trip.trip_durations?.[0]?.trip_prices?.[0]
+                ?.price_per_pax
+                ? `IDR ${parseInt(
+                    String(trip.trip_durations[0].trip_prices[0].price_per_pax)
+                  ).toLocaleString("id-ID")}/pax`
+                : "Price not available",
+              slug: trip.id?.toString() || "",
+            }));
+          setSimilarTrips(similarTripsData);
+        }
+
+        // Fetch boats data
+        const boatsResponse = await apiRequest<BoatResponse>(
+          "GET",
+          "/api/landing-page/boats"
+        );
+        if (boatsResponse?.data) {
+          setBoats(boatsResponse.data);
+        }
+      } catch (error) {
+        console.error("Error fetching trip details:", error);
+        setError("Gagal memuat detail trip");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTripDetails();
+  }, [packageId]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gold"></div>
+      </div>
+    );
+  }
+
+  if (error || !selectedPackage) {
     return (
       <div className="max-w-6xl mx-auto py-12 px-4">
         <h1 className="text-3xl font-bold text-gray-800">
-          Paket Tidak Ditemukan
+          {error || "Paket Tidak Ditemukan"}
         </h1>
         <p className="text-gray-600">
           Mohon maaf, paket Private Trip yang Anda cari tidak ditemukan.
@@ -386,19 +181,146 @@ export default function DetailPrivateTrip({ packageId }: DetailPrivateTripProps)
     );
   }
 
+  // Transform data dari API ke format yang diharapkan oleh komponen
+  const transformedData: PackageData = {
+    id: selectedPackage.id?.toString() || "",
+    title: selectedPackage.name || "Nama Trip",
+    price: selectedPackage.trip_durations?.[0]?.trip_prices?.[0]?.price_per_pax
+      ? `IDR ${selectedPackage.trip_durations[0].trip_prices[0].price_per_pax.toLocaleString(
+          "id-ID"
+        )}/pax`
+      : "Harga belum tersedia",
+    meetingPoint:
+      selectedPackage.meeting_point || "Meeting point belum ditentukan",
+    destination: selectedPackage.name || "Destinasi",
+    daysTrip:
+      selectedPackage.trip_durations?.[0]?.duration_label || "Custom Duration",
+    description: selectedPackage.note || "Deskripsi belum tersedia",
+    itinerary:
+      selectedPackage.trip_durations?.map((duration) => ({
+        durationId: duration.id,
+        durationLabel: duration.duration_label,
+        days:
+          duration.itineraries?.map((itinerary) => ({
+            day: `Day ${itinerary.day_number}`,
+            activities: itinerary.activities
+              .split("\n")
+              .filter((activity) => activity.trim())
+              .join("<br>"),
+          })) || [],
+      })) || [],
+    trip_durations:
+      selectedPackage.trip_durations?.map((duration) => ({
+        id: duration.id,
+        duration_label: duration.duration_label,
+        itineraries:
+          duration.itineraries?.map((itinerary) => ({
+            day: `Day ${itinerary.day_number}`,
+            activities: itinerary.activities
+              .split("\n")
+              .filter((activity) => activity.trim())
+              .join("<br>"),
+          })) || [],
+      })) || [],
+    information: selectedPackage.note || "Informasi belum tersedia",
+    boat: "Speed Boat", // Sesuaikan dengan data yang ada
+    groupSize: "10-15 people", // Sesuaikan dengan data yang ada
+    images:
+      selectedPackage.assets?.map((asset) => `${API_URL}${asset.file_url}`) ||
+      [],
+    destinations: selectedPackage.destination_count || 0,
+    include:
+      selectedPackage.include?.split("\n").filter((item) => item.trim()) || [],
+    exclude:
+      selectedPackage.exclude?.split("\n").filter((item) => item.trim()) || [],
+    mainImage: selectedPackage.assets?.[0]?.file_url
+      ? `${API_URL}${selectedPackage.assets[0].file_url}`
+      : "/img/default-image.png",
+    flightSchedules: selectedPackage.flight_schedules || [],
+    has_boat: selectedPackage.has_boat || false,
+    destination_count: selectedPackage.destination_count || 0,
+    flightInfo: {
+      guideFee1:
+        selectedPackage.additional_fees
+          ?.find(
+            (fee) =>
+              fee.fee_category === "Guide Fee" && fee.unit === "per_day_guide"
+          )
+          ?.price?.toString() || "0",
+      guideFee2:
+        selectedPackage.additional_fees
+          ?.find(
+            (fee) => fee.fee_category === "Guide Fee" && fee.unit === "per_5pax"
+          )
+          ?.price?.toString() || "0",
+    },
+    session: {
+      highSeason: {
+        period: selectedPackage.surcharges?.find(
+          (s) => s.season === "High Season"
+        )
+          ? `${
+              selectedPackage.surcharges.find((s) => s.season === "High Season")
+                ?.start_date
+            } ~ ${
+              selectedPackage.surcharges.find((s) => s.season === "High Season")
+                ?.end_date
+            }`
+          : "Not specified",
+        price: selectedPackage.surcharges?.find(
+          (s) => s.season === "High Season"
+        )
+          ? `IDR ${parseInt(
+              selectedPackage.surcharges
+                .find((s) => s.season === "High Season")
+                ?.surcharge_price?.toString() || "0"
+            ).toLocaleString("id-ID")}/pax`
+          : "Not specified",
+      },
+      peakSeason: {
+        period: selectedPackage.surcharges?.find(
+          (s) => s.season === "Peak Season"
+        )
+          ? `${
+              selectedPackage.surcharges.find((s) => s.season === "Peak Season")
+                ?.start_date
+            } ~ ${
+              selectedPackage.surcharges.find((s) => s.season === "Peak Season")
+                ?.end_date
+            }`
+          : "Not specified",
+        price: selectedPackage.surcharges?.find(
+          (s) => s.season === "Peak Season"
+        )
+          ? `IDR ${parseInt(
+              selectedPackage.surcharges
+                .find((s) => s.season === "Peak Season")
+                ?.surcharge_price?.toString() || "0"
+            ).toLocaleString("id-ID")}/pax`
+          : "Not specified",
+      },
+    },
+    boatImages: boats.flatMap((boat) =>
+      boat.assets.map((asset) => ({
+        image: asset.file_url.startsWith("http")
+          ? asset.file_url
+          : `${API_URL}${asset.file_url}`,
+        title: boat.boat_name,
+        id: boat.id.toString(),
+      }))
+    ),
+  };
+
   return (
     <div>
       {/* Detail Paket */}
-      <DetailPaketPrivateTrip data={selectedPackage} />
+      <DetailPaketPrivateTrip data={transformedData} />
 
       {/* Review Section */}
-      <DetailReview tripId={parseInt(selectedPackage.id)} />
+      <DetailReview tripId={selectedPackage.id} />
 
       {/* More Private Trip Section */}
-      <DetailMoreTrip
-        trips={morePrivateTrips.filter((trip) => trip.slug !== selectedPackage.id)}
-        tripType="private-trip"
-      />
+      <DetailMoreTrip trips={similarTrips} tripType="private-trip" />
 
       {/* Section Latest Post dan FAQ */}
       <div className="px-4 py-12 md:flex md:space-x-6">

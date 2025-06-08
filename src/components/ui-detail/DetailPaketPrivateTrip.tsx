@@ -3,17 +3,27 @@
 import { useState } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { Calendar } from "@/components/ui/calendar";
+import { useSearchParams } from "next/navigation";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { format } from "date-fns";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Calendar } from "@/components/ui/calendar";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { format, getDay } from "date-fns";
+import { FlightSchedule } from "@/types/trips";
 
+// Function untuk disable hari Senin-Kamis
+const disabledDays = (date: Date) => {
+  const day = getDay(date);
+  // 0 = Minggu, 1 = Senin, ..., 5 = Jumat, 6 = Sabtu
+  return day >= 1 && day <= 4; // Disable Senin(1) sampai Kamis(4)
+};
+
+// Definisikan tipe untuk data paket
 interface PackageData {
   id: string;
   title: string;
@@ -22,7 +32,11 @@ interface PackageData {
   destination: string;
   daysTrip: string;
   description: string;
-  itinerary: string[];
+  itinerary: {
+    durationId: number;
+    durationLabel: string;
+    days: { day: string; activities: string }[];
+  }[];
   information: string;
   boat: string;
   groupSize?: string;
@@ -39,8 +53,16 @@ interface PackageData {
     guideFee1: string;
     guideFee2: string;
   };
-  boatImages?: { image: string; title: string }[];
-  mainImage?: string; // Tambahkan properti mainImage
+  boatImages?: { image: string; title: string; id: string }[];
+  mainImage?: string;
+  flightSchedules?: FlightSchedule[];
+  has_boat: boolean;
+  destination_count: number;
+  trip_durations: {
+    id: number;
+    duration_label: string;
+    itineraries: { day: string; activities: string }[];
+  }[];
 }
 
 interface DetailPaketPrivateTripProps {
@@ -58,6 +80,12 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const router = useRouter();
+
+  const disabledDays = (date: Date) => {
+    const day = getDay(date);
+    // 0 = Minggu, 1 = Senin, ..., 5 = Jumat, 6 = Sabtu
+    return day >= 1 && day <= 4; // Disable Senin(1) sampai Kamis(4)
+  };
 
   const handleBookNow = (packageId: string) => {
     if (selectedDate) {
@@ -252,11 +280,14 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
+                {" "}
                 <Calendar
                   mode="single"
                   selected={selectedDate}
                   onSelect={setSelectedDate}
+                  disabled={disabledDays}
                   initialFocus
+                  className="rounded-md border"
                 />
               </PopoverContent>
             </Popover>
@@ -336,12 +367,29 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
               <h1 className="text-3xl font-bold text-gray-800 mb-2">
                 Itinerary
               </h1>
-              <div className="w-[120px] h-[3px] bg-[#CFB53B] mb-6"></div>
-              <ul className="list-disc list-inside text-gray-600 space-y-2">
-                {data.itinerary.map((item, index) => (
-                  <li key={index}>{item}</li>
+              <div className="w-[120px] h-[3px] bg-[#CFB53B] mb-6"></div>{" "}
+              <div>
+                {data.trip_durations.map((duration) => (
+                  <div key={duration.id} className="mb-8">
+                    <h3 className="text-xl font-semibold mb-4">
+                      {duration.duration_label}
+                    </h3>
+                    <ul className="list-disc list-inside text-gray-600 space-y-4">
+                      {duration.itineraries.map((day, index) => (
+                        <li key={index} className="ml-4">
+                          <span className="font-semibold">{`Day ${
+                            index + 1
+                          }`}</span>
+                          <div
+                            className="mt-2"
+                            dangerouslySetInnerHTML={{ __html: day.activities }}
+                          />
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
           )}
           {activeTab === "information" && (
@@ -438,11 +486,9 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
               <h1 className="text-3xl font-bold text-gray-800 mb-2">Boat</h1>
               <div className="w-[80px] h-[3px] bg-[#CFB53B] mb-6"></div>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 max-w-8xl mx-auto items-center mb-6">
+                {" "}
                 {data.boatImages?.map((boat, index) => (
-                  <Link
-                    key={index}
-                    href={`/detail-boat?type=${encodeURIComponent(boat.title)}`}
-                  >
+                  <Link key={index} href={`/detail-boat/${boat.id}`}>
                     <div className="relative group overflow-hidden rounded-lg shadow-lg cursor-pointer">
                       {/* Gambar Boat */}
                       <div className="relative h-[330px] w-full">
