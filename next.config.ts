@@ -13,9 +13,14 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'api.gongkomodotour.com',
         pathname: '/storage/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+        pathname: '/**',
       }
     ],
-    domains: ['localhost'],
+    domains: ['localhost', 'lh3.googleusercontent.com'],
   },
 };
 
