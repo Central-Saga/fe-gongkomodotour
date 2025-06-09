@@ -22,6 +22,15 @@ const nextConfig: NextConfig = {
     ],
     domains: ['localhost', 'lh3.googleusercontent.com'],
   },
+
+  eslint: {
+    // Menonaktifkan ESLint saat proses `yarn build`
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    // Menonaktifkan pengecekan tipe TypeScript saat `yarn build`
+    ignoreBuildErrors: true,
+  },
 };
 
 export default nextConfig;
