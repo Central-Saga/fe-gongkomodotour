@@ -87,10 +87,19 @@ export default function CreateHotelPage() {
       // Log data yang akan dikirim
       console.log('Data yang akan dikirim:', values)
       
+      // Pastikan format surcharges sesuai dengan yang diharapkan API
+      const payload = {
+        ...values,
+        surcharges: values.surcharges?.map(surcharge => ({
+          ...surcharge,
+          surcharge_price: Number(surcharge.surcharge_price)
+        }))
+      }
+      
       const response = await apiRequest<Hotel>(
         'POST',
         '/api/hotels',
-        values,
+        payload,
         {
           headers: {
             'Content-Type': 'application/json',
