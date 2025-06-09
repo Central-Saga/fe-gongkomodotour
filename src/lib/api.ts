@@ -12,7 +12,6 @@ const api = axios.create({
     'Accept-Language': 'id,en-US;q=0.7,en;q=0.3',
     'Content-Type': 'application/json',
     'X-Requested-With': 'XMLHttpRequest',
-    'Origin': 'http://localhost:3000', // Match the frontend origin
   },
 });
 
@@ -57,7 +56,6 @@ export const fetchCsrfToken = async (): Promise<void> => {
       headers: {
         'Accept': 'application/json',
         'X-Requested-With': 'XMLHttpRequest',
-        'Origin': 'http://localhost:3000',
       },
     });
     

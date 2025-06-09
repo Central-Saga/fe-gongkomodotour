@@ -22,7 +22,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { Loader2 } from "lucide-react"
+import { Loader2, Plus, Trash } from "lucide-react"
 import { toast } from "sonner"
 import { apiRequest } from "@/lib/api"
 import { Hotel } from "@/types/hotels"
@@ -39,6 +39,13 @@ const hotelSchema = z.object({
     message: "Harga harus berupa angka"
   }),
   status: z.enum(["Aktif", "Non Aktif"]),
+  surcharges: z.array(z.object({
+    season: z.string().min(1, "Season harus diisi"),
+    start_date: z.string().min(1, "Tanggal mulai harus diisi"),
+    end_date: z.string().min(1, "Tanggal selesai harus diisi"),
+    surcharge_price: z.number().min(0, "Harga surcharge harus diisi"),
+    status: z.enum(["Aktif", "Non Aktif"]),
+  })).optional(),
 })
 
 export default function CreateHotelPage() {
@@ -51,12 +58,27 @@ export default function CreateHotelPage() {
     occupancy: "Single Occupancy",
     price: "",
     status: "Aktif",
+    surcharges: [],
   }
 
   const form = useForm<z.infer<typeof hotelSchema>>({
     resolver: zodResolver(hotelSchema),
     defaultValues
   })
+
+  const handleAddSurcharge = () => {
+    const currentSurcharges = form.getValues("surcharges") || [];
+    form.setValue("surcharges", [
+      ...currentSurcharges,
+      {
+        season: "",
+        start_date: "",
+        end_date: "",
+        surcharge_price: 0,
+        status: "Aktif"
+      }
+    ])
+  }
 
   const onSubmit = async (values: z.infer<typeof hotelSchema>) => {
     try {
@@ -212,6 +234,132 @@ export default function CreateHotelPage() {
                         </FormItem>
                       )}
                     />
+                  </div>
+                </div>
+
+                {/* Surcharges */}
+                <div>
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-semibold text-gray-900">Surcharges</h2>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleAddSurcharge}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Tambah Surcharge
+                    </Button>
+                  </div>
+                  <div className="space-y-6">
+                    {form.watch("surcharges")?.map((surcharge, sIndex) => (
+                      <div key={sIndex} className="p-4 bg-gray-50 rounded-lg space-y-6">
+                        <div className="flex justify-between items-center">
+                          <h3 className="font-medium">Surcharge {sIndex + 1}</h3>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const currentSurcharges = form.getValues("surcharges") || [];
+                              form.setValue("surcharges", 
+                                currentSurcharges.filter((_, i) => i !== sIndex)
+                              )
+                            }}
+                          >
+                            <Trash className="w-4 h-4 text-red-500" />
+                          </Button>
+                        </div>
+                        <div className="grid grid-cols-4 gap-4">
+                          <FormField
+                            control={form.control}
+                            name={`surcharges.${sIndex}.season`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Season</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Contoh: Musim Panas" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`surcharges.${sIndex}.start_date`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Start Date</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    type="date"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`surcharges.${sIndex}.end_date`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>End Date</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    type="date"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`surcharges.${sIndex}.surcharge_price`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Surcharge Price</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    type="number"
+                                    min="0"
+                                    {...field}
+                                    onChange={e => field.onChange(parseInt(e.target.value))}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        <FormField
+                          control={form.control}
+                          name={`surcharges.${sIndex}.status`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Status</FormLabel>
+                              <FormControl>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Pilih status" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="Aktif">Aktif</SelectItem>
+                                    <SelectItem value="Non Aktif">Non Aktif</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    ))}
                   </div>
                 </div>
 

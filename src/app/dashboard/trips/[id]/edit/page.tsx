@@ -52,6 +52,41 @@ interface TripDuration {
   }[];
 }
 
+interface TripFormType {
+  name: string;
+  type: "Open Trip" | "Private Trip";
+  status: "Aktif" | "Non Aktif";
+  is_highlight: "Yes" | "No";
+  include: string;
+  exclude: string;
+  note?: string;
+  meeting_point: string;
+  start_time: string;
+  end_time: string;
+  has_boat: boolean;
+  has_hotel: boolean;
+  destination_count: number;
+  trip_durations: TripDuration[];
+  flight_schedules?: {
+    route: string;
+    etd_time: string;
+    eta_time: string;
+    etd_text?: string;
+    eta_text?: string;
+  }[];
+  additional_fees?: {
+    fee_category: string;
+    price: number;
+    region: "Domestic" | "Overseas" | "Domestic & Overseas";
+    unit: "per_pax" | "per_5pax" | "per_day" | "per_day_guide";
+    pax_min: number;
+    pax_max: number;
+    day_type: "Weekday" | "Weekend" | null;
+    is_required: boolean;
+    status: "Aktif" | "Non Aktif";
+  }[];
+}
+
 // Menggunakan schema yang sama dengan create
 const tripSchema = z.object({
   name: z.string().min(1, "Nama trip harus diisi"),
@@ -122,7 +157,7 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
   const [fileTitles, setFileTitles] = useState<string[]>([])
   const [fileDescriptions, setFileDescriptions] = useState<string[]>([])
 
-  const form = useForm<z.infer<typeof tripSchema>>({
+  const form = useForm<TripFormType>({
     resolver: zodResolver(tripSchema),
     defaultValues: {
       name: "",
@@ -154,13 +189,6 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
       }],
       flight_schedules: [],
       additional_fees: [],
-      surcharges: [{
-        season: "",
-        start_date: "",
-        end_date: "",
-        surcharge_price: 0,
-        status: "Aktif"
-      }]
     }
   })
 
@@ -252,7 +280,7 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
     }
   }
 
-  const onSubmit = async (values: z.infer<typeof tripSchema>) => {
+  const onSubmit = async (values: TripFormType) => {
     try {
       setIsSubmitting(true)
       console.log('Updating trip with ID:', id)
@@ -267,10 +295,6 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
           price: Number(fee.price) || 0,
           pax_min: Number(fee.pax_min),
           pax_max: Number(fee.pax_max)
-        })),
-        surcharges: values.surcharges?.map(surcharge => ({
-          ...surcharge,
-          surcharge_price: Number(String(surcharge.surcharge_price)) || 0
         })),
         trip_durations: values.trip_durations.map(duration => ({
           ...duration,
@@ -430,7 +454,6 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
   const tripDurations = form.watch("trip_durations") || []
   const flightSchedules = form.watch("flight_schedules") || []
   const additionalFees = form.watch("additional_fees") || []
-  const surcharges = form.watch("surcharges") || []
 
   if (isLoading) {
     return (
@@ -1454,171 +1477,6 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
                                     <SelectItem value="Non Aktif">Non Aktif</SelectItem>
                                   </SelectContent>
                                 </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Surcharges */}
-                <div>
-                  <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-semibold text-gray-900">Surcharges</h2>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const currentSurcharges = form.getValues("surcharges") || [];
-                        form.setValue("surcharges", [
-                          ...currentSurcharges,
-                          {
-                            season: "",
-                            start_date: "",
-                            end_date: "",
-                            surcharge_price: 0,
-                            status: "Aktif"
-                          }
-                        ])
-                      }}
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Tambah Surcharge
-                    </Button>
-                  </div>
-
-                  <div className="space-y-6">
-                    {surcharges.map((surcharge, sIndex) => (
-                      <div key={sIndex} className="p-4 bg-gray-50 rounded-lg space-y-6">
-                        <div className="flex justify-between items-center">
-                          <h3 className="font-medium">Surcharge {sIndex + 1}</h3>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              const currentSurcharges = form.getValues("surcharges") || [];
-                              form.setValue("surcharges", 
-                                currentSurcharges.filter((_, i) => i !== sIndex)
-                              )
-                            }}
-                          >
-                            <Trash className="w-4 h-4 text-red-500" />
-                          </Button>
-                        </div>
-
-                        <div className="grid grid-cols-4 gap-4">
-                          <FormField
-                            control={form.control}
-                            name={`surcharges.${sIndex}.season`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Season</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="Contoh: Musim Panas" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name={`surcharges.${sIndex}.start_date`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Start Date</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    type="date" 
-                                    {...field}
-                                    value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
-                                    onChange={(e) => {
-                                      const date = e.target.value;
-                                      if (date) {
-                                        field.onChange(new Date(date).toISOString().split('T')[0]);
-                                      } else {
-                                        field.onChange('');
-                                      }
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name={`surcharges.${sIndex}.end_date`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>End Date</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    type="date" 
-                                    {...field}
-                                    value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
-                                    onChange={(e) => {
-                                      const date = e.target.value;
-                                      if (date) {
-                                        field.onChange(new Date(date).toISOString().split('T')[0]);
-                                      } else {
-                                        field.onChange('');
-                                      }
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name={`surcharges.${sIndex}.surcharge_price`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Surcharge Price</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    type="number"
-                                    min="0"
-                                    {...field}
-                                    value={field.value || 0}
-                                    onChange={(e) => {
-                                      const value = e.target.value === '' ? 0 : parseInt(e.target.value);
-                                      field.onChange(value);
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-
-                        <div>
-                          <FormField
-                            control={form.control}
-                            name={`surcharges.${sIndex}.status`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Status</FormLabel>
-                                <FormControl>
-                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Pilih status" />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      <SelectItem value="Aktif">Aktif</SelectItem>
-                                      <SelectItem value="Non Aktif">Non Aktif</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </FormControl>
                                 <FormMessage />
                               </FormItem>
                             )}

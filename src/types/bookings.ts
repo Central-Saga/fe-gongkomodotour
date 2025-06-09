@@ -1,6 +1,6 @@
-export interface TripSurcharge {
+export interface HotelSurcharge {
   id: number
-  trip_id: number
+  hotel_occupancy_id: number
   season: string
   start_date: string
   end_date: string
@@ -50,7 +50,6 @@ export interface Trip {
   has_hotel: boolean
   created_at: string
   updated_at: string
-  surcharges: TripSurcharge[]
 }
 
 export interface Boat {
@@ -99,6 +98,7 @@ export interface HotelOccupancy {
   status: string
   created_at: string
   updated_at: string
+  surcharges: HotelSurcharge[]
 }
 
 export interface AdditionalFee {

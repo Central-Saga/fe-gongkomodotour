@@ -7,4 +7,14 @@ export interface Hotel {
   status: string
   created_at: string
   updated_at: string
+  surcharges?: {
+    id: number
+    season: string
+    start_date: string
+    end_date: string
+    surcharge_price: number
+    status: "Aktif" | "Non Aktif"
+    created_at: string
+    updated_at: string
+  }[]
 } 
