@@ -31,6 +31,11 @@ const nextConfig: NextConfig = {
     // Menonaktifkan pengecekan tipe TypeScript saat `yarn build`
     ignoreBuildErrors: true,
   },
+
+  experimental: {
+    workerThreads: false,
+    cpus: 4,
+  }
 };
 
 export default nextConfig;
