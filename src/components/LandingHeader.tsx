@@ -485,7 +485,7 @@ export default function LandingHeader() {
                           {t('login')}
                         </a>
                       </SheetClose>
-                      <SheetClose asChild>
+                      {/* <SheetClose asChild>
                         <a 
                           href="/auth/register" 
                           className="w-full flex items-center px-4 py-3 text-sm text-gray-700 hover:text-gold hover:bg-gray-50 rounded-lg transition-colors duration-200 gap-3"
@@ -493,7 +493,7 @@ export default function LandingHeader() {
                           <User size={18} />
                           {t('register')}
                         </a>
-                      </SheetClose>
+                      </SheetClose> */}
                     </div>
                   )}
                 </div>
