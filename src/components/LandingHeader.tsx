@@ -279,10 +279,10 @@ export default function LandingHeader() {
                         <User size={14} className="sm:w-4 sm:h-4" />
                         {t('login')}
                       </a>
-                      <a href="/auth/register" className="flex items-center px-3 sm:px-4 py-2 text-xs sm:text-sm hover:text-gold transition-colors duration-200 gap-2">
+                      {/* <a href="/auth/register" className="flex items-center px-3 sm:px-4 py-2 text-xs sm:text-sm hover:text-gold transition-colors duration-200 gap-2">
                         <User size={14} className="sm:w-4 sm:h-4" />
                         {t('register')}
-                      </a>
+                      </a> */}
                     </>
                   )}
                 </PopoverContent>
