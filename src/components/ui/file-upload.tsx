@@ -34,7 +34,7 @@ export function FileUpload({
   maxFiles = 5,
   maxSize = 10 * 1024 * 1024, // 10MB
   accept = {
-    'image/*': ['.png', '.jpg', '.jpeg', '.gif']
+    'image/*': ['.png', '.jpg', '.jpeg', '.gif', '.avif', '.webp']
   }
 }: FileUploadProps) {
   const [activeTab, setActiveTab] = useState<"file" | "url">("file")

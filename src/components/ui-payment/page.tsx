@@ -213,8 +213,8 @@ export default function Payment({
   date,
   tripCount,
 }: PaymentProps) {
-  const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/jpg"];
-  const ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png"];
+  const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/jpg", "image/avif", "image/webp"];
+  const ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".avif", ".webp"];
   const [isUploaded, setIsUploaded] = useState(false);
   const [bookingData, setBookingData] = useState<BookingData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -951,7 +951,7 @@ export default function Payment({
                     type="file"
                     ref={fileInputRef}
                     style={{ display: "none" }}
-                    accept="image/jpeg,image/png,image/jpg"
+                    accept="image/jpeg,image/png,image/jpg,image/avif,image/webp"
                     onChange={handleFileChange}
                     disabled={isFinalized}
                   />
