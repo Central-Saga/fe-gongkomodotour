@@ -21,10 +21,15 @@ const api = axios.create({
 
 // 2. Interceptor: tambahkan Bearer token jika ada
 api.interceptors.request.use((config: InternalAxiosRequestConfig<unknown>) => {
+  // Hanya jalankan di client-side
   if (typeof window !== "undefined") {
-    const token = localStorage.getItem('access_token');
-    if (token && config.headers) {
-      config.headers['Authorization'] = `Bearer ${token}`;
+    try {
+      const token = localStorage.getItem('access_token');
+      if (token && config.headers) {
+        config.headers['Authorization'] = `Bearer ${token}`;
+      }
+    } catch (error) {
+      console.warn('localStorage not available:', error);
     }
   }
   return config;
@@ -90,8 +95,8 @@ export async function apiRequest<T>(
         console.error('Direct fetch error:', fetchError);
       }
       
-      // Try 2: XHR fallback
-      if (method === 'GET') {
+      // Try 2: XHR fallback (hanya di client-side)
+      if (method === 'GET' && typeof window !== "undefined" && typeof XMLHttpRequest !== "undefined") {
         console.log('Attempting XHR fallback...');
         return new Promise((resolve, reject) => {
           const xhr = new XMLHttpRequest();
@@ -132,8 +137,8 @@ export async function apiRequest<T>(
       }
     }
     
-    // If axios fails and no fallback worked, try with native fetch as fallback
-    if (!axiosError.response && method === 'GET') {
+    // If axios fails and no fallback worked, try with native fetch as fallback (hanya di client-side)
+    if (!axiosError.response && method === 'GET' && typeof window !== "undefined" && typeof XMLHttpRequest !== "undefined") {
       console.log('Attempting fallback with XHR');
       return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
@@ -190,14 +195,18 @@ api.interceptors.response.use(
     });
 
     if (error.response?.status === 401) {
-      // Bersihkan data dari localStorage
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('token_type');
-      localStorage.removeItem('user');
-      
-      // Redirect ke halaman login
+      // Bersihkan data dari localStorage (hanya di client-side)
       if (typeof window !== 'undefined') {
-        window.location.href = '/auth/login';
+        try {
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('token_type');
+          localStorage.removeItem('user');
+          
+          // Redirect ke halaman login
+          window.location.href = '/auth/login';
+        } catch (localStorageError) {
+          console.warn('localStorage not available:', localStorageError);
+        }
       }
     }
     

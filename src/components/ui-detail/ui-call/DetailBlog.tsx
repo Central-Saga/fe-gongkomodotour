@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { apiRequest } from "@/lib/api";
 import type { Variants } from "framer-motion";
 import { getImageUrl } from "@/lib/imageUrl";
+import { cleanHtmlContent } from "@/lib/htmlUtils";
 
 export default function DetailBlog() {
   const [latestPosts, setLatestPosts] = useState<Blog[]>([]);
@@ -24,10 +25,11 @@ export default function DetailBlog() {
           .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
           .slice(0, 6);
         
-        // Format blog data with proper image URLs
+        // Format blog data with proper image URLs and cleaned content
         const formattedPosts = sortedPosts.map(post => {
           const formattedPost = {
             ...post,
+            content: cleanHtmlContent(post.content),
             assets: post.assets?.map(asset => {
               return {
                 ...asset,
@@ -138,14 +140,6 @@ export default function DetailBlog() {
 }
 
 function PostCard({ post, itemVariants }: { post: Blog, itemVariants: Variants }) {
-  const [decodedContent, setDecodedContent] = useState(post.content);
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const txt = document.createElement("textarea");
-      txt.innerHTML = post.content;
-      setDecodedContent(txt.value);
-    }
-  }, [post.content]);
   return (
     <motion.div 
       key={post.id}
@@ -177,11 +171,10 @@ function PostCard({ post, itemVariants }: { post: Blog, itemVariants: Variants }
         >
           {post.title}
         </motion.h3>
-        {/* Konten blog WYSIWYG dengan batas tinggi dan overflow, decode HTML entities di client-side */}
+        {/* Konten blog WYSIWYG dengan batas tinggi dan overflow */}
         <div
-          className="text-sm text-gray-600 mt-2 max-h-16 overflow-hidden relative"
-          style={{ WebkitLineClamp: 3, display: '-webkit-box', WebkitBoxOrient: 'vertical' }}
-          dangerouslySetInnerHTML={{ __html: decodedContent }}
+          className="text-sm text-gray-600 mt-2 max-h-16 overflow-hidden relative line-clamp-3"
+          dangerouslySetInnerHTML={{ __html: post.content }}
         />
         <div className="flex flex-wrap justify-between items-center mt-4 text-sm text-gray-500 gap-2">
           <motion.div 

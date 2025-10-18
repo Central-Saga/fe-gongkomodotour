@@ -8,6 +8,7 @@ import { apiRequest } from "@/lib/api";
 import { Blog } from "@/types/blog";
 import { motion } from "framer-motion";
 import { getImageUrl } from "@/lib/imageUrl";
+import { cleanHtmlContent } from "@/lib/htmlUtils";
 
 const BlogContent = () => {
   const [allPosts, setAllPosts] = useState<Blog[]>([]);
@@ -33,10 +34,12 @@ const BlogContent = () => {
     fetchPosts();
   }, []);
 
-  // Format blog data with proper image URLs
+
+  // Format blog data with proper image URLs and cleaned content
   const formatBlogData = (posts: Blog[]) => {
     return posts.map((post) => ({
       ...post,
+      content: cleanHtmlContent(post.content),
       assets: post.assets?.map((asset) => ({
         ...asset,
         file_url: getImageUrl(asset.file_url),
@@ -70,10 +73,14 @@ const BlogContent = () => {
   const tipsPosts = allPosts
     .filter((post) => post.category === "tips")
     .slice(0, 3);
+  const tripsPosts = allPosts
+    .filter((post) => post.category === "trips")
+    .slice(0, 3);
 
   const formattedLatestPosts = formatBlogData(latestPosts);
   const formattedTravelPosts = formatBlogData(travelPosts);
   const formattedTipsPosts = formatBlogData(tipsPosts);
+  const formattedTripsPosts = formatBlogData(tripsPosts);
   const formattedFilteredPosts = formatBlogData(filteredPosts);
 
   const containerVariants = {
@@ -368,6 +375,73 @@ const BlogContent = () => {
               animate="show"
             >
               {formattedTipsPosts.map((post) => (
+                <Link
+                  key={post.id}
+                  href={`/detail-blog?id=${post.id}`}
+                  className="group"
+                >
+                  <motion.div
+                    variants={itemVariants}
+                    className="post-card border rounded-lg shadow-md p-4 flex flex-col h-full cursor-pointer transition-transform duration-300 group-hover:scale-105"
+                  >
+                    {post.assets?.[0] && (
+                      <div className="relative h-64 w-full">
+                        <Image
+                          src={post.assets[0].file_url}
+                          alt={post.title}
+                          fill
+                          className="object-cover rounded-md transition-transform duration-300 hover:scale-105"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          unoptimized
+                        />
+                      </div>
+                    )}
+                    <h3 className="text-lg font-semibold mt-4">{post.title}</h3>
+                    <div
+                      className="text-sm text-gray-600 mt-2 flex-grow line-clamp-3"
+                      dangerouslySetInnerHTML={{ __html: post.content }}
+                    />
+                    <div className="flex justify-between items-center mt-4 text-sm text-gray-500">
+                      <div className="flex items-center gap-1">
+                        <FaUser className="w-4 h-4" />
+                        <span>Uploaded by: {post.author?.name}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <FaRegCalendarAlt className="w-4 h-4" />
+                        <span>
+                          {new Date(post.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                  </motion.div>
+                </Link>
+              ))}
+            </motion.div>
+          </motion.div>
+
+          {/* Trips Section */}
+          <motion.div
+            className="traveling-trips py-12"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.4, duration: 0.8 }}
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">Trips</h2>
+              <Link
+                href="/blog/viewall/trips"
+                className="text-gold font-semibold hover:text-gold-dark-10 transition-colors duration-300"
+              >
+                View All
+              </Link>
+            </div>
+            <motion.div
+              className="grid grid-cols-1 md:grid-cols-3 gap-6"
+              variants={containerVariants}
+              initial="hidden"
+              animate="show"
+            >
+              {formattedTripsPosts.map((post) => (
                 <Link
                   key={post.id}
                   href={`/detail-blog?id=${post.id}`}

@@ -3,6 +3,8 @@ import { FaUser, FaRegCalendarAlt, FaTag } from "react-icons/fa";
 import { apiRequest } from "@/lib/api";
 import { Blog } from "@/types/blog";
 import Image from "next/image";
+import Link from "next/link";
+import { cleanHtmlContent, stripHtmlTags } from "@/lib/htmlUtils";
 
 interface DetailBlogProps {
   blogId: string;
@@ -28,7 +30,11 @@ const DetailBlog: React.FC<DetailBlogProps> = ({ blogId }) => {
           "GET",
           `/api/landing-page/blogs/${blogId}`
         );
-        setBlog(response.data);
+        const cleanedBlog = {
+          ...response.data,
+          content: cleanHtmlContent(response.data.content),
+        };
+        setBlog(cleanedBlog);
       } catch (err) {
         console.error("Error fetching blog details:", err);
         setError("Failed to fetch blog details.");
@@ -50,7 +56,11 @@ const DetailBlog: React.FC<DetailBlogProps> = ({ blogId }) => {
               new Date(b.created_at).getTime() -
               new Date(a.created_at).getTime()
           )
-          .slice(0, 3);
+          .slice(0, 3)
+          .map((post) => ({
+            ...post,
+            content: cleanHtmlContent(post.content),
+          }));
         setLatestPosts(sortedPosts);
       } catch (error) {
         console.error("Error fetching latest posts:", error);
@@ -77,7 +87,15 @@ const DetailBlog: React.FC<DetailBlogProps> = ({ blogId }) => {
 
   return (
     <div className="detail-blog px-4 md:px-16 lg:px-24 py-12">
-      <h1 className="text-4xl font-bold mb-6">{blog.title}</h1>
+      <div className="mb-6">
+        <Link 
+          href="/blog" 
+          className="text-yellow-600 hover:text-yellow-700 font-semibold mb-4 inline-block transition-colors duration-300"
+        >
+          ← Kembali ke Blog
+        </Link>
+        <h1 className="text-4xl font-bold">{blog.title}</h1>
+      </div>
       <div className="relative w-full h-96 mb-6">
         <Image
           src={getImageUrl(blog.assets?.[0]?.file_url)}
@@ -124,9 +142,10 @@ const DetailBlog: React.FC<DetailBlogProps> = ({ blogId }) => {
                 />
               </div>
               <h3 className="text-lg font-semibold mb-2">{post.title}</h3>
-              <p className="text-sm text-gray-800 flex-grow">
-                {post.content.slice(0, 100)}...
-              </p>
+              <div 
+                className="text-sm text-gray-800 flex-grow line-clamp-3"
+                dangerouslySetInnerHTML={{ __html: post.content }}
+              />
               <div className="text-gray-600 text-sm mt-auto flex justify-between items-center">
                 <span className="flex items-center space-x-1">
                   <FaUser className="w-4 h-4" />
