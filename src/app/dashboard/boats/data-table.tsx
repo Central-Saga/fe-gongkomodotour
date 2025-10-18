@@ -71,11 +71,23 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
 // Fungsi untuk mendapatkan URL gambar dengan fallback
 const getImageUrl = (fileUrl: string) => {
-  if (!fileUrl) return '/placeholder-image.png'
+  if (!fileUrl) {
+    console.warn('Empty URL provided to getImageUrl')
+    return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5YTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlIE5vdCBGb3VuZDwvdGV4dD48L3N2Zz4='
+  }
+  
+  console.log('Original URL:', fileUrl)
+  
   if (fileUrl.startsWith('http')) {
+    console.log('Returning absolute URL:', fileUrl)
     return fileUrl
   }
-  return `${API_URL}${fileUrl}`
+  
+  // Pastikan URL dimulai dengan slash
+  const cleanUrl = fileUrl.startsWith('/') ? fileUrl : `/${fileUrl}`
+  const fullUrl = `${API_URL}${cleanUrl}`
+  console.log('Constructed URL:', fullUrl)
+  return fullUrl
 }
 
 

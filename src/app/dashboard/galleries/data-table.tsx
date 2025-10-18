@@ -61,9 +61,31 @@ interface DataTableProps<TData> {
 }
 
 const getImageUrl = (fileUrl: string) => {
-  const API_URL = process.env.NEXT_PUBLIC_API_URL
-  const cleanFileUrl = fileUrl.startsWith('/storage/') ? fileUrl.substring(8) : fileUrl
-  return `${API_URL}/storage/${cleanFileUrl}`
+  if (!fileUrl) {
+    console.warn('Empty URL provided to getImageUrl')
+    return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5YTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlIE5vdCBGb3VuZDwvdGV4dD48L3N2Zz4='
+  }
+  
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.gongkomodotour.com'
+  
+  console.log('Original URL:', fileUrl)
+  
+  if (fileUrl.startsWith('http')) {
+    console.log('Returning absolute URL:', fileUrl)
+    return fileUrl
+  }
+  
+  // Pastikan URL dimulai dengan slash
+  const cleanUrl = fileUrl.startsWith('/') ? fileUrl : `/${fileUrl}`
+  const fullUrl = `${API_URL}${cleanUrl}`
+  console.log('Constructed URL:', fullUrl)
+  return fullUrl
+}
+
+// Fungsi untuk membersihkan HTML tags dari teks
+const stripHtmlTags = (html: string) => {
+  if (!html) return ''
+  return html.replace(/<[^>]*>/g, '').trim()
 }
 
 const exportToPDF = (data: Gallery[]) => {
@@ -245,15 +267,9 @@ export function DataTable({
           <div className="bg-white p-4 rounded-lg shadow-sm">
             <h4 className="font-semibold text-lg mb-4 text-gray-800 border-b pb-2">Deskripsi Gallery</h4>
             <div className="bg-gray-50 p-3 rounded-md">
-              <div 
-                className="prose prose-sm max-w-none"
-                style={{ 
-                  maxWidth: '100%',
-                  overflowX: 'auto',
-                  whiteSpace: 'nowrap'
-                }}
-                dangerouslySetInnerHTML={{ __html: gallery.description }}
-              />
+              <p className="text-sm text-gray-700 leading-relaxed">
+                {stripHtmlTags(gallery.description)}
+              </p>
             </div>
           </div>
 
@@ -264,6 +280,11 @@ export function DataTable({
               <div className="flex justify-center">
                 {gallery.assets.slice(0, 1).map((asset, index) => {
                   const imageUrl = getImageUrl(asset.file_url)
+                  console.log('Gallery asset:', {
+                    asset,
+                    originalFileUrl: asset.file_url,
+                    constructedImageUrl: imageUrl
+                  })
                   return (
                     <div 
                       key={index} 
@@ -279,10 +300,14 @@ export function DataTable({
                           className="object-cover transition-transform duration-200 group-hover:scale-105"
                           onError={(e) => {
                             console.error(`Error loading image:`, e)
+                            console.error(`Failed URL:`, imageUrl)
                             const target = e.target as HTMLImageElement
-                            target.src = '/placeholder-image.png'
+                            target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5YTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlIE5vdCBGb3VuZDwvdGV4dD48L3N2Zz4='
                           }}
-                          priority={true}
+                          onLoad={() => {
+                            console.log(`Image loaded successfully:`, imageUrl)
+                          }}
+                          unoptimized={true}
                         />
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200" />
                       </div>

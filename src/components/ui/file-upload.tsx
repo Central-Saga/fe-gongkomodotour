@@ -27,6 +27,12 @@ interface FileUploadProps {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.gongkomodotour.com'
 
+// Fungsi untuk membersihkan HTML tags dari teks
+const stripHtmlTags = (html: string) => {
+  if (!html) return ''
+  return html.replace(/<[^>]*>/g, '').trim()
+}
+
 export function FileUpload({
   onUpload,
   onDelete,
@@ -369,7 +375,7 @@ export function FileUpload({
                   <div className="mt-2">
                     <p className="text-sm font-medium">{file.title || 'Untitled'}</p>
                     {file.description && (
-                      <p className="text-xs text-gray-500">{file.description}</p>
+                      <p className="text-xs text-gray-500">{stripHtmlTags(file.description)}</p>
                     )}
                   </div>
                 </div>

@@ -106,14 +106,31 @@ export default function EditGalleryPage({ params }: EditGalleryPageProps) {
 
   const handleFileDelete = async (fileUrl: string) => {
     try {
+      console.log('handleFileDelete called with fileUrl:', fileUrl)
+      console.log('Current existingAssets:', existingAssets.map(a => ({ id: a.id, title: a.title, file_url: a.file_url })))
+      
+      // Cari asset berdasarkan file_url
+      const asset = existingAssets.find(a => a.file_url === fileUrl)
+      if (!asset) {
+        console.error('Asset not found for fileUrl:', fileUrl)
+        throw new Error("Asset tidak ditemukan")
+      }
+
+      console.log('Found asset to delete:', { 
+        fileUrl, 
+        assetId: asset.id, 
+        assetTitle: asset.title
+      })
+      
+      // Hapus asset menggunakan ID yang benar
       await apiRequest(
         'DELETE',
-        `/api/assets/${encodeURIComponent(fileUrl)}`
+        `/api/assets/${asset.id}`
       )
       toast.success("File berhasil dihapus")
       
       // Update existing assets
-      setExistingAssets(prev => prev.filter(asset => asset.file_url !== fileUrl))
+      setExistingAssets(prev => prev.filter(a => a.file_url !== fileUrl))
     } catch (error) {
       console.error("Error deleting file:", error)
       toast.error("Gagal menghapus file")

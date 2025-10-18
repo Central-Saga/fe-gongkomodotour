@@ -57,11 +57,12 @@ export default function CreateGalleryPage() {
 
   const handleFileDelete = async (fileUrl: string) => {
     try {
-      await apiRequest(
-        'DELETE',
-        `/api/assets/${encodeURIComponent(fileUrl)}`
-      )
-      toast.success("File berhasil dihapus")
+      // Untuk create page, file yang dihapus adalah file yang baru diupload
+      // yang belum disimpan ke database, jadi tidak perlu call API
+      console.log('Removing file from upload list:', fileUrl)
+      
+      // File akan dihapus dari state oleh FileUpload component
+      toast.success("File berhasil dihapus dari daftar upload")
     } catch (error) {
       console.error("Error deleting file:", error)
       toast.error("Gagal menghapus file")
