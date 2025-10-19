@@ -23,15 +23,25 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { Loader2 } from "lucide-react"
+import { Loader2, Star } from "lucide-react"
 import { toast } from "sonner"
 import { apiRequest } from "@/lib/api"
+
+// Helper function to validate trip_id
+const validateTripId = (tripId: string | undefined): boolean => {
+  if (!tripId || tripId.trim() === '') return false
+  const num = Number(tripId.trim())
+  return !isNaN(num) && num > 0 && Number.isInteger(num)
+}
 
 const testimonialSchema = z.object({
   customer_name: z.string().min(1, "Nama customer harus diisi"),
   customer_email: z.string().email("Email harus valid"),
   customer_phone: z.string().min(1, "Nomor telepon harus diisi"),
-  trip_id: z.string().optional(),
+  trip_id: z.string().optional().refine(
+    (val) => !val || (!isNaN(Number(val)) && Number(val) > 0),
+    "Trip ID harus berupa angka yang valid"
+  ),
   rating: z.enum(["1", "2", "3", "4", "5"], {
     required_error: "Rating harus dipilih"
   }),
@@ -68,15 +78,30 @@ export default function CreateTestimonialPage() {
     try {
       setIsSubmitting(true)
       
-      const payload = {
-        ...values,
-        trip_id: values.trip_id ? parseInt(values.trip_id) : null,
+      // Handle trip_id validation - only include if it's a valid number and greater than 0
+      const tripId = values.trip_id?.trim()
+      const isValidTripId = validateTripId(tripId)
+      
+      const payload: any = {
+        customer_name: values.customer_name,
+        customer_email: values.customer_email,
+        customer_phone: values.customer_phone,
         rating: parseInt(values.rating),
+        review: values.review,
         is_approved: values.is_approved === "true",
-        is_highlight: values.is_highlight === "true"
+        is_highlight: values.is_highlight === "true",
+        source: values.source
       }
       
-      console.log('Final payload:', payload)
+      // Only include trip_id if it's valid
+      if (isValidTripId && tripId) {
+        payload.trip_id = parseInt(tripId)
+        console.log('Trip ID included:', payload.trip_id)
+      } else {
+        console.log('Trip ID not included - invalid or empty:', tripId)
+      }
+      
+      console.log('Create payload:', payload)
       
       const response = await apiRequest(
         'POST',
@@ -98,9 +123,20 @@ export default function CreateTestimonialPage() {
       toast.success("Testimonial berhasil dibuat")
       router.push("/dashboard/testimonials")
       router.refresh()
-    } catch (error: unknown) {
+    } catch (error: any) {
       console.error('Error detail:', error)
-      toast.error("Gagal membuat testimonial")
+      
+      // Handle specific validation errors
+      if (error?.response?.data?.errors) {
+        const errors = error.response.data.errors
+        if (errors.trip_id) {
+          toast.error("Trip ID tidak valid atau tidak ditemukan")
+        } else {
+          toast.error("Terdapat kesalahan validasi data")
+        }
+      } else {
+        toast.error("Gagal membuat testimonial")
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -206,10 +242,14 @@ export default function CreateTestimonialPage() {
                             <Input 
                               type="number"
                               placeholder="Masukkan ID trip (opsional)" 
+                              min="1"
                               {...field} 
                             />
                           </FormControl>
                           <FormMessage />
+                          <p className="text-sm text-gray-500">
+                            Kosongkan jika tidak ada trip yang terkait
+                          </p>
                         </FormItem>
                       )}
                     />
@@ -226,20 +266,23 @@ export default function CreateTestimonialPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Rating</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Pilih rating" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="1">1 Bintang</SelectItem>
-                              <SelectItem value="2">2 Bintang</SelectItem>
-                              <SelectItem value="3">3 Bintang</SelectItem>
-                              <SelectItem value="4">4 Bintang</SelectItem>
-                              <SelectItem value="5">5 Bintang</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <div className="flex gap-1">
+                            {[1, 2, 3, 4, 5].map((star) => {
+                              const currentRating = parseInt(field.value || "0")
+                              const isSelected = star <= currentRating
+                              return (
+                                <Star
+                                  key={star}
+                                  className={`h-8 w-8 cursor-pointer ${
+                                    isSelected
+                                      ? "text-yellow-400 fill-yellow-400"
+                                      : "text-gray-300"
+                                  }`}
+                                  onClick={() => field.onChange(star.toString() as "1" | "2" | "3" | "4" | "5")}
+                                />
+                              )
+                            })}
+                          </div>
                           <FormMessage />
                         </FormItem>
                       )}

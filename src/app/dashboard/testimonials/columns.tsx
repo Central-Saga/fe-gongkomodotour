@@ -154,8 +154,19 @@ export const columns = ({ onDelete }: ColumnsProps): ColumnDef<Testimonial>[] =>
       const rating = row.original.rating
       return (
         <div className="flex items-center">
-          <Star className="w-4 h-4 text-yellow-400 mr-1" />
-          <span>{rating}</span>
+          <div className="flex">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <Star
+                key={star}
+                className={`w-4 h-4 ${
+                  star <= rating
+                    ? "text-yellow-400 fill-yellow-400"
+                    : "text-gray-300"
+                }`}
+              />
+            ))}
+          </div>
+          <span className="ml-2 text-sm text-gray-600">({rating})</span>
         </div>
       )
     }
