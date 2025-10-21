@@ -1,7 +1,7 @@
 "use client";
 
 import { Star, Quote } from "lucide-react";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { apiRequest } from "@/lib/api";
@@ -44,6 +44,8 @@ export default function Testimoni() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const [showFull, setShowFull] = useState<number | null>(null);
+  const [isUserScrolling, setIsUserScrolling] = useState(false);
+  const userScrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { t } = useLanguage();
 
   useEffect(() => {
@@ -72,9 +74,14 @@ export default function Testimoni() {
     fetchTestimonials();
   }, []);
 
-  useEffect(() => {
+  // Fungsi untuk memulai autoscroll
+  const startAutoScroll = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+    
     intervalRef.current = setInterval(() => {
-      if (scrollContainerRef.current) {
+      if (scrollContainerRef.current && !isUserScrolling && !isDragging) {
         const nextIndex = (currentIndex + 1) % reviews.length;
         const scrollAmount = nextIndex * 358; // 350px card width + 8px gap
         scrollContainerRef.current.scrollTo({
@@ -83,23 +90,56 @@ export default function Testimoni() {
         });
         setCurrentIndex(nextIndex);
       }
-    }, 3000); // Scroll every 3 seconds
+    }, 4000); // Scroll every 4 seconds
+  }, [currentIndex, reviews.length, isUserScrolling, isDragging]);
+
+  useEffect(() => {
+    if (reviews.length > 0) {
+      startAutoScroll();
+    }
 
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
     };
-  }, [currentIndex, reviews.length]);
+  }, [startAutoScroll, reviews.length]);
+
+  // Fungsi untuk menangani scroll wheel
+  const handleWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (!scrollContainerRef.current) return;
+    
+    setIsUserScrolling(true);
+    
+    // Clear existing timeout
+    if (userScrollTimeoutRef.current) {
+      clearTimeout(userScrollTimeoutRef.current);
+    }
+    
+    // Set timeout to resume autoscroll after user stops scrolling
+    userScrollTimeoutRef.current = setTimeout(() => {
+      setIsUserScrolling(false);
+    }, 2000);
+    
+    const scrollAmount = e.deltaY > 0 ? 358 : -358;
+    scrollContainerRef.current.scrollBy({
+      left: scrollAmount,
+      behavior: "smooth"
+    });
+  }, []);
 
   // Fungsi untuk menangani drag dengan klik kiri
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!scrollContainerRef.current) return;
     if (e.button !== 0) return; // Hanya klik kiri yang memicu drag
     setIsDragging(true);
+    setIsUserScrolling(true);
     setStartX(e.pageX - scrollContainerRef.current.offsetLeft);
     setScrollLeft(scrollContainerRef.current.scrollLeft);
     scrollContainerRef.current.style.cursor = "grabbing";
+    
+    // Clear autoscroll saat user drag
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
@@ -117,25 +157,47 @@ export default function Testimoni() {
     if (scrollContainerRef.current) {
       scrollContainerRef.current.style.cursor = "grab";
     }
-    intervalRef.current = setInterval(() => {
-      if (scrollContainerRef.current) {
-        const nextIndex = (currentIndex + 1) % reviews.length;
-        const scrollAmount = nextIndex * 358;
-        scrollContainerRef.current.scrollTo({
-          left: scrollAmount,
-          behavior: "smooth"
-        });
-        setCurrentIndex(nextIndex);
-      }
-    }, 3000);
+    
+    // Resume autoscroll setelah user selesai drag
+    setTimeout(() => {
+      setIsUserScrolling(false);
+    }, 1000);
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!isDragging || !scrollContainerRef.current) return;
     e.preventDefault();
     const x = e.pageX - scrollContainerRef.current.offsetLeft;
-    const walk = (x - startX) * 2; // Mengatur kecepatan drag
+    const walk = (x - startX) * 1.5; // Mengurangi kecepatan drag untuk kontrol yang lebih halus
     scrollContainerRef.current.scrollLeft = scrollLeft - walk;
+  };
+
+  // Fungsi untuk menangani touch events (mobile)
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!scrollContainerRef.current) return;
+    setIsDragging(true);
+    setIsUserScrolling(true);
+    setStartX(e.touches[0].pageX - scrollContainerRef.current.offsetLeft);
+    setScrollLeft(scrollContainerRef.current.scrollLeft);
+    
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!isDragging || !scrollContainerRef.current) return;
+    e.preventDefault();
+    const x = e.touches[0].pageX - scrollContainerRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    scrollContainerRef.current.scrollLeft = scrollLeft - walk;
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+    setTimeout(() => {
+      setIsUserScrolling(false);
+    }, 1000);
   };
 
   if (loading) {
@@ -185,12 +247,17 @@ export default function Testimoni() {
           style={{ 
             scrollBehavior: "smooth", 
             cursor: "grab",
-            scrollSnapType: "x mandatory"
+            scrollSnapType: "x mandatory",
+            WebkitOverflowScrolling: "touch"
           }}
           onMouseDown={handleMouseDown}
           onMouseLeave={handleMouseLeave}
           onMouseUp={handleMouseUp}
           onMouseMove={handleMouseMove}
+          onWheel={handleWheel}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
         >
           {reviews.map((review, index) => {
             const isLong = review.text.length > 250;
