@@ -125,22 +125,22 @@ const tripSchema = z.object({
   end_time: z.string().min(1, "Waktu selesai harus diisi"),
   has_boat: z.boolean().default(false),
   has_hotel: z.boolean().default(false),
-  destination_count: z.number().min(0, "Jumlah destinasi harus diisi").default(0),
+  destination_count: z.coerce.number().min(0, "Jumlah destinasi harus diisi").default(0),
   operational_days: z.array(z.string()).default([]),
   tentation: z.enum(["Yes", "No"]).default("No"),
   trip_durations: z.array(z.object({
     duration_label: z.string().min(1, "Label durasi harus diisi"),
-    duration_days: z.number().min(1, "Jumlah hari harus diisi"),
-    duration_nights: z.number().min(0, "Jumlah malam harus diisi"),
+    duration_days: z.coerce.number().min(1, "Jumlah hari harus diisi"),
+    duration_nights: z.coerce.number().min(0, "Jumlah malam harus diisi"),
     status: z.enum(["Aktif", "Non Aktif"]),
     itineraries: z.array(z.object({
-      day_number: z.number().min(1, "Hari harus diisi"),
+      day_number: z.coerce.number().min(1, "Hari harus diisi"),
       activities: z.string().min(1, "Aktivitas harus diisi")
     })),
     prices: z.array(z.object({
-      pax_min: z.number().min(1, "Minimal pax harus diisi"),
-      pax_max: z.number().min(1, "Maksimal pax harus diisi"),
-      price_per_pax: z.number().min(0, "Harga per pax harus diisi"),
+      pax_min: z.coerce.number().min(1, "Minimal pax harus diisi"),
+      pax_max: z.coerce.number().min(1, "Maksimal pax harus diisi"),
+      price_per_pax: z.coerce.number().min(0, "Harga per pax harus diisi"),
       status: z.enum(["Aktif", "Non Aktif"]),
       region: z.enum(["Domestic", "Overseas", "Domestic & Overseas"])
     }))
@@ -154,11 +154,11 @@ const tripSchema = z.object({
   })).optional(),
   additional_fees: z.array(z.object({
     fee_category: z.string().min(1, "Kategori fee harus diisi"),
-    price: z.number().min(0, "Harga harus diisi"),
+    price: z.coerce.number().min(0, "Harga harus diisi"),
     region: z.enum(["Domestic", "Overseas", "Domestic & Overseas"]),
     unit: z.enum(["per_pax", "per_5pax", "per_day", "per_day_guide"]),
-    pax_min: z.number().min(1, "Minimal pax harus diisi"),
-    pax_max: z.number().min(1, "Maksimal pax harus diisi"),
+    pax_min: z.coerce.number().min(1, "Minimal pax harus diisi"),
+    pax_max: z.coerce.number().min(1, "Maksimal pax harus diisi"),
     day_type: z.enum(["Weekday", "Weekend"]).nullable(),
     is_required: z.boolean(),
     status: z.enum(["Aktif", "Non Aktif"])
@@ -1384,9 +1384,19 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
                                   <Input 
                                     type="number" 
                                     min="1"
-                                    {...field}
-                                    value={field.value || 1}
-                                    onChange={e => field.onChange(Number(e.target.value) || 1)}
+                                    step="1"
+                                    value={field.value ?? 1}
+                                    onChange={e => {
+                                      const value = e.target.value;
+                                      if (value === '') {
+                                        field.onChange(1);
+                                      } else {
+                                        const numValue = Number(value);
+                                        if (!isNaN(numValue) && numValue >= 1) {
+                                          field.onChange(numValue);
+                                        }
+                                      }
+                                    }}
                                   />
                                 </FormControl>
                                 <FormMessage />
@@ -1403,9 +1413,19 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
                                   <Input 
                                     type="number"
                                     min="0"
-                                    {...field}
-                                    value={field.value || 0}
-                                    onChange={e => field.onChange(Number(e.target.value) || 0)}
+                                    step="1"
+                                    value={field.value ?? 0}
+                                    onChange={e => {
+                                      const value = e.target.value;
+                                      if (value === '') {
+                                        field.onChange(0);
+                                      } else {
+                                        const numValue = Number(value);
+                                        if (!isNaN(numValue) && numValue >= 0) {
+                                          field.onChange(numValue);
+                                        }
+                                      }
+                                    }}
                                   />
                                 </FormControl>
                                 <FormMessage />
@@ -1529,9 +1549,19 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
                                         <Input 
                                           type="number"
                                           min="1"
-                                          {...field}
-                                          value={field.value || 1}
-                                          onChange={e => field.onChange(Number(e.target.value) || 1)}
+                                          step="1"
+                                          value={field.value ?? 1}
+                                          onChange={e => {
+                                            const value = e.target.value;
+                                            if (value === '') {
+                                              field.onChange(1);
+                                            } else {
+                                              const numValue = Number(value);
+                                              if (!isNaN(numValue) && numValue >= 1) {
+                                                field.onChange(numValue);
+                                              }
+                                            }
+                                          }}
                                         />
                                       </FormControl>
                                       <FormMessage />
@@ -1548,9 +1578,19 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
                                         <Input 
                                           type="number"
                                           min="1"
-                                          {...field}
-                                          value={field.value || 1}
-                                          onChange={e => field.onChange(Number(e.target.value) || 1)}
+                                          step="1"
+                                          value={field.value ?? 1}
+                                          onChange={e => {
+                                            const value = e.target.value;
+                                            if (value === '') {
+                                              field.onChange(1);
+                                            } else {
+                                              const numValue = Number(value);
+                                              if (!isNaN(numValue) && numValue >= 1) {
+                                                field.onChange(numValue);
+                                              }
+                                            }
+                                          }}
                                         />
                                       </FormControl>
                                       <FormMessage />
@@ -1567,9 +1607,19 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
                                         <Input 
                                           type="number"
                                           min="0"
-                                          {...field}
-                                          value={field.value || 0}
-                                          onChange={e => field.onChange(Number(e.target.value) || 0)}
+                                          step="1"
+                                          value={field.value ?? 0}
+                                          onChange={e => {
+                                            const value = e.target.value;
+                                            if (value === '') {
+                                              field.onChange(0);
+                                            } else {
+                                              const numValue = Number(value);
+                                              if (!isNaN(numValue) && numValue >= 0) {
+                                                field.onChange(numValue);
+                                              }
+                                            }
+                                          }}
                                         />
                                       </FormControl>
                                       <FormMessage />

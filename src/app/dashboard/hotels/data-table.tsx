@@ -209,7 +209,7 @@ const SurchargeRow = ({ hotel }: { hotel: Hotel }) => {
                   {new Intl.NumberFormat("id-ID", {
                     style: "currency",
                     currency: "IDR",
-                  }).format(surcharge.surcharge_price)}
+                  }).format(Number(surcharge.surcharge_price))}
                 </td>
                 <td className="py-2 px-3">
                   <Badge className={`${surcharge.status === "Aktif" ? "bg-emerald-500" : "bg-red-500"} text-white text-xs`}>

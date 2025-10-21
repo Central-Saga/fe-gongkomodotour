@@ -125,13 +125,13 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex h-screen">
+    <div className="flex min-h-screen">
       {/* Left Section - Login Form */}
       <motion.div 
         initial={{ opacity: 0, x: -50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-1/2 flex items-center justify-center bg-white p-10"
+        className="w-1/2 flex items-center justify-center bg-white p-8 lg:p-12"
       >
         <motion.div 
           initial={{ scale: 0.9, opacity: 0 }}
@@ -139,28 +139,24 @@ export default function LoginPage() {
           transition={{ delay: 0.2, duration: 0.5 }}
           className="w-full max-w-md"
         >
-          <motion.h1 
+          <motion.div 
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.5 }}
-            className="text-4xl font-bold text-gray-800 mb-6 flex items-center"
+            className="text-center mb-8"
           >
             <Image
               src={logo}
               alt="Gong Komodo Tour Logo"
-              width={400}
-              height={100}
-              className="mx-auto"
+              width={350}
+              height={90}
+              className="mx-auto mb-4"
             />
-          </motion.h1>
-          <motion.h2 
-            initial={{ y: -20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.4, duration: 0.5 }}
-            className="text-3xl font-semibold text-[#CFB53B] mb-8 text-center"
-          >
-            Sign In
-          </motion.h2>
+            <h2 className="text-3xl font-semibold text-[#CFB53B]">
+              Sign In
+            </h2>
+            <p className="text-gray-600 mt-2">Welcome back! Please sign in to your account</p>
+          </motion.div>
           <Form {...form}>
             <motion.form 
               initial={{ y: 20, opacity: 0 }}
@@ -226,12 +222,12 @@ export default function LoginPage() {
                           className="h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded"
                         />
                       </FormControl>
-                      <FormLabel className="text-sm text-gray-700">Remember</FormLabel>
+                      <FormLabel className="text-sm text-gray-700">Remember me</FormLabel>
                     </FormItem>
                   )}
                 />
                 <a href="/auth/register" className="text-sm text-blue-600 hover:underline">
-                  Forget Password?
+                  Forgot Password?
                 </a>
               </div>
 
@@ -244,13 +240,21 @@ export default function LoginPage() {
                 {isSubmitting ? "Signing In..." : "Sign In"}
               </Button>
 
-              {/* Sign Up Link */}
-              <p className="text-center text-sm text-gray-600">
-                I&apos;m a new user{' '}
-                <a href="/auth/register" className="text-blue-600 hover:underline">
-                  Sign Up
-                </a>
-              </p>
+              {/* Navigation Links */}
+              <div className="text-center space-y-2">
+                <p className="text-sm text-gray-600">
+                  I&apos;m a new user{' '}
+                  <a href="/auth/register" className="text-blue-600 hover:underline font-medium">
+                    Sign Up
+                  </a>
+                </p>
+                <p className="text-sm text-gray-600">
+                  Back to{' '}
+                  <a href="/" className="text-[#CFB53B] hover:underline font-medium">
+                    Home
+                  </a>
+                </p>
+              </div>
             </motion.form>
           </Form>
         </motion.div>

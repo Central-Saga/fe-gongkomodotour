@@ -39,10 +39,10 @@ const boatSchema = z.object({
     cabin_name: z.string().min(1, "Nama kabin harus diisi"),
     bed_type: z.string().min(1, "Tipe bed harus diisi"),
     bathroom: z.string().optional(),
-    min_pax: z.number().min(1, "Minimal pax harus diisi"),
-    max_pax: z.number().min(1, "Maksimal pax harus diisi"),
-    base_price: z.number().min(0, "Harga dasar harus diisi"),
-    additional_price: z.number().min(0, "Harga tambahan harus diisi"),
+    min_pax: z.coerce.number().min(1, "Minimal pax harus diisi"),
+    max_pax: z.coerce.number().min(1, "Maksimal pax harus diisi"),
+    base_price: z.coerce.number().min(0, "Harga dasar harus diisi"),
+    additional_price: z.coerce.number().min(0, "Harga tambahan harus diisi"),
     status: z.enum(["Aktif", "Non Aktif"])
   }))
 })
@@ -440,8 +440,19 @@ export default function CreateBoatPage() {
                                   <Input 
                                     type="number" 
                                     min="1"
-                                    {...field}
-                                    onChange={e => field.onChange(parseInt(e.target.value))}
+                                    step="1"
+                                    value={field.value ?? 1}
+                                    onChange={e => {
+                                      const value = e.target.value;
+                                      if (value === '') {
+                                        field.onChange(1);
+                                      } else {
+                                        const numValue = Number(value);
+                                        if (!isNaN(numValue) && numValue >= 1) {
+                                          field.onChange(numValue);
+                                        }
+                                      }
+                                    }}
                                   />
                                 </FormControl>
                                 <FormMessage />
@@ -461,8 +472,19 @@ export default function CreateBoatPage() {
                                   <Input 
                                     type="number" 
                                     min="1"
-                                    {...field}
-                                    onChange={e => field.onChange(parseInt(e.target.value))}
+                                    step="1"
+                                    value={field.value ?? 1}
+                                    onChange={e => {
+                                      const value = e.target.value;
+                                      if (value === '') {
+                                        field.onChange(1);
+                                      } else {
+                                        const numValue = Number(value);
+                                        if (!isNaN(numValue) && numValue >= 1) {
+                                          field.onChange(numValue);
+                                        }
+                                      }
+                                    }}
                                   />
                                 </FormControl>
                                 <FormMessage />
@@ -482,8 +504,19 @@ export default function CreateBoatPage() {
                                   <Input 
                                     type="number" 
                                     min="0"
-                                    {...field}
-                                    onChange={e => field.onChange(parseInt(e.target.value))}
+                                    step="1"
+                                    value={field.value ?? 0}
+                                    onChange={e => {
+                                      const value = e.target.value;
+                                      if (value === '') {
+                                        field.onChange(0);
+                                      } else {
+                                        const numValue = Number(value);
+                                        if (!isNaN(numValue) && numValue >= 0) {
+                                          field.onChange(numValue);
+                                        }
+                                      }
+                                    }}
                                   />
                                 </FormControl>
                                 <FormMessage />
@@ -500,8 +533,19 @@ export default function CreateBoatPage() {
                                   <Input 
                                     type="number" 
                                     min="0"
-                                    {...field}
-                                    onChange={e => field.onChange(parseInt(e.target.value))}
+                                    step="1"
+                                    value={field.value ?? 0}
+                                    onChange={e => {
+                                      const value = e.target.value;
+                                      if (value === '') {
+                                        field.onChange(0);
+                                      } else {
+                                        const numValue = Number(value);
+                                        if (!isNaN(numValue) && numValue >= 0) {
+                                          field.onChange(numValue);
+                                        }
+                                      }
+                                    }}
                                   />
                                 </FormControl>
                                 <FormMessage />

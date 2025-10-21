@@ -133,177 +133,187 @@ export default function RegisterPage() {
       </div>
 
       {/* Right Section - Register Form */}
-      <div className="w-1/2 flex items-center justify-center bg-white p-6">
-        <div className="w-full max-w-md">
-          <h1 className="text-4xl font-bold text-gray-800 mb-4 flex items-center">
+      <div className="w-1/2 flex items-center justify-center bg-white p-8 lg:p-12">
+        <div className="w-full max-w-4xl">
+          <div className="text-center mb-8">
             <Image
               src={logo}
               alt="Gong Komodo Tour Logo"
-              width={300} // Kurangi ukuran logo
-              height={75}
-              className="mx-auto"
+              width={350}
+              height={90}
+              className="mx-auto mb-4"
             />
-          </h1>
-          <h2 className="text-3xl font-semibold text-[#CFB53B] mb-6 text-center">
-            Sign Up
-          </h2>
+            <h2 className="text-3xl font-semibold text-[#CFB53B]">
+              Sign Up
+            </h2>
+            <p className="text-gray-600 mt-2">Create your account to get started</p>
+          </div>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              {/* Name Field */}
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-700">
-                      Name
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Your name"
-                        {...field}
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-yellow-500"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+              {/* Two Column Layout */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {/* Left Column */}
+                <div className="space-y-5">
+                  {/* Name Field */}
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium text-gray-700">
+                          Full Name
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Enter your full name"
+                            {...field}
+                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-yellow-500"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              {/* Email Field */}
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-700">
-                      Email
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="example@gmail.com"
-                        {...field}
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-yellow-500"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  {/* Email Field */}
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium text-gray-700">
+                          Email
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Enter your email address"
+                            {...field}
+                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-yellow-500"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              {/* Password Field */}
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-700">
-                      Password
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="••••••••"
-                        {...field}
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-yellow-500"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  {/* Password Field */}
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium text-gray-700">
+                          Password
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="password"
+                            placeholder="••••••••"
+                            {...field}
+                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-yellow-500"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              {/* Password Confirmation Field */}
-              <FormField
-                control={form.control}
-                name="password_confirmation"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-700">
-                      Confirm Password
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="••••••••"
-                        {...field}
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-yellow-500"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  {/* Password Confirmation Field */}
+                  <FormField
+                    control={form.control}
+                    name="password_confirmation"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium text-gray-700">
+                          Confirm Password
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="password"
+                            placeholder="••••••••"
+                            {...field}
+                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-yellow-500"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-              {/* Address Field */}
-              <FormField
-                control={form.control}
-                name="alamat"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-700">
-                      Address
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Your address"
-                        {...field}
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-yellow-500"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                {/* Right Column */}
+                <div className="space-y-5">
+                  {/* Address Field */}
+                  <FormField
+                    control={form.control}
+                    name="alamat"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium text-gray-700">
+                          Address
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Enter your address"
+                            {...field}
+                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-yellow-500"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              {/* Phone Number Field */}
-              <FormField
-                control={form.control}
-                name="no_hp"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-700">
-                      Phone Number
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="081234567890"
-                        {...field}
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-yellow-500"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  {/* Phone Number Field */}
+                  <FormField
+                    control={form.control}
+                    name="no_hp"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium text-gray-700">
+                          Phone Number
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Enter your phone number"
+                            {...field}
+                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-yellow-500"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              {/* Nationality Field */}
-              <FormField
-                control={form.control}
-                name="nasionality"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-700">
-                      Nationality
-                    </FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a country" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {countryOptions.map((country) => (
-                          <SelectItem key={country.value} value={country.value}>
-                            {country.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  {/* Nationality Field */}
+                  <FormField
+                    control={form.control}
+                    name="nasionality"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium text-gray-700">
+                          Nationality
+                        </FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Choose your nationality" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {countryOptions.map((country) => (
+                              <SelectItem key={country.value} value={country.value}>
+                                {country.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
 
               {/* Region Field (Who You Are) - Hidden but still in form state */}
               <FormField
@@ -341,13 +351,21 @@ export default function RegisterPage() {
                 {isSubmitting ? "Signing Up..." : "Sign Up"}
               </Button>
 
-              {/* Sign In Link */}
-              <p className="text-center text-sm text-gray-600 mt-4">
-                I have an account{" "}
-                <a href="/auth/login" className="text-blue-600 hover:underline">
-                  Sign In
-                </a>
-              </p>
+              {/* Navigation Links */}
+              <div className="text-center space-y-2 mt-4">
+                <p className="text-sm text-gray-600">
+                  I have an account{" "}
+                  <a href="/auth/login" className="text-blue-600 hover:underline font-medium">
+                    Sign In
+                  </a>
+                </p>
+                <p className="text-sm text-gray-600">
+                  Back to{' '}
+                  <a href="/" className="text-[#CFB53B] hover:underline font-medium">
+                    Home
+                  </a>
+                </p>
+              </div>
             </form>
           </Form>
         </div>

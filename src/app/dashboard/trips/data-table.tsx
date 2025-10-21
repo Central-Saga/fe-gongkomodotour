@@ -451,7 +451,12 @@ export function DataTable({
                               </div>
                               <div>
                                 <p className="text-gray-600 text-sm">Harga per Pax:</p>
-                                <p className="font-medium break-words">{price.price_per_pax}</p>
+                                <p className="font-medium break-words">
+                                  {new Intl.NumberFormat("id-ID", {
+                                    style: "currency",
+                                    currency: "IDR",
+                                  }).format(Number(price.price_per_pax))}
+                                </p>
                               </div>
                               <div>
                                 <p className="text-gray-600 text-sm">Region:</p>
@@ -496,7 +501,12 @@ export function DataTable({
                     <div>
                       <p className="text-gray-600 font-medium mb-1">Harga:</p>
                       <div className="bg-white p-2 rounded border border-gray-100">
-                        <p className="text-gray-800 break-words">{fee.price}</p>
+                        <p className="text-gray-800 break-words">
+                          {new Intl.NumberFormat("id-ID", {
+                            style: "currency",
+                            currency: "IDR",
+                          }).format(Number(fee.price))}
+                        </p>
                       </div>
                     </div>
                     <div>

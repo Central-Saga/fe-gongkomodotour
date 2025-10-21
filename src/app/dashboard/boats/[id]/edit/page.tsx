@@ -535,12 +535,23 @@ export default function EditBoatPage({ params }: EditBoatPageProps) {
                               <FormItem>
                                 <FormLabel>Minimal Pax</FormLabel>
                                 <FormControl>
-                            <Input 
-                              type="number" 
-                              min="1"
-                              value={field.value ?? 1}
-                              onChange={e => field.onChange(Number(e.target.value))}
-                            />
+                                  <Input 
+                                    type="number" 
+                                    min="1"
+                                    step="1"
+                                    value={field.value ?? 1}
+                                    onChange={e => {
+                                      const value = e.target.value;
+                                      if (value === '') {
+                                        field.onChange(1);
+                                      } else {
+                                        const numValue = Number(value);
+                                        if (!isNaN(numValue) && numValue >= 1) {
+                                          field.onChange(numValue);
+                                        }
+                                      }
+                                    }}
+                                  />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -556,12 +567,23 @@ export default function EditBoatPage({ params }: EditBoatPageProps) {
                               <FormItem>
                                 <FormLabel>Maksimal Pax</FormLabel>
                                 <FormControl>
-                            <Input 
-                              type="number" 
-                              min="1"
-                              value={field.value ?? 1}
-                              onChange={e => field.onChange(Number(e.target.value))}
-                            />
+                                  <Input 
+                                    type="number" 
+                                    min="1"
+                                    step="1"
+                                    value={field.value ?? 1}
+                                    onChange={e => {
+                                      const value = e.target.value;
+                                      if (value === '') {
+                                        field.onChange(1);
+                                      } else {
+                                        const numValue = Number(value);
+                                        if (!isNaN(numValue) && numValue >= 1) {
+                                          field.onChange(numValue);
+                                        }
+                                      }
+                                    }}
+                                  />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -577,12 +599,23 @@ export default function EditBoatPage({ params }: EditBoatPageProps) {
                               <FormItem>
                                 <FormLabel>Harga Dasar</FormLabel>
                                 <FormControl>
-                            <Input 
-                              type="number" 
-                              min="0"
-                              value={field.value ?? 0}
-                              onChange={e => field.onChange(Number(e.target.value))}
-                            />
+                                  <Input 
+                                    type="number" 
+                                    min="0"
+                                    step="1"
+                                    value={field.value ?? 0}
+                                    onChange={e => {
+                                      const value = e.target.value;
+                                      if (value === '') {
+                                        field.onChange(0);
+                                      } else {
+                                        const numValue = Number(value);
+                                        if (!isNaN(numValue) && numValue >= 0) {
+                                          field.onChange(numValue);
+                                        }
+                                      }
+                                    }}
+                                  />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -595,12 +628,23 @@ export default function EditBoatPage({ params }: EditBoatPageProps) {
                               <FormItem>
                                 <FormLabel>Harga Tambahan</FormLabel>
                                 <FormControl>
-                            <Input 
-                              type="number" 
-                              min="0"
-                              value={field.value ?? 0}
-                              onChange={e => field.onChange(Number(e.target.value))}
-                            />
+                                  <Input 
+                                    type="number" 
+                                    min="0"
+                                    step="1"
+                                    value={field.value ?? 0}
+                                    onChange={e => {
+                                      const value = e.target.value;
+                                      if (value === '') {
+                                        field.onChange(0);
+                                      } else {
+                                        const numValue = Number(value);
+                                        if (!isNaN(numValue) && numValue >= 0) {
+                                          field.onChange(numValue);
+                                        }
+                                      }
+                                    }}
+                                  />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>

@@ -452,13 +452,23 @@ export function DataTable({
                     <div>
                       <p className="text-gray-600 font-medium mb-1">Harga Dasar:</p>
                       <div className="bg-white p-2 rounded border border-gray-100">
-                        <p className="text-gray-800 break-words">Rp {cabin.base_price}</p>
+                        <p className="text-gray-800 break-words">
+                          {new Intl.NumberFormat("id-ID", {
+                            style: "currency",
+                            currency: "IDR",
+                          }).format(Number(cabin.base_price))}
+                        </p>
                       </div>
                     </div>
                     <div>
                       <p className="text-gray-600 font-medium mb-1">Harga Tambahan:</p>
                       <div className="bg-white p-2 rounded border border-gray-100">
-                        <p className="text-gray-800 break-words">Rp {cabin.additional_price}</p>
+                        <p className="text-gray-800 break-words">
+                          {new Intl.NumberFormat("id-ID", {
+                            style: "currency",
+                            currency: "IDR",
+                          }).format(Number(cabin.additional_price))}
+                        </p>
                       </div>
                     </div>
                   </div>

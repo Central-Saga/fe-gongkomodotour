@@ -33,15 +33,13 @@ const hotelSchema = z.object({
     required_error: "Tipe hotel harus dipilih"
   }),
   occupancy: z.string().min(1, "Tipe kamar harus diisi"),
-  price: z.string().min(1, "Harga harus diisi").refine((val) => !isNaN(Number(val)), {
-    message: "Harga harus berupa angka"
-  }),
+  price: z.coerce.number().min(0, "Harga harus diisi"),
   status: z.enum(["Aktif", "Non Aktif"]),
   surcharges: z.array(z.object({
     season: z.string().min(1, "Season harus diisi"),
     start_date: z.string().min(1, "Tanggal mulai harus diisi"),
     end_date: z.string().min(1, "Tanggal selesai harus diisi"),
-    surcharge_price: z.number().min(0, "Harga surcharge harus diisi"),
+    surcharge_price: z.coerce.number().min(0, "Harga surcharge harus diisi"),
     status: z.enum(["Aktif", "Non Aktif"]),
   })).default([]),
 })
@@ -54,7 +52,7 @@ export default function CreateHotelPage() {
     hotel_name: "",
     hotel_type: "Bintang 3",
     occupancy: "Single Occupancy",
-    price: "",
+    price: 0,
     status: "Aktif",
     surcharges: [],
   }
@@ -208,11 +206,19 @@ export default function CreateHotelPage() {
                             <Input 
                               type="number"
                               min="0"
+                              step="1"
                               placeholder="Masukkan harga"
-                              {...field}
+                              value={field.value ?? 0}
                               onChange={(e) => {
                                 const value = e.target.value;
-                                field.onChange(value);
+                                if (value === '') {
+                                  field.onChange(0);
+                                } else {
+                                  const numValue = Number(value);
+                                  if (!isNaN(numValue) && numValue >= 0) {
+                                    field.onChange(numValue);
+                                  }
+                                }
                               }}
                             />
                           </FormControl>
@@ -334,8 +340,19 @@ export default function CreateHotelPage() {
                                   <Input 
                                     type="number"
                                     min="0"
-                                    {...field}
-                                    onChange={e => field.onChange(parseInt(e.target.value))}
+                                    step="1"
+                                    value={field.value ?? 0}
+                                    onChange={e => {
+                                      const value = e.target.value;
+                                      if (value === '') {
+                                        field.onChange(0);
+                                      } else {
+                                        const numValue = Number(value);
+                                        if (!isNaN(numValue) && numValue >= 0) {
+                                          field.onChange(numValue);
+                                        }
+                                      }
+                                    }}
                                   />
                                 </FormControl>
                                 <FormMessage />
