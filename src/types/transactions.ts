@@ -1,3 +1,15 @@
+export interface TransactionAsset {
+  id: number
+  title: string
+  description: string
+  file_url: string
+  original_file_url: string
+  is_external: boolean
+  file_path: string
+  created_at: string
+  updated_at: string
+}
+
 export interface Transaction {
   id: string
   booking_id: string
@@ -30,4 +42,5 @@ export interface Transaction {
     description: string
     created_at: string
   }[]
+  assets: TransactionAsset[]
 } 

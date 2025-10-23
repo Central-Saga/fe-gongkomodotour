@@ -20,17 +20,45 @@ export default function TransactionsPage() {
   const fetchTransactions = async () => {
     try {
       setIsLoading(true)
+      console.log('Starting to fetch transactions...')
+      
       const response = await apiRequest<TransactionResponse>(
         'GET',
         '/api/transactions'
       )
 
+      console.log('API Response for transactions:', response)
+      console.log('Response type:', typeof response)
+      console.log('Response keys:', Object.keys(response || {}))
+      
       if (response?.data) {
+        console.log('Transactions data:', response.data)
+        console.log('Number of transactions:', response.data.length)
+        
+        // Log each transaction's payment_proof
+        response.data.forEach((transaction, index) => {
+          console.log(`Transaction ${index + 1}:`, {
+            id: transaction.id,
+            payment_proof: transaction.payment_proof,
+            payment_status: transaction.payment_status,
+            customer_name: transaction.booking?.customer_name,
+            has_payment_proof: !!transaction.payment_proof,
+            payment_proof_length: transaction.payment_proof?.length || 0
+          })
+        })
         setTransactions(response.data)
+      } else {
+        console.warn('No data in response:', response)
+        setTransactions([])
       }
     } catch (error) {
       console.error('Error fetching transactions:', error)
+      console.error('Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      })
       toast.error("Gagal mengambil data transaksi")
+      setTransactions([])
     } finally {
       setIsLoading(false)
     }
@@ -63,6 +91,10 @@ export default function TransactionsPage() {
           columns={columns()} 
           data={transactions}
           setData={setTransactions}
+          onStatusUpdate={(transactionId, newStatus) => {
+            console.log(`Status updated for transaction ${transactionId} to ${newStatus}`)
+            // Additional logic can be added here if needed
+          }}
         />
       </div>
     </div>

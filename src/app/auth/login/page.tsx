@@ -242,12 +242,12 @@ export default function LoginPage() {
 
               {/* Navigation Links */}
               <div className="text-center space-y-2">
-                <p className="text-sm text-gray-600">
+                {/* <p className="text-sm text-gray-600">
                   I&apos;m a new user{' '}
                   <a href="/auth/register" className="text-blue-600 hover:underline font-medium">
                     Sign Up
                   </a>
-                </p>
+                </p> */}
                 <p className="text-sm text-gray-600">
                   Back to{' '}
                   <a href="/" className="text-[#CFB53B] hover:underline font-medium">

@@ -46,22 +46,56 @@ import { ChevronDown, FileDown, ChevronLeft, ChevronRight, ChevronsLeft, Chevron
 import { useState } from "react"
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
-import { Transaction } from "@/types/transactions"
+import { Transaction, TransactionAsset } from "@/types/transactions"
 import { toast } from "sonner"
 import { apiRequest } from "@/lib/api"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import Image from "next/image"
+import { ImageModal } from "@/components/ui/image-modal"
+import { columns as createColumns } from "./columns"
 
 interface DataTableProps<TData> {
   columns: ColumnDef<TData, string>[]
   data: TData[]
-  setData: (data: TData[]) => void
+  setData: React.Dispatch<React.SetStateAction<TData[]>>
+  onStatusUpdate?: (transactionId: string, newStatus: string) => void
 }
 
 interface TransactionResponse {
   data: Transaction[]
   message?: string
   status?: string
+}
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.gongkomodotour.com'
+
+// Fungsi untuk mendapatkan URL gambar
+const getImageUrl = (fileUrl: string) => {
+  console.log('getImageUrl called with:', { fileUrl, type: typeof fileUrl })
+  
+  if (!fileUrl || fileUrl.trim() === '') {
+    console.warn('Empty or invalid file URL provided:', fileUrl)
+    return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5YTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlIE5vdCBGb3VuZDwvdGV4dD48L3N2Zz4='
+  }
+  
+  // Jika sudah URL lengkap, return langsung
+  if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) {
+    console.log('Full URL detected:', fileUrl)
+    return fileUrl
+  }
+  
+  // Pastikan fileUrl dimulai dengan slash
+  const cleanUrl = fileUrl.startsWith('/') ? fileUrl : `/${fileUrl}`
+  const fullUrl = `${API_URL}${cleanUrl}`
+  
+  console.log('Image URL constructed:', { 
+    original: fileUrl, 
+    cleanUrl: cleanUrl,
+    apiUrl: API_URL,
+    constructed: fullUrl 
+  })
+  
+  return fullUrl
 }
 
 const exportToPDF = (data: Transaction[]) => {
@@ -170,6 +204,7 @@ export function DataTable({
   columns,
   data,
   setData,
+  onStatusUpdate,
 }: DataTableProps<Transaction>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -181,6 +216,8 @@ export function DataTable({
     pageSize: 10,
   })
   const [isDeleting, setIsDeleting] = useState(false)
+  const [selectedImage, setSelectedImage] = useState<TransactionAsset | null>(null)
+  const [updateKey, setUpdateKey] = useState(0)
 
   const handleDelete = async (transaction: Transaction) => {
     try {
@@ -195,6 +232,63 @@ export function DataTable({
       toast.error("Gagal menghapus transaksi")
     } finally {
       setIsDeleting(false)
+    }
+  }
+
+  const handleStatusUpdate = async (transactionId: string, newStatus: string) => {
+    try {
+      console.log(`Updating transaction ${transactionId} to status: ${newStatus}`)
+      
+      // Find the transaction to get all required fields
+      const transaction = data.find(t => t.id === transactionId)
+      if (!transaction) {
+        throw new Error('Transaction not found')
+      }
+      
+      console.log('Transaction data:', {
+        id: transaction.id,
+        booking_id: transaction.booking_id,
+        bank_type: transaction.bank_type,
+        total_amount: transaction.total_amount,
+        payment_proof: transaction.payment_proof,
+        payment_status: newStatus
+      })
+      
+      // Update status via backend API with all required fields
+      const response = await apiRequest('PUT', `/api/transactions/${transactionId}`, {
+        booking_id: transaction.booking_id,
+        bank_type: transaction.bank_type,
+        total_amount: transaction.total_amount,
+        payment_proof: transaction.payment_proof,
+        payment_status: newStatus
+      })
+      
+      console.log('API response:', response)
+      
+      // Update local data
+      setData((prevData: Transaction[]) => {
+        const updatedData = prevData.map((transaction: Transaction) => 
+          transaction.id === transactionId 
+            ? { ...transaction, payment_status: newStatus }
+            : transaction
+        )
+        console.log('Updated data for transaction:', updatedData.find(t => t.id === transactionId))
+        return updatedData
+      })
+      
+      // Show success notification
+      toast.success(`Status pembayaran berhasil diubah menjadi "${newStatus}"`)
+      
+      // Force re-render
+      setUpdateKey(prev => prev + 1)
+      
+      // Call parent callback if provided
+      if (onStatusUpdate) {
+        onStatusUpdate(transactionId, newStatus)
+      }
+    } catch (error) {
+      console.error("Error updating transaction status:", error)
+      toast.error("Gagal mengubah status pembayaran")
     }
   }
 
@@ -229,7 +323,7 @@ export function DataTable({
   const table = useReactTable({
     data,
     columns: [
-      ...columns.filter(col => col.id !== "actions"),
+      ...createColumns(handleStatusUpdate, updateKey).filter((col: ColumnDef<Transaction, string>) => col.id !== "actions"),
       {
         id: "actions",
         header: () => null,
@@ -283,6 +377,15 @@ export function DataTable({
   const renderSubComponent = ({ row }: { row: Row<Transaction> }) => {
     const transaction = row.original
     
+    console.log('Transaction data for rendering:', {
+      id: transaction.id,
+      payment_proof: transaction.payment_proof,
+      payment_status: transaction.payment_status,
+      booking: transaction.booking,
+      assetsCount: transaction.assets?.length || 0,
+      assets: transaction.assets?.map((a: TransactionAsset) => ({ id: a.id, title: a.title, file_url: a.file_url })) || []
+    })
+    
     return (
       <div className="p-4 bg-muted/50 rounded-lg">
         <div className="space-y-4 max-w-5xl mx-auto">
@@ -311,9 +414,11 @@ export function DataTable({
                 <p className="text-gray-600 font-medium mb-1">Status:</p>
                 <div className="bg-gray-50 p-2 rounded border border-gray-100">
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    transaction.payment_status === "Lunas" ? "bg-green-100 text-green-800" :
                     transaction.payment_status === "Pembayaran Berhasil" ? "bg-green-100 text-green-800" :
                     transaction.payment_status === "Menunggu Pembayaran" ? "bg-yellow-100 text-yellow-800" :
-                    "bg-red-100 text-red-800"
+                    transaction.payment_status === "Ditolak" ? "bg-red-100 text-red-800" :
+                    "bg-gray-100 text-gray-800"
                   }`}>
                     {transaction.payment_status}
                   </span>
@@ -334,18 +439,126 @@ export function DataTable({
             </div>
           </div>
 
-          {/* Bukti Pembayaran */}
-          {transaction.payment_proof && (
-            <div className="bg-white p-4 rounded-lg shadow-sm">
+          {/* Bukti Pembayaran - Assets */}
+          {(transaction.assets && transaction.assets.length > 0) && (
+            <div className="bg-white p-6 rounded-lg shadow-sm w-full overflow-hidden">
               <h4 className="font-semibold text-lg mb-4 text-gray-800 border-b pb-2">Bukti Pembayaran</h4>
-              <div className="flex justify-center">
-                <div className="relative w-full max-w-2xl h-[400px]">
-                  <Image 
-                    src={transaction.payment_proof} 
-                    alt="Bukti Pembayaran" 
-                    fill
-                    className="object-contain rounded-lg shadow-md"
-                  />
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 w-full">
+                {transaction.assets.map((asset: TransactionAsset, index: number) => {
+                  if (!asset || !asset.file_url) {
+                    console.warn(`Invalid asset at index ${index}:`, asset)
+                    return null
+                  }
+                  
+                  const imageUrl = getImageUrl(asset.file_url)
+                  console.log(`Rendering asset ${index}:`, {
+                    id: asset.id,
+                    title: asset.title,
+                    file_url: asset.file_url,
+                    imageUrl: imageUrl
+                  })
+                  
+                  return (
+                    <div 
+                      key={asset.id || `asset-${index}`} 
+                      className="space-y-2 cursor-pointer group w-full"
+                      onClick={() => setSelectedImage(asset)}
+                    >
+                      <div className="relative aspect-[4/3] rounded-lg overflow-hidden border border-gray-200 w-full">
+                        <Image
+                          src={imageUrl}
+                          alt={asset.title || `Bukti Pembayaran ${index + 1}`}
+                          fill
+                          sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+                          className="object-cover transition-transform duration-200 group-hover:scale-105"
+                          unoptimized={true}
+                          onError={(e) => {
+                            console.error(`Error loading image for asset ${asset.id || index}:`, {
+                              assetId: asset.id,
+                              assetTitle: asset.title,
+                              fileUrl: asset.file_url,
+                              imageUrl: imageUrl,
+                              error: e,
+                              transactionId: transaction.id
+                            })
+                            const target = e.target as HTMLImageElement
+                            // Gunakan data URL untuk placeholder yang valid
+                            target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5YTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlIE5vdCBGb3VuZDwvdGV4dD48L3N2Zz4='
+                          }}
+                          onLoad={() => {
+                            console.log(`Image loaded successfully for asset ${asset.id || index}: ${asset.title || `Bukti Pembayaran ${index + 1}`}`)
+                          }}
+                          priority={index < 5}
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200" />
+                      </div>
+                      {asset.title && (
+                        <p className="text-sm text-gray-600 text-center truncate" title={asset.title}>
+                          {asset.title}
+                        </p>
+                      )}
+                      {asset.description && (
+                        <p className="text-xs text-gray-500 text-center truncate" title={asset.description}>
+                          {asset.description}
+                        </p>
+                      )}
+                    </div>
+                  )
+                }).filter(Boolean)}
+              </div>
+            </div>
+          )}
+
+          {/* Fallback untuk payment_proof lama jika assets tidak ada */}
+          {(!transaction.assets || transaction.assets.length === 0) && transaction.payment_proof && (
+            <div className="bg-white p-6 rounded-lg shadow-sm w-full overflow-hidden">
+              <h4 className="font-semibold text-lg mb-4 text-gray-800 border-b pb-2">Bukti Pembayaran</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 w-full">
+                <div 
+                  className="space-y-2 cursor-pointer group w-full"
+                  onClick={() => {
+                    // Buat objek asset sementara untuk kompatibilitas
+                    const tempAsset: TransactionAsset = {
+                      id: 0,
+                      title: "Bukti Pembayaran",
+                      description: "Bukti pembayaran transaksi",
+                      file_url: transaction.payment_proof,
+                      original_file_url: transaction.payment_proof,
+                      is_external: false,
+                      file_path: "",
+                      created_at: transaction.created_at,
+                      updated_at: transaction.updated_at
+                    }
+                    setSelectedImage(tempAsset)
+                  }}
+                >
+                  <div className="relative aspect-[4/3] rounded-lg overflow-hidden border border-gray-200 w-full">
+                    <Image
+                      src={getImageUrl(transaction.payment_proof)}
+                      alt="Bukti Pembayaran"
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                      className="object-cover transition-transform duration-200 group-hover:scale-105"
+                      unoptimized={true}
+                      onError={(e) => {
+                        console.error(`Error loading payment proof image:`, {
+                          paymentProof: transaction.payment_proof,
+                          transactionId: transaction.id,
+                          error: e
+                        })
+                        const target = e.target as HTMLImageElement
+                        target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5YTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlIE5vdCBGb3VuZDwvdGV4dD48L3N2Zz4='
+                      }}
+                      onLoad={() => {
+                        console.log(`Payment proof image loaded successfully for transaction ${transaction.id}`)
+                      }}
+                      priority={true}
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200" />
+                  </div>
+                  <p className="text-sm text-gray-600 text-center truncate" title="Bukti Pembayaran">
+                    Bukti Pembayaran
+                  </p>
                 </div>
               </div>
             </div>
@@ -480,6 +693,17 @@ export function DataTable({
                 ))}
               </div>
             </div>
+          )}
+
+          {/* Image Modal */}
+          {selectedImage && (
+            <ImageModal
+              isOpen={!!selectedImage}
+              onClose={() => setSelectedImage(null)}
+              imageUrl={getImageUrl(selectedImage.file_url)}
+              title={selectedImage.title}
+              description={selectedImage.description || "Bukti pembayaran transaksi"}
+            />
           )}
         </div>
       </div>

@@ -5,6 +5,7 @@ import { Transaction } from "@/types/transactions"
 import { Button } from "@/components/ui/button"
 import { ArrowUpDown, ChevronDown, ChevronRight, MoreHorizontal, Trash } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 const ActionsCell = () => {
   return (
@@ -25,7 +26,7 @@ const ActionsCell = () => {
   )
 }
 
-export const columns = (): ColumnDef<Transaction>[] => [
+export const columns = (onStatusUpdate?: (transactionId: string, newStatus: string) => void, updateKey?: number): ColumnDef<Transaction>[] => [
   {
     id: "expander",
     header: () => null,
@@ -148,15 +149,53 @@ export const columns = (): ColumnDef<Transaction>[] => [
     ),
     cell: ({ row }) => {
       const status = row.getValue("payment_status") as string
+      const transaction = row.original
+      
+      console.log(`Rendering status for transaction ${transaction.id}:`, {
+        id: transaction.id,
+        status: status,
+        customer: transaction.booking?.customer_name
+      })
+      
+      const statusOptions = [
+        { value: "Menunggu Pembayaran", label: "Menunggu Pembayaran", color: "bg-yellow-100 text-yellow-800" },
+        { value: "Lunas", label: "Lunas", color: "bg-green-100 text-green-800" },
+        { value: "Pembayaran Berhasil", label: "Pembayaran Berhasil", color: "bg-green-100 text-green-800" },
+        { value: "Ditolak", label: "Ditolak", color: "bg-red-100 text-red-800" }
+      ]
+      
+      const currentStatus = statusOptions.find(option => option.value === status) || statusOptions[0]
+      
       return (
         <div className="min-w-[150px]">
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-            status === "Pembayaran Berhasil" ? "bg-green-100 text-green-800" :
-            status === "Menunggu Pembayaran" ? "bg-yellow-100 text-yellow-800" :
-            "bg-red-100 text-red-800"
-          }`}>
-            {status}
-          </span>
+          <Select
+            key={`status-${transaction.id}-${status}-${updateKey || 0}`}
+            value={status}
+            onValueChange={(newStatus) => {
+              if (onStatusUpdate && newStatus !== status) {
+                onStatusUpdate(transaction.id, newStatus)
+              }
+            }}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue>
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${currentStatus.color}`}>
+                  {currentStatus.label}
+                </span>
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {statusOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  <div className="flex items-center">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${option.color}`}>
+                      {option.label}
+                    </span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       )
     },
