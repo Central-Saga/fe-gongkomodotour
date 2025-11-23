@@ -1104,10 +1104,6 @@ export default function Payment({
                                   }
                                 );
                                 setSubmitSuccess(true);
-                                setTimeout(() => {
-                                  setShowDialog(false);
-                                  setSubmitSuccess(false);
-                                }, 4000);
                               } catch (err: unknown) {
                                 const anyErr = err as { response?: { data?: { message?: string } } ; message?: string }
                                 const apiMsg = (anyErr?.response?.data?.message || anyErr?.message || '').toString();
