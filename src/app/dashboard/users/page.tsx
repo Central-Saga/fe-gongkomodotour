@@ -20,6 +20,8 @@ export default function UserPages() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | undefined>();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentUser, setCurrentUser] = useState<{ id?: number; roles?: string[] } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchUsers = async () => {
     try {
@@ -41,6 +43,20 @@ export default function UserPages() {
 
   useEffect(() => {
     fetchUsers();
+    
+    // Ambil current user dari localStorage
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        setCurrentUser({
+          id: user.id,
+          roles: user.roles || []
+        });
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
+    }
   }, []);
 
   const handleCreate = () => {
@@ -53,16 +69,60 @@ export default function UserPages() {
     setDialogOpen(true);
   };
 
+  // Helper function untuk normalisasi role
+  const normalizeRole = (role: string | string[] | undefined): string => {
+    if (!role) return '';
+    const roleStr = Array.isArray(role) ? role[0] : role;
+    return roleStr.trim();
+  };
+
+  // Helper function untuk cek permission delete
+  const canDeleteUser = (targetUser: User): { canDelete: boolean; reason?: string } => {
+    // Jika tidak ada current user data, tidak bisa delete
+    if (!currentUser?.id || !currentUser?.roles) {
+      return { canDelete: false, reason: "Data user tidak ditemukan" };
+    }
+
+    const currentUserRole = normalizeRole(currentUser.roles);
+    const targetUserRole = normalizeRole(targetUser.role);
+
+    // Hanya Super Admin yang bisa delete
+    if (currentUserRole !== 'Super Admin') {
+      return { canDelete: false, reason: "Hanya Super Admin yang dapat menghapus user" };
+    }
+
+    // Super Admin tidak bisa menghapus dirinya sendiri
+    if (currentUser.id === targetUser.id) {
+      return { canDelete: false, reason: "Anda tidak dapat menghapus akun sendiri" };
+    }
+
+    // Super Admin tidak bisa menghapus Super Admin lain
+    if (targetUserRole === 'Super Admin') {
+      return { canDelete: false, reason: "Super Admin tidak dapat menghapus Super Admin lain" };
+    }
+
+    // Super Admin bisa menghapus Admin dan role lainnya
+    return { canDelete: true };
+  };
+
   const handleDelete = async (user: User) => {
-    if (!confirm("Are you sure you want to delete this user?")) return;
+    // Validasi permission
+    const permission = canDeleteUser(user);
+    if (!permission.canDelete) {
+      toast.error(permission.reason || "Tidak memiliki izin untuk menghapus user ini");
+      return;
+    }
 
     try {
+      setIsDeleting(true);
       await apiRequest('DELETE', `/api/users/${user.id}`);
-      toast.success("User deleted successfully");
+      toast.success("User berhasil dihapus");
       fetchUsers();
     } catch (err) {
-      toast.error("Failed to delete user");
+      toast.error("Gagal menghapus user");
       console.error("Error deleting user:", err);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -112,7 +172,13 @@ export default function UserPages() {
       </div>
       <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
         <DataTable<User, string>
-          columns={columns({ onEdit: handleEdit, onDelete: handleDelete })} 
+          columns={columns({ 
+            onEdit: handleEdit, 
+            onDelete: handleDelete,
+            currentUserId: currentUser?.id,
+            currentUserRole: normalizeRole(currentUser?.roles),
+            isDeleting: isDeleting
+          })} 
           data={data}
           onCreate={handleCreate}
         />

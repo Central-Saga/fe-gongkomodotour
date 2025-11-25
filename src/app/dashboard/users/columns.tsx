@@ -11,13 +11,57 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import * as React from "react";
 
 interface ColumnsProps {
   onEdit: (user: User) => void;
   onDelete: (user: User) => void;
+  currentUserId?: number;
+  currentUserRole?: string;
+  isDeleting?: boolean;
 }
 
-export const columns = ({ onEdit, onDelete }: ColumnsProps): ColumnDef<User>[] => [
+// Helper function untuk normalisasi role (trim whitespace)
+const normalizeRole = (role: string | undefined): string => {
+  if (!role) return '';
+  return role.trim();
+};
+
+// Helper function untuk cek permission delete
+const canDeleteUser = (
+  currentUserRole: string | undefined,
+  currentUserId: number | undefined,
+  targetUser: User
+): boolean => {
+  // Jika tidak ada current user data, tidak bisa delete
+  if (!currentUserRole || !currentUserId) {
+    return false;
+  }
+
+  const normalizedCurrentRole = normalizeRole(currentUserRole);
+  const normalizedTargetRole = normalizeRole(targetUser.role);
+
+  // Hanya Super Admin yang bisa delete
+  if (normalizedCurrentRole !== 'Super Admin') {
+    return false;
+  }
+
+  // Super Admin tidak bisa menghapus dirinya sendiri
+  if (currentUserId === targetUser.id) {
+    return false;
+  }
+
+  // Super Admin tidak bisa menghapus Super Admin lain
+  if (normalizedTargetRole === 'Super Admin') {
+    return false;
+  }
+
+  // Super Admin bisa menghapus Admin dan role lainnya (selain Super Admin)
+  return true;
+};
+
+export const columns = ({ onEdit, onDelete, currentUserId, currentUserRole, isDeleting = false }: ColumnsProps): ColumnDef<User>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -155,6 +199,35 @@ export const columns = ({ onEdit, onDelete }: ColumnsProps): ColumnDef<User>[] =
     id: "actions",
     cell: ({ row }) => {
       const user = row.original;
+      const canDelete = canDeleteUser(currentUserRole, currentUserId, user);
+
+      const DeleteConfirmationDialog = ({ user, children }: { user: User, children: React.ReactNode }) => {
+        return (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              {children}
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Konfirmasi Hapus</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Apakah Anda yakin ingin menghapus user <strong>{user.name}</strong> ({user.email})? Tindakan ini tidak dapat dibatalkan.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Batal</AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={() => onDelete(user)}
+                  disabled={isDeleting}
+                  className="bg-red-500 hover:bg-red-600"
+                >
+                  {isDeleting ? "Menghapus..." : "Hapus"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        );
+      };
 
       return (
         <DropdownMenu>
@@ -172,13 +245,34 @@ export const columns = ({ onEdit, onDelete }: ColumnsProps): ColumnDef<User>[] =
               <Pencil className="mr-2 h-4 w-4" />
               Edit
             </DropdownMenuItem>
-            <DropdownMenuItem 
-              onClick={() => onDelete(user)} 
-              className="hover:bg-gray-50 cursor-pointer text-red-600"
-            >
-              <Trash className="mr-2 h-4 w-4" />
-              Delete
-            </DropdownMenuItem>
+            {canDelete ? (
+              <DeleteConfirmationDialog user={user}>
+                <DropdownMenuItem 
+                  onSelect={(e) => e.preventDefault()}
+                  className="hover:bg-gray-50 cursor-pointer text-red-600"
+                >
+                  <Trash className="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              </DeleteConfirmationDialog>
+            ) : (
+              <DropdownMenuItem 
+                disabled
+                className="cursor-not-allowed text-gray-400 opacity-50"
+                title={
+                  currentUserRole !== 'Super Admin' 
+                    ? "Hanya Super Admin yang dapat menghapus user"
+                    : currentUserId === user.id
+                    ? "Anda tidak dapat menghapus akun sendiri"
+                    : user.role === 'Super Admin'
+                    ? "Super Admin tidak dapat menghapus Super Admin lain"
+                    : "Tidak dapat menghapus user ini"
+                }
+              >
+                <Trash className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       );
