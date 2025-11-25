@@ -121,11 +121,27 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
     return imageSrc;
   };
 
-  // Disabled date berdasarkan hari operasional paket
+  // Disabled date berdasarkan hari operasional paket dan tanggal yang sudah lewat
   const allowedDaysSet = new Set(
     (data.operational_days || []).map((d) => dayNameToIndex[d])
   );
+  
+  // Function untuk disable tanggal yang sudah lewat
+  const isPastDate = (date: Date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const checkDate = new Date(date);
+    checkDate.setHours(0, 0, 0, 0);
+    return checkDate < today;
+  };
+  
   const disabledByOperationalDays = (date: Date) => {
+    // Disable tanggal yang sudah lewat
+    if (isPastDate(date)) {
+      return true;
+    }
+    
+    // Disable berdasarkan hari operasional jika ada konfigurasi
     if (allowedDaysSet.size === 0) return false; // jika tidak ada konfigurasi, izinkan semua hari
     return !allowedDaysSet.has(date.getDay());
   };

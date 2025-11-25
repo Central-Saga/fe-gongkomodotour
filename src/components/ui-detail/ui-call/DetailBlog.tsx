@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { FaUser, FaRegCalendarAlt } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { Blog } from "@/types/blog";
@@ -141,58 +142,61 @@ export default function DetailBlog() {
 
 function PostCard({ post, itemVariants }: { post: Blog, itemVariants: Variants }) {
   return (
-    <motion.div 
-      key={post.id}
-      variants={itemVariants}
-      whileHover="hover"
-      className="post-card border rounded-lg shadow-md p-4 flex flex-col md:flex-row gap-4 bg-white hover:shadow-xl transition-shadow duration-300"
-    >
-      {post.assets?.[0] && (
-        <motion.div 
-          className="relative w-full md:w-48 h-48 overflow-hidden rounded-md flex-shrink-0"
-          whileHover={{ scale: 1.05 }}
-          transition={{ duration: 0.3 }}
-        >
-          <Image
-            src={post.assets[0].file_url}
-            alt={post.title}
-            fill
-            className="object-cover rounded-md"
-            sizes="(max-width: 768px) 100vw, 33vw"
-            unoptimized
-            priority
+    <Link href={`/detail-blog?id=${post.id}`}>
+      <motion.div 
+        key={post.id}
+        variants={itemVariants}
+        whileHover="hover"
+        className="post-card border rounded-lg shadow-md p-4 flex flex-col md:flex-row gap-4 h-full bg-white hover:shadow-xl transition-shadow duration-300 cursor-pointer"
+      >
+        {post.assets?.[0]?.file_url && (
+          <motion.div 
+            className="relative w-full md:w-48 h-40 md:h-40 overflow-hidden rounded-md flex-shrink-0"
+            whileHover={{ scale: 1.05 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Image
+              src={post.assets[0].file_url}
+              alt={post.title}
+              fill
+              className="object-cover object-center rounded-md"
+              sizes="(max-width: 768px) 100vw, 33vw"
+              unoptimized
+              priority
+            />
+          </motion.div>
+        )}
+        <div className="flex flex-col flex-1 min-w-0">
+          <motion.h3 
+            className="text-lg font-semibold mb-2"
+            whileHover={{ scale: 1.01 }}
+          >
+            {post.title}
+          </motion.h3>
+          {/* Konten blog WYSIWYG dengan flex-grow agar memenuhi ruang yang tersedia */}
+          <div
+            className="text-sm text-gray-600 flex-grow overflow-hidden relative line-clamp-3"
+            dangerouslySetInnerHTML={{ __html: post.content }}
           />
-        </motion.div>
-      )}
-      <div className="flex-1 min-w-0">
-        <motion.h3 
-          className="text-lg font-semibold"
-          whileHover={{ scale: 1.01 }}
-        >
-          {post.title}
-        </motion.h3>
-        {/* Konten blog WYSIWYG dengan batas tinggi dan overflow */}
-        <div
-          className="text-sm text-gray-600 mt-2 max-h-16 overflow-hidden relative line-clamp-3"
-          dangerouslySetInnerHTML={{ __html: post.content }}
-        />
-        <div className="flex flex-wrap justify-between items-center mt-4 text-sm text-gray-500 gap-2">
-          <motion.div 
-            className="flex items-center gap-1"
-            whileHover={{ scale: 1.05 }}
-          >
-            <FaUser className="w-4 h-4 flex-shrink-0" />
-            <span className="truncate">Uploaded by: {post.author?.name}</span>
-          </motion.div>
-          <motion.div 
-            className="flex items-center gap-1"
-            whileHover={{ scale: 1.05 }}
-          >
-            <FaRegCalendarAlt className="w-4 h-4 flex-shrink-0" />
-            <span>{new Date(post.created_at).toLocaleDateString()}</span>
-          </motion.div>
+          {/* Author info dan date selalu di bagian bawah dengan mt-auto */}
+          <div className="flex flex-wrap justify-between items-center mt-auto text-sm text-gray-500 gap-2 pt-2 border-t border-gray-200">
+            <motion.div 
+              className="flex items-center gap-1"
+              whileHover={{ scale: 1.05 }}
+            >
+              <FaUser className="w-4 h-4 flex-shrink-0" />
+              <span className="truncate">Uploaded by: {post.author?.name}</span>
+            </motion.div>
+            <motion.div 
+              className="flex items-center gap-1"
+              whileHover={{ scale: 1.05 }}
+            >
+              <FaRegCalendarAlt className="w-4 h-4 flex-shrink-0" />
+              <span>{new Date(post.created_at).toLocaleDateString()}</span>
+            </motion.div>
+          </div>
         </div>
-      </div>
-    </motion.div>
+      </motion.div>
+    </Link>
   );
 }
