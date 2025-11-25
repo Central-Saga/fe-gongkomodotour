@@ -17,6 +17,7 @@ import { apiRequest } from "@/lib/api";
 import { Trip } from "@/types/trips";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { ArrowUpDown, Calendar, X, Filter } from "lucide-react";
 
 interface TripResponse {
   data: Trip[];
@@ -35,6 +36,16 @@ export default function OpenTrip() {
   const [duration, setDuration] = useState<string>("");
   const [availableDurations, setAvailableDurations] = useState<string[]>([]);
   const itemsPerPage = 6;
+
+  // Reset filters
+  const handleResetFilters = () => {
+    setSortBy("");
+    setDuration("");
+    setCurrentPage(1);
+  };
+
+  // Check if any filter is active
+  const hasActiveFilters = sortBy !== "" || duration !== "";
 
   useEffect(() => {
     const fetchOpenTrips = async () => {
@@ -152,33 +163,102 @@ export default function OpenTrip() {
             initial={{ opacity: 0, x: 20 }}
             whileInView={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
-            className="md:w-1/3 bg-white p-8 rounded-lg shadow-lg"
+            className="md:w-1/3 bg-gradient-to-br from-white to-gray-50 p-8 rounded-xl shadow-lg border border-gray-200"
           >
-            <h3 className="text-xl font-semibold mb-6 text-gray-800">
-              {t('findYourTripTitle')}
-            </h3>
-            <div className="space-y-6">
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-full border-gray-300 focus:ring-2 focus:ring-gold">
-                  <SelectValue placeholder={t('sortBy')} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="high-low">{t('priceHighToLow')}</SelectItem>
-                  <SelectItem value="low-high">{t('priceLowToHigh')}</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={duration} onValueChange={setDuration}>
-                <SelectTrigger className="w-full border-gray-300 focus:ring-2 focus:ring-gold">
-                  <SelectValue placeholder={t('duration')} />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableDurations.map((duration) => (
-                    <SelectItem key={duration} value={duration}>
-                      {duration}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <Filter className="w-5 h-5 text-gold" />
+                <h3 className="text-xl font-semibold text-gray-800">
+                  {t('findYourTripTitle')}
+                </h3>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              {/* Sort By Filter */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <ArrowUpDown className="w-4 h-4 text-gold" />
+                  {t('sortBy')}
+                </label>
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-full border-gray-300 focus:ring-2 focus:ring-gold hover:border-gold transition-colors">
+                    <SelectValue placeholder={t('sortBy')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="high-low">{t('priceHighToLow')}</SelectItem>
+                    <SelectItem value="low-high">{t('priceLowToHigh')}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Duration Filter */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-gold" />
+                  {t('duration')}
+                </label>
+                <Select value={duration} onValueChange={setDuration}>
+                  <SelectTrigger className="w-full border-gray-300 focus:ring-2 focus:ring-gold hover:border-gold transition-colors">
+                    <SelectValue placeholder={t('duration')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableDurations.length > 0 ? (
+                      availableDurations.map((durationLabel) => (
+                        <SelectItem key={durationLabel} value={durationLabel}>
+                          {durationLabel}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="no-duration" disabled>
+                        {t('noDurationAvailable') || 'Tidak ada durasi tersedia'}
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Active Filters Summary */}
+              {hasActiveFilters && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  className="pt-2 border-t border-gray-200"
+                >
+                  <p className="text-xs text-gray-500 mb-2">Filter Aktif:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {sortBy && (
+                      <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-200">
+                        <ArrowUpDown className="w-3 h-3 mr-1" />
+                        {sortBy === "high-low" ? t('priceHighToLow') : t('priceLowToHigh')}
+                      </Badge>
+                    )}
+                    {duration && (
+                      <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-200">
+                        <Calendar className="w-3 h-3 mr-1" />
+                        {duration}
+                      </Badge>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Reset Button */}
+              <div className="pt-4 border-t border-gray-200">
+                <Button
+                  variant={hasActiveFilters ? "default" : "outline"}
+                  onClick={handleResetFilters}
+                  disabled={!hasActiveFilters}
+                  className={`w-full ${
+                    hasActiveFilters 
+                      ? "bg-red-500 hover:bg-red-600 text-white" 
+                      : "border-gray-300 text-gray-400 cursor-not-allowed"
+                  } transition-colors`}
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  {t('resetFilters') || 'Reset Filter'}
+                </Button>
+              </div>
             </div>
           </motion.div>
         </div>

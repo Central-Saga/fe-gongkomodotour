@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import Image from "next/image";
 import { FaUser, FaRegCalendarAlt } from "react-icons/fa";
 import Link from "next/link";
@@ -9,12 +9,36 @@ import { Blog } from "@/types/blog";
 import { motion } from "framer-motion";
 import { getImageUrl } from "@/lib/imageUrl";
 import { cleanHtmlContent } from "@/lib/htmlUtils";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import {
+  Search,
+  Filter,
+  X,
+  ArrowUpDown,
+  Calendar,
+  User,
+  Tag,
+  SortAsc,
+  SortDesc,
+} from "lucide-react";
 
 const BlogContent = () => {
   const [allPosts, setAllPosts] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [sortBy, setSortBy] = useState<string>("newest");
+  const [selectedAuthor, setSelectedAuthor] = useState<string>("all");
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -47,16 +71,83 @@ const BlogContent = () => {
     }));
   };
 
-  // Filter posts based on search and category
-  const filteredPosts = allPosts.filter((post) => {
-    const matchesSearch =
-      searchQuery === "" ||
-      post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      post.content.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory =
-      selectedCategory === "all" || post.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  // Get unique authors
+  const availableAuthors = useMemo(() => {
+    const authors = new Set<string>();
+    allPosts.forEach((post) => {
+      if (post.author?.name) {
+        authors.add(post.author.name);
+      }
+    });
+    return Array.from(authors).sort();
+  }, [allPosts]);
+
+  // Reset filters
+  const handleResetFilters = () => {
+    setSearchQuery("");
+    setSelectedCategory("all");
+    setSortBy("newest");
+    setSelectedAuthor("all");
+  };
+
+  // Check if any filter is active
+  const hasActiveFilters =
+    searchQuery !== "" ||
+    selectedCategory !== "all" ||
+    sortBy !== "newest" ||
+    selectedAuthor !== "all";
+
+  // Filter and sort posts
+  const filteredPosts = useMemo(() => {
+    let filtered = [...allPosts];
+
+    // Filter by search
+    if (searchQuery) {
+      filtered = filtered.filter(
+        (post) =>
+          post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          post.content.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Filter by category
+    if (selectedCategory !== "all") {
+      filtered = filtered.filter((post) => post.category === selectedCategory);
+    }
+
+    // Filter by author
+    if (selectedAuthor !== "all") {
+      filtered = filtered.filter(
+        (post) => post.author?.name === selectedAuthor
+      );
+    }
+
+    // Sort posts
+    switch (sortBy) {
+      case "newest":
+        filtered.sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+        break;
+      case "oldest":
+        filtered.sort(
+          (a, b) =>
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+        break;
+      case "title-asc":
+        filtered.sort((a, b) => a.title.localeCompare(b.title));
+        break;
+      case "title-desc":
+        filtered.sort((a, b) => b.title.localeCompare(a.title));
+        break;
+      default:
+        break;
+    }
+
+    return filtered;
+  }, [allPosts, searchQuery, selectedCategory, selectedAuthor, sortBy]);
 
   // Get latest 3 posts
   const latestPosts = [...allPosts]
@@ -121,51 +212,180 @@ const BlogContent = () => {
         initial={{ opacity: 0, y: -30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1, ease: "easeOut" }}
-        className="blog-header bg-cover bg-center text-center py-16 w-screen -mx-4 md:-mx-16 lg:-mx-24 h-96 flex flex-col justify-center items-center"
+        className="blog-header bg-cover bg-center text-center py-14 w-screen -mx-4 md:-mx-16 lg:-mx-24 h-auto min-h-[400px] flex flex-col justify-center items-center"
         style={{ backgroundImage: "url('/img/boat/bg-boat-dlx-mv.jpg')" }}
       >
         <h1 className="text-4xl font-bold text-[#ffffff] mb-8">Blog</h1>
-        <div className="search-bar flex justify-center gap-4 bg-[#f5f5f5] p-6 rounded-md shadow-md items-center w-full max-w-7xl mx-auto">
-          <input
-            type="text"
-            placeholder="Search Article"
-            className="p-3 border border-[#403d3d] rounded-md w-full md:w-1/3 focus:outline-none"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <select
-            className="p-3 border border-[#403d3d] rounded-md w-full md:w-1/3 focus:outline-none"
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-          >
-            <option value="all">All Categories</option>
-            <option value="travel">Travel</option>
-            <option value="tips">Tips</option>
-          </select>
-          <button
-            className="p-3 bg-gold text-white rounded-md w-full md:w-auto md:px-6 focus:outline-none active:opacity-100 hover:bg-gold-dark-10 transition-colors duration-300"
-            onClick={() => {
-              setSearchQuery("");
-              setSelectedCategory("all");
-            }}
-          >
-            Reset
-          </button>
-        </div>
+        
+        {/* Enhanced Filter Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
+          className="w-full max-w-7xl mx-auto px-4"
+        >
+          <Card className="bg-white/95 backdrop-blur-sm p-6 shadow-xl border-0">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <Filter className="w-5 h-5 text-gold" />
+                <h3 className="text-xl font-semibold text-gray-800">
+                  Filter & Search
+                </h3>
+              </div>
+              {hasActiveFilters && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleResetFilters}
+                  className="text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                >
+                  <X className="w-4 h-4 mr-1" />
+                  Reset
+                </Button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Search Input */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <Search className="w-4 h-4 text-gold" />
+                  Search Article
+                </label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    type="text"
+                    placeholder="Search by title or content..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 border-gray-300 focus:ring-2 focus:ring-gold"
+                  />
+                </div>
+                {searchQuery && (
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-200 mt-1">
+                    {searchQuery}
+                  </Badge>
+                )}
+              </div>
+
+              {/* Category Filter */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <Tag className="w-4 h-4 text-gold" />
+                  Category
+                </label>
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger className="w-full border-gray-300 focus:ring-2 focus:ring-gold hover:border-gold transition-colors">
+                    <SelectValue placeholder="All Categories" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    <SelectItem value="travel">Travel</SelectItem>
+                    <SelectItem value="tips">Tips</SelectItem>
+                    <SelectItem value="trips">Trips</SelectItem>
+                  </SelectContent>
+                </Select>
+                {selectedCategory !== "all" && (
+                  <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-200 mt-1">
+                    {selectedCategory}
+                  </Badge>
+                )}
+              </div>
+
+              {/* Author Filter */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <User className="w-4 h-4 text-gold" />
+                  Author
+                </label>
+                <Select value={selectedAuthor} onValueChange={setSelectedAuthor}>
+                  <SelectTrigger className="w-full border-gray-300 focus:ring-2 focus:ring-gold hover:border-gold transition-colors">
+                    <SelectValue placeholder="All Authors" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Authors</SelectItem>
+                    {availableAuthors.map((author) => (
+                      <SelectItem key={author} value={author}>
+                        {author}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedAuthor !== "all" && (
+                  <Badge variant="secondary" className="bg-purple-100 text-purple-700 border-purple-200 mt-1">
+                    {selectedAuthor}
+                  </Badge>
+                )}
+              </div>
+
+              {/* Sort By */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <ArrowUpDown className="w-4 h-4 text-gold" />
+                  Sort By
+                </label>
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-full border-gray-300 focus:ring-2 focus:ring-gold hover:border-gold transition-colors">
+                    <SelectValue placeholder="Sort By" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="newest">
+                      <div className="flex items-center gap-2">
+                        <SortDesc className="w-4 h-4" />
+                        Newest First
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="oldest">
+                      <div className="flex items-center gap-2">
+                        <SortAsc className="w-4 h-4" />
+                        Oldest First
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="title-asc">
+                      <div className="flex items-center gap-2">
+                        <SortAsc className="w-4 h-4" />
+                        Title A-Z
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="title-desc">
+                      <div className="flex items-center gap-2">
+                        <SortDesc className="w-4 h-4" />
+                        Title Z-A
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                {sortBy !== "newest" && (
+                  <Badge variant="secondary" className="bg-orange-100 text-orange-700 border-orange-200 mt-1">
+                    {sortBy === "oldest" ? "Oldest First" : sortBy === "title-asc" ? "Title A-Z" : "Title Z-A"}
+                  </Badge>
+                )}
+              </div>
+            </div>
+
+          </Card>
+        </motion.div>
       </motion.div>
 
       {/* Search Results Section */}
-      {(searchQuery || selectedCategory !== "all") && (
+      {hasActiveFilters && (
         <motion.div
           className="search-results py-12"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8 }}
         >
-          <h2 className="text-2xl font-bold mb-6">
-            Search Results{" "}
-            {selectedCategory !== "all" ? `in ${selectedCategory}` : ""}
-          </h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold">
+              Search Results
+              {filteredPosts.length > 0 && (
+                <span className="text-lg font-normal text-gray-500 ml-2">
+                  ({filteredPosts.length} {filteredPosts.length === 1 ? "post" : "posts"})
+                </span>
+              )}
+            </h2>
+          </div>
           <motion.div
             className="grid grid-cols-1 md:grid-cols-3 gap-6"
             variants={containerVariants}
@@ -224,7 +444,7 @@ const BlogContent = () => {
       )}
 
       {/* Default View (when no search or filter) */}
-      {!searchQuery && selectedCategory === "all" && (
+      {!hasActiveFilters && (
         <>
           {/* Latest Post Section */}
           <motion.div
