@@ -242,9 +242,9 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
     }
   }, [hasHotel, form])
 
-  // Jika jadwal fleksibel (tentation = Yes), kosongkan hari operasional
+  // Jika jadwal fleksibel No, kosongkan hari operasional
   useEffect(() => {
-    if (tentation === "Yes") {
+    if (tentation === "No") {
       form.setValue("operational_days", [])
     }
   }, [tentation, form])
@@ -1175,7 +1175,7 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
                 )} */}
 
                 {/* Operational Days */}
-                {tentation !== "Yes" && (
+                {tentation === "Yes" && (
                   <div>
                     <h2 className="text-xl font-semibold text-gray-900 mb-6">Hari Operasional</h2>
                     

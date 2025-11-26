@@ -151,15 +151,36 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
     return checkDate < today;
   };
   
+  // Function untuk cek apakah tanggal adalah hari ini
+  const isToday = (date: Date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const checkDate = new Date(date);
+    checkDate.setHours(0, 0, 0, 0);
+    return checkDate.getTime() === today.getTime();
+  };
+  
   const disabledByOperationalDays = (date: Date) => {
+    // Disable hari ini
+    if (isToday(date)) {
+      return true;
+    }
+    
     // Disable tanggal yang sudah lewat
     if (isPastDate(date)) {
       return true;
     }
     
-    // Disable berdasarkan hari operasional jika ada konfigurasi
-    if (allowedDaysSet.size === 0) return false; // jika tidak ada konfigurasi, izinkan semua hari
-    return !allowedDaysSet.has(date.getDay());
+    // Jika ada konfigurasi hari operasional (custom jadwal), ikuti hari operasional tersebut
+    // Baik jadwal fleksibel (Yes) maupun tidak fleksibel (No), jika ada operational_days harus diikuti
+    if (allowedDaysSet.size > 0) {
+      // Return true jika hari tidak ada dalam daftar hari operasional (disable)
+      // Return false jika hari ada dalam daftar hari operasional (enable)
+      return !allowedDaysSet.has(date.getDay());
+    }
+    
+    // Jika tidak ada konfigurasi hari operasional, izinkan semua hari (kecuali hari ini dan yang sudah lewat)
+    return false;
   };
 
   const handleBookNow = (packageId: string) => {
