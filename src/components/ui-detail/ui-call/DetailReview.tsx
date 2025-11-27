@@ -38,6 +38,7 @@ export default function DetailReview() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showFull, setShowFull] = useState<number | null>(null);
+  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
   const { t } = useLanguage();
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -207,13 +208,33 @@ export default function DetailReview() {
                     className="relative w-12 h-12 rounded-full bg-white border-2 border-yellow-400 flex items-center justify-center overflow-hidden shadow-md"
                     style={{ minWidth: 48, minHeight: 48 }}
                   >
-                    {review.profile_photo_url ? (
-                      <Image
-                        src={review.profile_photo_url}
-                        alt={review.author_name}
-                        fill
-                        className="object-cover rounded-full"
-                      />
+                    {review.profile_photo_url && !imageErrors.has(review.profile_photo_url) ? (
+                      review.profile_photo_url.includes('googleusercontent.com') ? (
+                        // Gunakan tag img biasa untuk Google User Content agar referrer browser digunakan
+                        <img
+                          src={review.profile_photo_url}
+                          alt={review.author_name}
+                          className="w-full h-full object-cover rounded-full"
+                          referrerPolicy="no-referrer-when-downgrade"
+                          crossOrigin="anonymous"
+                          onError={() => {
+                            console.warn('Gambar profil gagal dimuat:', review.profile_photo_url);
+                            setImageErrors(prev => new Set(prev).add(review.profile_photo_url || ''));
+                          }}
+                        />
+                      ) : (
+                        // Gunakan Next.js Image untuk gambar lain
+                        <Image
+                          src={review.profile_photo_url}
+                          alt={review.author_name}
+                          fill
+                          className="object-cover rounded-full"
+                          onError={() => {
+                            console.warn('Gambar profil gagal dimuat:', review.profile_photo_url);
+                            setImageErrors(prev => new Set(prev).add(review.profile_photo_url || ''));
+                          }}
+                        />
+                      )
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-lg">
                         {review.author_name.charAt(0).toUpperCase()}
