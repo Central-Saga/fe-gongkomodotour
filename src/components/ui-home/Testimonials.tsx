@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { apiRequest } from "@/lib/api";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { GoogleProfileImage } from "@/components/ui/google-profile-image";
 
 interface Testimonial {
   id?: number;
@@ -47,6 +48,7 @@ export default function Testimoni() {
   const [isUserScrolling, setIsUserScrolling] = useState(false);
   const userScrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
+  const loggedPlaceholdersRef = useRef<Set<string>>(new Set()); // Track logged placeholders untuk menghindari log berulang
   const { t } = useLanguage();
 
   useEffect(() => {
@@ -60,6 +62,11 @@ export default function Testimoni() {
         console.log('Testimonial Response:', response);
 
         if (response.success && response.data && Array.isArray(response.data)) {
+          // Log summary saja untuk menghindari spam console
+          const withPhoto = response.data.filter(r => r.profile_photo_url && r.profile_photo_url.trim() !== '').length;
+          const googlePhotos = response.data.filter(r => r.profile_photo_url?.includes('googleusercontent.com')).length;
+          console.log(`📊 Testimonials loaded: ${response.data.length} total, ${withPhoto} with photos, ${googlePhotos} from Google`);
+          
           setReviews(response.data);
         } else {
           throw new Error('Tidak ada testimonial yang ditemukan');
@@ -322,38 +329,80 @@ export default function Testimoni() {
                     className="relative w-12 h-12 rounded-full bg-white border-2 border-yellow-400 flex items-center justify-center overflow-hidden shadow-md"
                     style={{ minWidth: 48, minHeight: 48 }}
                   >
-                    {review.profile_photo_url && !imageErrors.has(review.profile_photo_url) ? (
-                      review.profile_photo_url.includes('googleusercontent.com') ? (
-                        // Gunakan tag img biasa untuk Google User Content agar referrer browser digunakan
-                        <img
-                          src={review.profile_photo_url}
-                          alt={review.author_name}
-                          className="w-full h-full object-cover rounded-full"
-                          referrerPolicy="no-referrer-when-downgrade"
-                          crossOrigin="anonymous"
-                          onError={() => {
-                            console.warn('Gambar profil gagal dimuat:', review.profile_photo_url);
-                            setImageErrors(prev => new Set(prev).add(review.profile_photo_url || ''));
-                          }}
-                        />
-                      ) : (
-                        // Gunakan Next.js Image untuk gambar lain
-                        <Image
-                          src={review.profile_photo_url}
-                          alt={review.author_name}
-                          fill
-                          className="object-cover rounded-full"
-                          onError={() => {
-                            console.warn('Gambar profil gagal dimuat:', review.profile_photo_url);
-                            setImageErrors(prev => new Set(prev).add(review.profile_photo_url || ''));
-                          }}
-                        />
-                      )
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-lg">
-                        {review.author_name.charAt(0).toUpperCase()}
-                      </div>
-                    )}
+                    {(() => {
+                      // Validasi profile_photo_url
+                      const photoUrl = review.profile_photo_url;
+                      const hasValidUrl = photoUrl && 
+                                        photoUrl.trim() !== '' && 
+                                        photoUrl !== 'null' &&
+                                        photoUrl !== 'undefined';
+                      
+                      if (!hasValidUrl || !photoUrl) {
+                        // Jika tidak ada URL atau URL tidak valid, tampilkan placeholder
+                        // Log hanya sekali per review untuk menghindari spam console
+                        if (!loggedPlaceholdersRef.current.has(review.author_name)) {
+                          console.log(`ℹ️ No valid profile photo URL for ${review.author_name}, showing placeholder`);
+                          loggedPlaceholdersRef.current.add(review.author_name);
+                        }
+                        return (
+                          <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-lg">
+                            {review.author_name.charAt(0).toUpperCase()}
+                          </div>
+                        );
+                      }
+
+                      // Jika URL ada tapi sudah di error set, tampilkan placeholder
+                      if (imageErrors.has(photoUrl)) {
+                        return (
+                          <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-lg">
+                            {review.author_name.charAt(0).toUpperCase()}
+                          </div>
+                        );
+                      }
+
+                      // Coba load gambar - photoUrl sudah di-validasi di atas
+                      if (photoUrl.includes('googleusercontent.com')) {
+                        // Gunakan GoogleProfileImage component dengan lazy load dan retry logic
+                        return (
+                          <GoogleProfileImage
+                            src={photoUrl}
+                            alt={review.author_name}
+                            className="w-full h-full object-cover rounded-full"
+                            fallbackInitial={review.author_name.charAt(0).toUpperCase()}
+                          />
+                        );
+                      } else {
+                        // Gunakan Next.js Image dengan unoptimized untuk gambar lain dari remote
+                        return (
+                          <Image
+                            src={photoUrl}
+                            alt={review.author_name}
+                            fill
+                            className="object-cover rounded-full"
+                            quality={85}
+                            sizes="48px"
+                            unoptimized={photoUrl.includes('api.gongkomodotour.com') || photoUrl.includes('http')}
+                            onError={() => {
+                              // Hanya log jika belum di error set untuk menghindari spam
+                              if (!imageErrors.has(photoUrl)) {
+                                console.warn(`⚠️ Profile image failed to load for ${review.author_name}`);
+                                setImageErrors(prev => new Set(prev).add(photoUrl));
+                              }
+                            }}
+                            onLoad={() => {
+                              // Hapus dari error set jika berhasil load
+                              if (imageErrors.has(photoUrl)) {
+                                setImageErrors(prev => {
+                                  const newSet = new Set(prev);
+                                  newSet.delete(photoUrl);
+                                  return newSet;
+                                });
+                              }
+                            }}
+                          />
+                        );
+                      }
+                    })()}
                   </motion.div>
                   <div className="flex flex-col justify-center">
                     <p className="text-xs font-medium text-gray-800">

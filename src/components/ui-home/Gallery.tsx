@@ -127,8 +127,9 @@ export default function Gallery({ data }: GalleryProps) {
                 width={600}
                 height={500}
                 className="w-full h-auto object-cover"
-                quality={100}
+                quality={85}
                 priority={true}
+                sizes="(max-width: 768px) 100vw, 50vw"
               />
             </video>
           </motion.div>
@@ -149,13 +150,15 @@ export default function Gallery({ data }: GalleryProps) {
                 onClick={() => handleItemClick(item)}
               >
                 <div className="relative h-full w-full">
-                  <Image
-                    src={`${API_URL}${item.assets[0].file_url}`}
-                    alt={item.title}
-                    fill
-                    className="object-cover transition-transform duration-300 group-hover:scale-105"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  />
+                    <Image
+                      src={`${API_URL}${item.assets[0].file_url}`}
+                      alt={item.title}
+                      fill
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      quality={85}
+                      loading="lazy"
+                    />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   <div className="absolute bottom-0 left-0 right-0 p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
                     <h3 className="text-white text-sm font-semibold text-center line-clamp-2">
@@ -212,6 +215,8 @@ export default function Gallery({ data }: GalleryProps) {
                       alt={`${selectedItem.title} - Image ${index + 1}`}
                       fill
                       className="object-cover"
+                      quality={85}
+                      sizes="(max-width: 768px) 50vw, 25vw"
                     />
                   </div>
                 ))}

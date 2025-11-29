@@ -5,8 +5,10 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination, Navigation, EffectFade } from "swiper/modules";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 
 // Impor gaya Swiper
 import "swiper/css";
@@ -261,18 +263,15 @@ export default function LandingHero() {
             return (
             <SwiperSlide key={carouselItem.id}>
               <div className="h-full w-full relative overflow-hidden">
-                <div
-                  className="h-full w-full bg-cover bg-no-repeat"
-                  style={{ 
-                    backgroundImage: `url(${imageUrl})`,
-                    backgroundPosition: 'center center',
-                    backgroundSize: 'cover',
-                    backgroundAttachment: 'scroll'
-                  }}
-                  onError={(e) => {
-                    // Fallback ke default image jika gagal load
-                    e.currentTarget.style.backgroundImage = 'url(/img/default-trip.jpg)';
-                  }}
+                <OptimizedImage
+                  src={imageUrl}
+                  alt={carouselItem.title || 'Carousel Image'}
+                  fill
+                  className="object-cover"
+                  quality={85}
+                  priority={carouselItem.id === carouselItems[0]?.id}
+                  sizes="100vw"
+                  fallbackSrc="/img/default-trip.jpg"
                 />
                 <div className="absolute inset-0 flex items-center justify-start pl-18 sm:pl-24 md:pl-28 lg:pl-24 xl:pl-60 pr-4 sm:pr-8 md:pr-12 lg:pr-16 xl:pr-20">
                   <motion.div 

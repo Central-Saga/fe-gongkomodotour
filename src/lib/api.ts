@@ -19,7 +19,7 @@ const api = axios.create({
   proxy: false
 });
 
-// 2. Interceptor: tambahkan Bearer token jika ada
+// 2. Interceptor: tambahkan Bearer token jika ada dan handle FormData
 api.interceptors.request.use((config: InternalAxiosRequestConfig<unknown>) => {
   // Hanya jalankan di client-side
   if (typeof window !== "undefined") {
@@ -32,6 +32,14 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig<unknown>) => {
       console.warn('localStorage not available:', error);
     }
   }
+  
+  // Jika data adalah FormData, hapus Content-Type dari default headers
+  // Biarkan browser/Axios set otomatis dengan boundary yang benar
+  if (config.data instanceof FormData && config.headers) {
+    delete config.headers['Content-Type'];
+    delete config.headers['content-type'];
+  }
+  
   return config;
 });
 
@@ -47,11 +55,23 @@ export async function apiRequest<T>(
     console.log('Request config:', { method, url, data, config });
     console.log('API Base URL:', API_BASE_URL);
     
+    // Jika data adalah FormData, hapus Content-Type dari headers agar Axios set otomatis dengan boundary
+    const requestConfig: AxiosRequestConfig = { ...config };
+    if (data instanceof FormData) {
+      if (requestConfig.headers) {
+        // Hapus Content-Type jika ada, biarkan Axios set otomatis
+        const headers = { ...requestConfig.headers };
+        delete headers['Content-Type'];
+        delete headers['content-type'];
+        requestConfig.headers = headers;
+      }
+    }
+    
     const response = await api({
       method,
       url,
       data,
-      ...config,
+      ...requestConfig,
     });
     console.log(`Successful response from ${url}`, response.status);
     console.log('Response data:', response.data);

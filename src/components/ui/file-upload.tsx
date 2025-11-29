@@ -234,12 +234,13 @@ export function FileUpload({
                         <X className="h-4 w-4" />
                       </button>
                       <div className="space-y-2">
-                        <div className="h-32 w-full relative rounded-lg overflow-hidden">
+                        <div className="h-32 w-full relative rounded-lg overflow-hidden bg-gray-100">
                           <Image
                             src={file.preview}
                             alt={file.title}
                             fill
                             className="object-cover"
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                             unoptimized={true}
                             onLoad={() => console.log('Image loaded successfully:', file.file.name)}
                             onError={(e) => {

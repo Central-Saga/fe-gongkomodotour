@@ -31,6 +31,7 @@ import { TipTapEditor } from "@/components/ui/tiptap-editor"
 import { Boat, BoatAsset } from "@/types/boats"
 import { use } from "react"
 import { deleteAssetByFileUrl } from "@/lib/assetHelpers"
+import { optimizeImages } from "@/lib/imageOptimization"
 
 const boatSchema = z.object({
   boat_name: z.string().min(1, "Nama kapal harus diisi"),
@@ -70,6 +71,12 @@ export default function EditBoatPage({ params }: EditBoatPageProps) {
   const [cabinFileDescriptions, setCabinFileDescriptions] = useState<Record<number, string[]>>({})
   const [existingBoatAssets, setExistingBoatAssets] = useState<BoatAsset[]>([])
   const [existingCabinAssets, setExistingCabinAssets] = useState<Record<number, BoatAsset[]>>({})
+  const [uploadProgress, setUploadProgress] = useState<{
+    current: number
+    total: number
+    message: string
+    stage: 'optimizing' | 'uploading'
+  } | null>(null)
 
   const form = useForm<z.infer<typeof boatSchema>>({
     resolver: zodResolver(boatSchema),
@@ -241,27 +248,79 @@ export default function EditBoatPage({ params }: EditBoatPageProps) {
 
       // Upload new boat files if any
       if (files.length > 0) {
+        // Optimasi gambar sebelum upload untuk mempercepat upload
+        setUploadProgress({
+          current: 0,
+          total: files.length,
+          message: 'Mengoptimasi gambar...',
+          stage: 'optimizing'
+        })
+
+        const optimizedFiles = await optimizeImages(
+          files,
+          {
+            maxWidth: 1920,
+            maxHeight: 1920,
+            quality: 0.85,
+            maxSizeMB: 2
+          },
+          (current, total) => {
+            setUploadProgress({
+              current,
+              total,
+              message: `Mengoptimasi gambar ${current}/${total}...`,
+              stage: 'optimizing'
+            })
+          }
+        )
+
         const formData = new FormData()
         formData.append('model_type', 'boat')
         formData.append('model_id', boatId.toString())
         formData.append('is_external', '0')
         
-        files.forEach((file: File, index: number) => {
-          formData.append('files[]', file)
-          formData.append('file_titles[]', fileTitles[index])
+        optimizedFiles.forEach((file: File, index: number) => {
+          // Log file info untuk debugging
+          console.log(`Uploading optimized file ${index + 1}:`, {
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            originalSize: files[index].size,
+            compressionRatio: ((1 - file.size / files[index].size) * 100).toFixed(1) + '%'
+          })
+          
+          // Pastikan file dikirim dengan nama yang benar
+          formData.append('files[]', file, file.name)
+          formData.append('file_titles[]', fileTitles[index] || file.name)
           formData.append('file_descriptions[]', fileDescriptions[index] || '')
         })
 
-        await apiRequest(
-          'POST',
-          '/api/assets/multiple',
-          formData,
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-          }
-        )
+        // Timeout lebih lama untuk upload file (120 detik = 2 menit)
+        // Content-Type akan dihandle otomatis oleh interceptor di api.ts
+        setUploadProgress({
+          current: 0,
+          total: optimizedFiles.length,
+          message: 'Mengupload gambar...',
+          stage: 'uploading'
+        })
+
+        try {
+          await apiRequest(
+            'POST',
+            '/api/assets/multiple',
+            formData,
+            {
+              timeout: 120000, // 2 menit untuk upload file
+            }
+          )
+          console.log('Boat files uploaded successfully')
+          setUploadProgress(null)
+        } catch (uploadError: unknown) {
+          console.error('Error uploading boat files:', uploadError)
+          setUploadProgress(null)
+          // Re-throw error agar bisa dihandle di catch block utama
+          throw uploadError
+        }
       }
 
       // Upload new cabin files if any
@@ -275,42 +334,125 @@ export default function EditBoatPage({ params }: EditBoatPageProps) {
           
           const cabinId = cabin.id
           
+          // Optimasi gambar sebelum upload
+          setUploadProgress({
+            current: 0,
+            total: cabinFilesList.length,
+            message: `Mengoptimasi gambar kabin ${cabinId}...`,
+            stage: 'optimizing'
+          })
+
+          const optimizedCabinFiles = await optimizeImages(
+            cabinFilesList,
+            {
+              maxWidth: 1920,
+              maxHeight: 1920,
+              quality: 0.85,
+              maxSizeMB: 2
+            },
+            (current, total) => {
+              setUploadProgress({
+                current,
+                total,
+                message: `Mengoptimasi gambar kabin ${cabinId} ${current}/${total}...`,
+                stage: 'optimizing'
+              })
+            }
+          )
+          
           const formData = new FormData()
           formData.append('model_type', 'cabin')
           formData.append('model_id', cabinId.toString())
           formData.append('is_external', '0')
           
-          cabinFilesList.forEach((file: File, index: number) => {
-            formData.append('files[]', file)
-            formData.append('file_titles[]', cabinFileTitles[parseInt(cabinIndex)][index])
+          optimizedCabinFiles.forEach((file: File, index: number) => {
+            // Log file info untuk debugging
+            console.log(`Uploading optimized cabin file ${index + 1} for cabin ${cabinId}:`, {
+              name: file.name,
+              type: file.type,
+              size: file.size,
+              originalSize: cabinFilesList[index].size,
+              compressionRatio: ((1 - file.size / cabinFilesList[index].size) * 100).toFixed(1) + '%'
+            })
+            
+            // Pastikan file dikirim dengan nama yang benar
+            formData.append('files[]', file, file.name)
+            formData.append('file_titles[]', cabinFileTitles[parseInt(cabinIndex)][index] || file.name)
             formData.append('file_descriptions[]', cabinFileDescriptions[parseInt(cabinIndex)][index] || '')
           })
 
+          setUploadProgress({
+            current: 0,
+            total: optimizedCabinFiles.length,
+            message: `Mengupload gambar kabin ${cabinId}...`,
+            stage: 'uploading'
+          })
+
           try {
+            // Timeout lebih lama untuk upload file (120 detik = 2 menit)
+            // Content-Type akan dihandle otomatis oleh interceptor di api.ts
             await apiRequest(
               'POST',
               '/api/assets/multiple',
               formData,
               {
-                headers: {
-                  'Content-Type': 'multipart/form-data',
-                },
+                timeout: 120000, // 2 menit untuk upload file
               }
             )
+            console.log(`Cabin files uploaded successfully for cabin ${cabinId}`)
+            setUploadProgress(null)
           } catch (error) {
             console.error(`Error saat mengupload file untuk cabin ${cabinId}:`, error)
+            setUploadProgress(null)
+            toast.error(`Gagal mengupload file untuk cabin ${cabinId}`)
           }
         }
       }
 
+      setUploadProgress(null) // Tutup progress indicator saat sukses
       toast.success("Kapal berhasil diperbarui")
       router.push("/dashboard/boats")
       router.refresh()
     } catch (error: unknown) {
       console.error('Error detail:', error)
-      toast.error("Gagal memperbarui kapal")
+      setUploadProgress(null) // Tutup progress indicator saat error
+      
+      // Handle error response dari backend
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } }
+        const errorData = axiosError.response?.data
+        
+        if (errorData?.errors) {
+          // Tampilkan error validasi dari backend
+          const errorMessages: string[] = []
+          Object.entries(errorData.errors).forEach(([field, messages]) => {
+            messages.forEach(msg => {
+              if (field.includes('files')) {
+                errorMessages.push(`File: ${msg}`)
+              } else {
+                errorMessages.push(`${field}: ${msg}`)
+              }
+            })
+          })
+          toast.error(errorMessages.join(', ') || "Gagal memperbarui kapal")
+        } else if (errorData?.message) {
+          toast.error(errorData.message)
+        } else {
+          toast.error("Gagal memperbarui kapal")
+        }
+      } else if (error && typeof error === 'object' && 'message' in error) {
+        const errorMessage = (error as { message: string }).message
+        if (errorMessage.includes('timeout')) {
+          toast.error("Upload file timeout. Coba lagi dengan file yang lebih kecil atau periksa koneksi internet Anda.")
+        } else {
+          toast.error(errorMessage || "Gagal memperbarui kapal")
+        }
+      } else {
+        toast.error("Gagal memperbarui kapal")
+      }
     } finally {
       setIsSubmitting(false)
+      setUploadProgress(null) // Pastikan progress indicator ditutup
     }
   }
 
@@ -324,6 +466,32 @@ export default function EditBoatPage({ params }: EditBoatPageProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Progress Indicator */}
+      {uploadProgress && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <div className="flex items-center gap-4 mb-4">
+              <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+              <div className="flex-1">
+                <p className="font-semibold text-gray-900">
+                  {uploadProgress.stage === 'optimizing' ? 'Mengoptimasi Gambar' : 'Mengupload Gambar'}
+                </p>
+                <p className="text-sm text-gray-600">{uploadProgress.message}</p>
+              </div>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2.5">
+              <div
+                className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }}
+              />
+            </div>
+            <p className="text-xs text-gray-500 mt-2 text-center">
+              {uploadProgress.current} dari {uploadProgress.total} file
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="container max-w-7xl mx-auto px-4 py-10">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Edit Kapal</h1>

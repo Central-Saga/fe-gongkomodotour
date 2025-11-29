@@ -197,7 +197,9 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
                   alt={data.title || "Default Image"}
                   fill
                   className="rounded-sm object-cover"
-                  unoptimized={true}
+                  quality={85}
+                  sizes="(max-width: 768px) 100vw, 70vw"
+                  priority
                   onError={() => handleImageError(mainImage)}
                 />
               </div>
@@ -210,7 +212,9 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
                   width={800}
                   height={600}
                   className="rounded-lg"
-                  unoptimized={true}
+                  quality={85}
+                  sizes="(max-width: 768px) 100vw, 70vw"
+                  priority
                 />
               )}
             </DialogContent>
@@ -233,7 +237,9 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
                       alt={`${data.title} ${index + 1}`}
                       fill
                       className="rounded-sm object-cover"
-                      unoptimized={true}
+                      quality={85}
+                  sizes="(max-width: 768px) 100vw, 70vw"
+                  priority
                       onError={() => handleImageError(image)}
                     />
                   </div>
@@ -246,7 +252,9 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
                       width={800}
                       height={600}
                       className="rounded-lg"
-                      unoptimized={true}
+                      quality={85}
+                  sizes="(max-width: 768px) 100vw, 70vw"
+                  priority
                     />
                   )}
                 </DialogContent>
@@ -261,7 +269,9 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
                     alt="More Info Background"
                     fill
                     className="rounded-sm object-cover"
-                    unoptimized={true}
+                    quality={85}
+                  sizes="(max-width: 768px) 100vw, 70vw"
+                  priority
                     onError={() => data.images[4] && handleImageError(data.images[4])}
                   />
                   <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
@@ -281,7 +291,9 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
                         alt={`${data.title} ${index + 4}`}
                         fill
                         className="rounded-sm object-cover"
-                        unoptimized={true}
+                        quality={85}
+                  sizes="(max-width: 768px) 100vw, 70vw"
+                  priority
                         onError={() => handleImageError(image)}
                       />
                     </div>
@@ -316,6 +328,7 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
               <div className="p-2">
               <Image
                 src="/img/assembly-point.gif"
+                unoptimized
                 alt="Meeting Point Icon"
                   width={40}
                   height={40}
@@ -333,6 +346,7 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
               <div className="p-2">
               <Image
                 src="/img/destination-map.gif"
+                unoptimized
                 alt="Destinations Icon"
                   width={40}
                   height={40}
@@ -350,6 +364,7 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
               <div className="p-2">
               <Image
                 src="/img/24-hour-service.gif"
+                unoptimized
                   alt="Duration Icon"
                   width={40}
                   height={40}
@@ -408,6 +423,7 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
                 <div className="p-2">
                   <Image
                     src="/img/calendar-time.gif"
+                    unoptimized
                     alt="Operational Days Icon"
                     width={40}
                     height={40}
@@ -441,6 +457,7 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
                 <div className="p-2">
                   <Image
                     src="/img/cruise-ship.gif"
+                    unoptimized
                     alt="Boat Icon"
                     width={40}
                     height={40}
@@ -699,7 +716,9 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
                           alt={boat.title}
                           fill
                           className="rounded-lg transition-transform duration-300 group-hover:scale-110 object-cover"
-                          unoptimized={true}
+                          quality={85}
+                  sizes="(max-width: 768px) 100vw, 70vw"
+                  priority
                           onError={() => handleImageError(boat.image)}
                         />
                       </div>

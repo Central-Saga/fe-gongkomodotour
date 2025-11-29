@@ -195,7 +195,9 @@ export default function DetailBoat({ boat }: DetailBoatProps) {
                 alt={boat.boat_name}
                 fill
                 className="object-cover"
-                quality={100}
+                quality={85}
+                sizes="(max-width: 768px) 100vw, 70vw"
+                priority
                 onClick={() => setSelectedImage(mainImage)}
               />
             </motion.div>
@@ -216,7 +218,9 @@ export default function DetailBoat({ boat }: DetailBoatProps) {
                     width={800}
                     height={600}
                     className="rounded-lg object-cover"
-                    quality={100}
+                    quality={85}
+                sizes="(max-width: 768px) 100vw, 70vw"
+                priority
                   />
                 </motion.div>
               )}
@@ -253,7 +257,9 @@ export default function DetailBoat({ boat }: DetailBoatProps) {
                     alt={`${boat.boat_name} ${index + 1}`}
                     fill
                     className="object-cover"
-                    quality={100}
+                    quality={85}
+                sizes="(max-width: 768px) 100vw, 70vw"
+                priority
                   />
                 </motion.div>
               </DialogTrigger>
@@ -308,7 +314,9 @@ export default function DetailBoat({ boat }: DetailBoatProps) {
                       alt={`Boat Image ${index + 1}`}
                       fill
                       className="object-cover"
-                      quality={100}
+                      quality={85}
+                      sizes="(max-width: 768px) 50vw, 33vw"
+                      loading="lazy"
                     />
                   </motion.div>
                 ))}
@@ -464,7 +472,9 @@ export default function DetailBoat({ boat }: DetailBoatProps) {
                                       alt={cabin.assets[0].title || `Cabin Image Main`}
                                       fill
                                       className="object-cover hover:opacity-90 transition-opacity cursor-pointer"
-                                      quality={100}
+                                      quality={85}
+                sizes="(max-width: 768px) 100vw, 70vw"
+                priority
                                       onClick={() => setSelectedImage(cabin.assets[0].file_url.startsWith('http') 
                                         ? cabin.assets[0].file_url 
                                         : `${API_URL}${cabin.assets[0].file_url}`)}
@@ -498,7 +508,9 @@ export default function DetailBoat({ boat }: DetailBoatProps) {
                                           alt={asset.title || `Cabin Image ${index + 1}`}
                                           fill
                                           className="object-cover hover:opacity-90 transition-opacity"
-                                          quality={100}
+                                          quality={85}
+                sizes="(max-width: 768px) 100vw, 70vw"
+                priority
                                         />
                                       </motion.div>
                                     ))}
@@ -601,7 +613,9 @@ export default function DetailBoat({ boat }: DetailBoatProps) {
                                       alt={cabin.assets[0].title || `Cabin Image Main`}
                                       fill
                                       className="object-cover hover:opacity-90 transition-opacity cursor-pointer"
-                                      quality={100}
+                                      quality={85}
+                sizes="(max-width: 768px) 100vw, 70vw"
+                priority
                                       onClick={() => setSelectedImage(cabin.assets[0].file_url.startsWith('http') 
                                         ? cabin.assets[0].file_url 
                                         : `${API_URL}${cabin.assets[0].file_url}`)}
@@ -635,7 +649,9 @@ export default function DetailBoat({ boat }: DetailBoatProps) {
                                           alt={asset.title || `Cabin Image ${index + 1}`}
                                           fill
                                           className="object-cover hover:opacity-90 transition-opacity"
-                                          quality={100}
+                                          quality={85}
+                sizes="(max-width: 768px) 100vw, 70vw"
+                priority
                                         />
                                       </motion.div>
                                     ))}
@@ -707,7 +723,9 @@ export default function DetailBoat({ boat }: DetailBoatProps) {
                 alt="Cabin Preview"
                 fill
                 className="object-contain"
-                quality={100}
+                quality={85}
+                sizes="(max-width: 768px) 100vw, 70vw"
+                priority
               />
             )}
           </div>

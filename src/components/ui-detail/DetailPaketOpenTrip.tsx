@@ -217,9 +217,10 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
                   src={getSafeImageSrc(mainImage)}
                   alt={data.title || "Default Image"}
                   fill
-                  quality={100}
+                  quality={85}
                   className="rounded-sm object-cover transition-transform duration-300 group-hover:scale-105"
-                  unoptimized={true}
+                  sizes="(max-width: 768px) 100vw, 70vw"
+                  priority
                   onError={() => handleImageError(mainImage)}
                   onLoad={() => console.log("Main image loaded successfully:", mainImage)}
                 />
@@ -242,9 +243,9 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
                       alt="Selected Image"
                       width={1200}
                       height={800}
-                      quality={100}
+                      quality={85}
                       className="rounded-lg"
-                      unoptimized={true}
+                      sizes="(max-width: 768px) 100vw, 80vw"
                       onError={() => selectedImage && handleImageError(selectedImage)}
                       onLoad={() => console.log("Selected image loaded successfully:", selectedImage)}
                     />
@@ -289,9 +290,10 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
                       src={getSafeImageSrc(image)}
                       alt={`${data.title} ${index + 1}`}
                       fill
-                      quality={100}
+                      quality={85}
                       className="rounded-sm object-cover transition-transform duration-300 group-hover:scale-105"
-                      unoptimized={true}
+                      sizes="(max-width: 768px) 50vw, 25vw"
+                      loading="lazy"
                       onError={() => handleImageError(image)}
                       onLoad={() => console.log(`Small image ${index + 1} loaded successfully:`, image)}
                     />
@@ -314,7 +316,8 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
                           alt="Selected Image"
                           width={1200}
                           height={800}
-                          quality={100}
+                          quality={85}
+                          sizes="(max-width: 768px) 100vw, 50vw"
                           className="rounded-lg"
                         />
                         <button
@@ -432,6 +435,7 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
                   width={40}
                   height={40}
                   className="min-w-[40px]"
+                  unoptimized
                 />
               </div>
               <div className="flex flex-col">
@@ -453,6 +457,7 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
                   width={40}
                   height={40}
                   className="min-w-[40px]"
+                  unoptimized
                 />
               </div>
               <div className="flex flex-col">
@@ -472,6 +477,7 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
               <div className="p-2">
                 <Image
                   src="/img/24-hour-service.gif"
+                  unoptimized
                   alt="Duration Icon"
                   width={40}
                   height={40}
@@ -566,6 +572,7 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
                 <div className="p-2">
                   <Image
                     src="/img/calendar-time.gif"
+                    unoptimized
                     alt="Operational Days Icon"
                     width={40}
                     height={40}
@@ -601,6 +608,7 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
                 <div className="p-2">
                   <Image
                     src="/img/cruise-ship.gif"
+                    unoptimized
                     alt="Boat Icon"
                     width={40}
                     height={40}
@@ -924,7 +932,8 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
                           alt={boat.title}
                           fill
                           className="rounded-lg transition-transform duration-300 group-hover:scale-110 object-cover"
-                          unoptimized={true}
+                          quality={85}
+                          sizes="(max-width: 768px) 100vw, 80vw"
                           onError={() => handleImageError(boat.image)}
                           onLoad={() => console.log("Boat image loaded successfully:", boat.image)}
                         />

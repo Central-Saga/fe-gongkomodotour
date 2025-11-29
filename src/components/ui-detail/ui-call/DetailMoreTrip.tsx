@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 
 // Definisikan tipe untuk data tur
 interface TripData {
@@ -53,14 +54,15 @@ export default function DetailMoreTrip({ trips, tripType }: DetailMoreTripProps)
             >
               <Card className="group relative h-full overflow-hidden">
                 <div className="absolute inset-0">
-                  <Image
+                  <OptimizedImage
                     src={trip.image}
                     alt={trip.name}
                     fill
                     className="object-cover transition-transform duration-300 group-hover:scale-110"
                     priority={index < 3}
-                    quality={100}
+                    quality={85}
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    fallbackSrc="/img/default-trip.jpg"
                   />
                   <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/70" />
                 </div>

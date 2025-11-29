@@ -87,10 +87,11 @@ export default function WhyChooseUs() {
               <Image
                 src="/img/whychooseus.jpg"
                 alt="Professional team of Gong Komodo Tour ready to serve your journey"
-                layout="fill"
-                objectFit="cover"
-                quality={100}
+                fill
+                className="object-cover"
+                quality={85}
                 priority
+                sizes="(max-width: 768px) 100vw, 50vw"
               />
               <motion.div 
                 initial={{ opacity: 0, scale: 0.8 }}
@@ -140,7 +141,9 @@ export default function WhyChooseUs() {
                     alt={`${reason.title} animation`}
                     fill
                     className="object-contain"
-                    unoptimized
+                    quality={85}
+                    sizes="(max-width: 768px) 64px, 96px"
+                    unoptimized={reason.icon.endsWith('.gif')}
                   />
                 </motion.div>
                 <motion.h3

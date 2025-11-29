@@ -62,7 +62,14 @@ export default function PackagesPage() {
       <footer className="bg-blue-900 text-white py-10">
         <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-6">
           <div>
-            <Image src="/img/logo.png" alt="Gong Komodo Tour Logo" className="h-12 w-auto mb-4" />
+            <Image 
+              src="/img/logo.png" 
+              alt="Gong Komodo Tour Logo" 
+              width={120}
+              height={48}
+              className="h-12 w-auto mb-4"
+              style={{ width: "auto", height: "3rem" }}
+            />
             <div className="flex space-x-4">
               <a href="#" className="text-white hover:text-gray-300">X</a>
               <a href="#" className="text-white hover:text-gray-300">Instagram</a>
