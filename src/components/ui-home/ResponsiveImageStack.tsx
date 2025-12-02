@@ -6,11 +6,11 @@ import ImageStackTablet from "./ImageStackTablet";
 import ImageStackDesktop from "./ImageStackDesktop";
 
 interface ResponsiveImageStackProps {
-  imageSrc: string;
+  imageSrcs: [string, string, string]; // [left, middle, right]
   alt: string;
 }
 
-export default function ResponsiveImageStack({ imageSrc, alt }: ResponsiveImageStackProps) {
+export default function ResponsiveImageStack({ imageSrcs, alt }: ResponsiveImageStackProps) {
   const [screenSize, setScreenSize] = useState<'mobile' | 'tablet' | 'desktop'>('mobile');
 
   useEffect(() => {
@@ -37,10 +37,10 @@ export default function ResponsiveImageStack({ imageSrc, alt }: ResponsiveImageS
 
   // Render based on screen size
   if (screenSize === 'mobile') {
-    return <ImageStackMobile imageSrc={imageSrc} alt={alt} />;
+    return <ImageStackMobile imageSrcs={imageSrcs} alt={alt} />;
   } else if (screenSize === 'tablet') {
-    return <ImageStackTablet imageSrc={imageSrc} alt={alt} />;
+    return <ImageStackTablet imageSrcs={imageSrcs} alt={alt} />;
   } else {
-    return <ImageStackDesktop imageSrc={imageSrc} alt={alt} />;
+    return <ImageStackDesktop imageSrcs={imageSrcs} alt={alt} />;
   }
 }

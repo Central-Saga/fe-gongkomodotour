@@ -4,11 +4,13 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 
 interface ImageStackTabletProps {
-  imageSrc: string;
+  imageSrcs: [string, string, string]; // [left, middle, right]
   alt: string;
 }
 
-export default function ImageStackTablet({ imageSrc, alt }: ImageStackTabletProps) {
+export default function ImageStackTablet({ imageSrcs, alt }: ImageStackTabletProps) {
+  const [leftSrc, middleSrc, rightSrc] = imageSrcs;
+  
   return (
     <div className="relative h-[400px] w-full max-w-[600px] mx-auto flex justify-center items-center">
       {/* Gambar Kiri - Tablet Layout */}
@@ -26,7 +28,7 @@ export default function ImageStackTablet({ imageSrc, alt }: ImageStackTabletProp
         style={{ transformOrigin: 'left center' }}
       >
         <Image
-          src={imageSrc}
+          src={leftSrc}
           alt={`${alt} Left`}
           width={320}
           height={400}
@@ -49,7 +51,7 @@ export default function ImageStackTablet({ imageSrc, alt }: ImageStackTabletProp
         className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 scale-120"
       >
         <Image
-          src={imageSrc}
+          src={middleSrc}
           alt={`${alt} Middle`}
           width={420}
           height={500}
@@ -74,7 +76,7 @@ export default function ImageStackTablet({ imageSrc, alt }: ImageStackTabletProp
         style={{ transformOrigin: 'right center' }}
       >
         <Image
-          src={imageSrc}
+          src={rightSrc}
           alt={`${alt} Right`}
           width={320}
           height={400}

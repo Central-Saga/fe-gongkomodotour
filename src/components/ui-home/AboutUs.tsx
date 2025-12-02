@@ -25,7 +25,7 @@ export default function AboutUs() {
     <motion.section 
       ref={sectionRef}
       style={{ opacity }}
-      className="py-10 bg-gray-50 overflow-hidden"
+      className="py-47 bg-gray-50 overflow-hidden"
     >
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 items-center">
@@ -75,7 +75,11 @@ export default function AboutUs() {
             className="w-full"
           >
             <ResponsiveImageStack 
-              imageSrc="/img/about_us.png" 
+              imageSrcs={[
+                "/img/about-landing/about2.jpg",
+                "/img/about-landing/about1.jpg",
+                "/img/about-landing/about3.jpg"
+              ]}
               alt="About Us" 
             />
           </motion.div>

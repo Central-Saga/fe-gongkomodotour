@@ -4,11 +4,13 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 
 interface ImageStackMobileProps {
-  imageSrc: string;
+  imageSrcs: [string, string, string]; // [left, middle, right]
   alt: string;
 }
 
-export default function ImageStackMobile({ imageSrc, alt }: ImageStackMobileProps) {
+export default function ImageStackMobile({ imageSrcs, alt }: ImageStackMobileProps) {
+  const [leftSrc, middleSrc, rightSrc] = imageSrcs;
+  
   return (
     <div className="relative h-[250px] w-full max-w-[400px] mx-auto flex justify-center items-center">
       {/* Gambar Kiri - Mobile Layout */}
@@ -26,7 +28,7 @@ export default function ImageStackMobile({ imageSrc, alt }: ImageStackMobileProp
         style={{ transformOrigin: 'left center' }}
       >
         <Image
-          src={imageSrc}
+          src={leftSrc}
           alt={`${alt} Left`}
           width={320}
           height={400}
@@ -49,7 +51,7 @@ export default function ImageStackMobile({ imageSrc, alt }: ImageStackMobileProp
         className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 scale-[0.8]"
       >
         <Image
-          src={imageSrc}
+          src={middleSrc}
           alt={`${alt} Middle`}
           width={420}
           height={500}
@@ -74,7 +76,7 @@ export default function ImageStackMobile({ imageSrc, alt }: ImageStackMobileProp
         style={{ transformOrigin: 'right center' }}
       >
         <Image
-          src={imageSrc}
+          src={rightSrc}
           alt={`${alt} Right`}
           width={320}
           height={400}
