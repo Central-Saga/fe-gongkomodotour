@@ -12,7 +12,7 @@ export default function ImageStackDesktop({ imageSrcs, alt }: ImageStackDesktopP
   const [leftSrc, middleSrc, rightSrc] = imageSrcs;
   
   return (
-    <div className="relative h-[350px] w-full max-w-[800px] mx-auto flex justify-center items-center">
+    <div className="relative h-[280px] w-full max-w-[700px] mx-auto flex justify-center items-center">
       {/* Gambar Kiri - Desktop Layout */}
       <motion.div 
         initial={{ opacity: 0, rotate: -15, x: -100 }}
@@ -30,9 +30,9 @@ export default function ImageStackDesktop({ imageSrcs, alt }: ImageStackDesktopP
         <CachedImage
           src={leftSrc}
           alt={`${alt} Left`}
-          width={280}
-          height={350}
-          className="rounded-lg shadow-xl object-cover hover:shadow-2xl transition-all duration-300 w-[280px] h-[350px]"
+          width={220}
+          height={280}
+          className="rounded-lg shadow-xl object-cover hover:shadow-2xl transition-all duration-300 w-[220px] h-[280px]"
         />
       </motion.div>
 
@@ -53,9 +53,9 @@ export default function ImageStackDesktop({ imageSrcs, alt }: ImageStackDesktopP
         <CachedImage
           src={middleSrc}
           alt={`${alt} Middle`}
-          width={280}
-          height={350}
-          className="rounded-lg shadow-xl object-cover hover:shadow-2xl transition-all duration-300 w-[280px] h-[350px]"
+          width={220}
+          height={280}
+          className="rounded-lg shadow-xl object-cover hover:shadow-2xl transition-all duration-300 w-[220px] h-[280px]"
           priority={true}
         />
       </motion.div>
@@ -78,9 +78,9 @@ export default function ImageStackDesktop({ imageSrcs, alt }: ImageStackDesktopP
         <CachedImage
           src={rightSrc}
           alt={`${alt} Right`}
-          width={280}
-          height={350}
-          className="rounded-lg shadow-xl object-cover hover:shadow-2xl transition-all duration-300 w-[280px] h-[350px]"
+          width={220}
+          height={280}
+          className="rounded-lg shadow-xl object-cover hover:shadow-2xl transition-all duration-300 w-[220px] h-[280px]"
         />
       </motion.div>
     </div>

@@ -31,6 +31,7 @@ export function GoogleProfileImage({
   const imgRef = useRef<HTMLImageElement | null>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadTriggeredRef = useRef<boolean>(false); // Track apakah sudah trigger load
+  const isVisibleRef = useRef<boolean>(false); // Track apakah gambar sudah terlihat
 
   // Handle image load dengan queue system (memoized untuk menghindari re-create)
   const handleImageLoad = useCallback(() => {
@@ -47,11 +48,11 @@ export function GoogleProfileImage({
     const cached = sessionStorage.getItem(cacheKey);
     
     if (cached === 'error') {
-      // Clear cache error setelah 2 menit untuk retry (diperpanjang untuk menghindari spam request)
+      // Clear cache error setelah 30 menit untuk retry (diperpanjang drastis untuk menghindari spam request)
       const errorTime = sessionStorage.getItem(`${cacheKey}_error_time`);
       if (errorTime) {
         const timeDiff = Date.now() - parseInt(errorTime);
-        if (timeDiff > 2 * 60 * 1000) { // 2 menit
+        if (timeDiff > 30 * 60 * 1000) { // 30 menit (diperpanjang dari 10 menit)
           sessionStorage.removeItem(cacheKey);
           sessionStorage.removeItem(`${cacheKey}_error_time`);
         } else {
@@ -76,7 +77,8 @@ export function GoogleProfileImage({
     setIsLoading(true);
 
     // Tambahkan ke queue dengan priority (1 = high jika visible, 0 = low jika tidak visible)
-    const imagePriority = priority ? 1 : 0;
+    // Jika gambar terlihat (di-trigger oleh Intersection Observer), set priority tinggi
+    const imagePriority = (priority || isVisibleRef.current) ? 1 : 0; // Priority tinggi jika visible atau priority prop true
     
     googleImageQueue.enqueue(
       src,
@@ -132,6 +134,7 @@ export function GoogleProfileImage({
             if (entry.isIntersecting && !loadTriggeredRef.current) {
               // Gambar terlihat, mulai load (hanya sekali)
               loadTriggeredRef.current = true;
+              isVisibleRef.current = true; // Mark sebagai visible
               
               // Unobserve segera untuk menghindari multiple triggers
               if (observerRef.current && currentImgRef) {
@@ -144,8 +147,8 @@ export function GoogleProfileImage({
           });
         },
         {
-          rootMargin: '50px', // Dikurangi dari 100px untuk mengurangi early trigger
-          threshold: 0.25, // Dinaikkan dari 0.01 - hanya trigger saat 25% terlihat (lebih ketat)
+          rootMargin: '100px', // Load 100px sebelum terlihat (early loading)
+          threshold: 0.1, // Trigger saat 10% terlihat (lebih cepat untuk user experience)
         }
       );
 
@@ -166,6 +169,19 @@ export function GoogleProfileImage({
   // Tampilkan placeholder sebagai background jika belum ada src
   const initial = fallbackInitial || alt.charAt(0).toUpperCase();
   
+  // Gunakan proxy di localhost untuk menghindari 403
+  const getImageSrc = (originalSrc: string | null): string | undefined => {
+    if (!originalSrc) return undefined;
+    
+    const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+    if (isLocalhost && originalSrc.includes('googleusercontent.com')) {
+      // Di localhost, gunakan proxy untuk menghindari 403
+      return `/api/proxy-google-image?url=${encodeURIComponent(originalSrc)}`;
+    }
+    
+    return originalSrc;
+  };
+  
   return (
     <div className="relative w-full h-full">
       {/* Placeholder background */}
@@ -183,12 +199,10 @@ export function GoogleProfileImage({
       {/* src hanya di-set setelah queue berhasil preload untuk menghindari request langsung */}
       <img
         ref={imgRef}
-        src={imgSrc || undefined} // Hanya set src setelah queue berhasil preload
+        src={getImageSrc(imgSrc)} // Gunakan proxy di localhost
         alt={alt}
         className={`${className} ${imgSrc ? 'relative z-20 opacity-100' : 'opacity-0 pointer-events-none'} transition-opacity duration-300`}
-        referrerPolicy="no-referrer-when-downgrade"
-        // JANGAN gunakan crossOrigin untuk Google images - menyebabkan CORS error
-        // crossOrigin="anonymous" // ❌ Hapus ini
+        referrerPolicy="no-referrer"
         loading="lazy"
         decoding="async"
         onError={() => {

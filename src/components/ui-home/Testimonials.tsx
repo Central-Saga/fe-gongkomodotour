@@ -55,12 +55,35 @@ export default function Testimoni() {
   useEffect(() => {
     const fetchTestimonials = async () => {
       try {
+        setLoading(true);
+        setError(null);
+        
+        // Clear cache untuk localhost (development)
+        if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+          console.log('🧹 Clearing cache for localhost...');
+          // Clear API cache
+          const { apiCache } = await import('@/lib/browserCache');
+          apiCache.clear('/api/landing-page/all-testimonials');
+          // Clear sessionStorage cache
+          sessionStorage.removeItem('testimonials_cache');
+          sessionStorage.removeItem('testimonials_cache_time');
+          // Clear Google images cache
+          const googleImageCacheKeys = Object.keys(sessionStorage).filter(key => 
+            key.startsWith('google_img_') || key.startsWith('img_cache_')
+          );
+          googleImageCacheKeys.forEach(key => sessionStorage.removeItem(key));
+          console.log(`🧹 Cleared ${googleImageCacheKeys.length} Google image cache entries`);
+        }
+        
         const response = await apiRequest<TestimonialResponse>(
           'GET',
-          '/api/landing-page/all-testimonials'
+          '/api/landing-page/all-testimonials',
+          undefined,
+          { useCache: false } // Disable cache untuk memastikan data fresh
         );
         
         console.log('Testimonial Response:', response);
+        console.log('Environment:', typeof window !== 'undefined' ? window.location.hostname : 'server');
 
         if (response.success && response.data && Array.isArray(response.data)) {
           // Log summary saja untuk menghindari spam console
@@ -68,19 +91,72 @@ export default function Testimoni() {
           const googlePhotos = response.data.filter(r => r.profile_photo_url?.includes('googleusercontent.com')).length;
           console.log(`📊 Testimonials loaded: ${response.data.length} total, ${withPhoto} with photos, ${googlePhotos} from Google`);
           
-          setReviews(response.data);
+          // Filter dan validasi data sebelum set
+          const validReviews = response.data.filter(review => {
+            // Pastikan review memiliki data minimal yang valid
+            return review.author_name && review.text && review.rating;
+          });
+          
+          if (validReviews.length === 0) {
+            throw new Error('Tidak ada testimonial yang valid ditemukan');
+          }
+          
+          // Simpan ke cache untuk fallback jika error di masa depan
+          try {
+            sessionStorage.setItem('testimonials_cache', JSON.stringify(validReviews));
+            sessionStorage.setItem('testimonials_cache_time', Date.now().toString());
+          } catch (cacheError) {
+            console.warn('Failed to cache testimonials:', cacheError);
+          }
+          
+          setReviews(validReviews);
+          console.log(`✅ Successfully loaded ${validReviews.length} testimonials`);
         } else {
-          throw new Error('Tidak ada testimonial yang ditemukan');
+          console.error('❌ Invalid response format:', response);
+          throw new Error('Format response tidak valid atau tidak ada testimonial yang ditemukan');
         }
       } catch (error) {
-        console.error('Error fetching testimonials:', error);
-        setError(error instanceof Error ? error.message : 'Terjadi kesalahan saat mengambil testimonial');
+        console.error('❌ Error fetching testimonials:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Terjadi kesalahan saat mengambil testimonial';
+        setError(errorMessage);
+        
+        // Log detail error untuk debugging
+        if (error instanceof Error) {
+          console.error('Error details:', {
+            message: error.message,
+            stack: error.stack,
+            name: error.name
+          });
+        }
+        
+        // Jika error, coba load dari cache jika ada
+        try {
+          const cached = sessionStorage.getItem('testimonials_cache');
+          if (cached) {
+            const cachedData = JSON.parse(cached);
+            const cacheTime = sessionStorage.getItem('testimonials_cache_time');
+            if (cacheTime && Date.now() - parseInt(cacheTime) < 30 * 60 * 1000) { // Cache valid 30 menit
+              console.log('📦 Loading testimonials from cache...');
+              setReviews(cachedData);
+              setError(null);
+            }
+          }
+        } catch (cacheError) {
+          console.error('Error loading from cache:', cacheError);
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchTestimonials();
+    
+    // Set interval untuk refresh data setiap 30 menit (jika diperlukan)
+    const refreshInterval = setInterval(() => {
+      fetchTestimonials();
+    }, 30 * 60 * 1000); // 30 menit
+    
+    return () => clearInterval(refreshInterval);
   }, []);
 
   // Fungsi untuk memulai autoscroll

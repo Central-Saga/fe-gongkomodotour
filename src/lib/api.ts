@@ -52,10 +52,21 @@ export async function apiRequest<T>(
   config?: AxiosRequestConfig & { useCache?: boolean; cacheTTL?: number }
 ): Promise<T> {
   // Untuk GET requests, cek cache terlebih dahulu
+  // useCache: false berarti TIDAK menggunakan cache sama sekali
   const useCache = method === 'GET' && (config?.useCache !== false);
   const cacheTTL = config?.cacheTTL || 5 * 60 * 1000; // Default 5 menit
 
-  if (useCache && typeof window !== 'undefined') {
+  // Di localhost/development, disable cache untuk memastikan data fresh
+  const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+  const shouldUseCache = useCache && !isLocalhost; // Jangan gunakan cache di localhost
+
+  // Jika useCache: false atau localhost, clear cache terlebih dahulu untuk memastikan fresh data
+  if ((config?.useCache === false || isLocalhost) && typeof window !== 'undefined') {
+    apiCache.clear(url);
+    console.log(`🗑️ Cache cleared for ${url} (useCache: ${config?.useCache}, localhost: ${isLocalhost})`);
+  }
+
+  if (shouldUseCache && typeof window !== 'undefined') {
     const cached = apiCache.get<T>(url);
     if (cached) {
       console.log(`Cache hit for ${url}`);
@@ -89,8 +100,8 @@ export async function apiRequest<T>(
     console.log(`Successful response from ${url}`, response.status);
     console.log('Response data:', response.data);
     
-    // Cache GET responses
-    if (useCache && typeof window !== 'undefined') {
+    // Cache GET responses (jangan cache di localhost)
+    if (shouldUseCache && typeof window !== 'undefined') {
       apiCache.set(url, response.data, cacheTTL);
     }
     
