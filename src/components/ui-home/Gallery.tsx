@@ -1,6 +1,7 @@
 "use client"; // Direktif untuk menjadikan file ini sebagai Client Component
 
 import Image from "next/image";
+import { CachedImage } from "@/components/ui/cached-image";
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button"; // Impor komponen Button dari ShadCN UI
@@ -121,7 +122,7 @@ export default function Gallery({ data }: GalleryProps) {
               onMouseLeave={handleMouseLeave}
             >
               <source src="/videos/landingvidio.mp4" type="video/mp4" />
-              <Image
+              <CachedImage
                 src="/img/gallery1.jpg"
                 alt="Fallback Video Galeri"
                 width={600}
@@ -150,14 +151,15 @@ export default function Gallery({ data }: GalleryProps) {
                 onClick={() => handleItemClick(item)}
               >
                 <div className="relative h-full w-full">
-                    <Image
+                    <CachedImage
                       src={`${API_URL}${item.assets[0].file_url}`}
                       alt={item.title}
                       fill
                       className="object-cover transition-transform duration-300 group-hover:scale-105"
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       quality={85}
-                      loading="lazy"
+                      priority={false}
+                      fallbackSrc="/placeholder-image.png"
                     />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   <div className="absolute bottom-0 left-0 right-0 p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
@@ -165,7 +167,7 @@ export default function Gallery({ data }: GalleryProps) {
                       {item.title}
                     </h3>
                     {item.category && (
-                      <span className="text-gold text-xs text-center block mt-2 bg-black/40 px-3 py-1 rounded-full inline-block border border-gold/30">
+                      <span className="text-gold text-xs text-center inline-block mt-2 bg-black/40 px-3 py-1 rounded-full border border-gold/30">
                         {item.category}
                       </span>
                     )}
@@ -210,13 +212,14 @@ export default function Gallery({ data }: GalleryProps) {
               <div className="grid grid-cols-2 gap-4">
                 {selectedItem.assets.slice(0, 4).map((asset, index) => (
                   <div key={asset.id} className="relative aspect-square rounded-lg overflow-hidden">
-                    <Image
+                    <CachedImage
                       src={`${API_URL}${asset.file_url}`}
                       alt={`${selectedItem.title} - Image ${index + 1}`}
                       fill
                       className="object-cover"
                       quality={85}
                       sizes="(max-width: 768px) 50vw, 25vw"
+                      fallbackSrc="/placeholder-image.png"
                     />
                   </div>
                 ))}

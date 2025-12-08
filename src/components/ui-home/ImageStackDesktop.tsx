@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { CachedImage } from "@/components/ui/cached-image";
 import { motion } from "framer-motion";
 
 interface ImageStackDesktopProps {
@@ -27,7 +27,7 @@ export default function ImageStackDesktop({ imageSrcs, alt }: ImageStackDesktopP
         className="absolute left-0 top-1/2 -translate-y-1/2 z-10 scale-[0.7]"
         style={{ transformOrigin: 'left center' }}
       >
-        <Image
+        <CachedImage
           src={leftSrc}
           alt={`${alt} Left`}
           width={320}
@@ -50,13 +50,13 @@ export default function ImageStackDesktop({ imageSrcs, alt }: ImageStackDesktopP
         viewport={{ once: true, margin: "-100px" }}
         className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 scale-100"
       >
-        <Image
+        <CachedImage
           src={middleSrc}
           alt={`${alt} Middle`}
           width={320}
           height={400}
           className="rounded-lg shadow-xl object-cover hover:shadow-2xl transition-all duration-300"
-          priority
+          priority={true}
         />
       </motion.div>
 
@@ -75,7 +75,7 @@ export default function ImageStackDesktop({ imageSrcs, alt }: ImageStackDesktopP
         className="absolute right-0 top-1/2 -translate-y-1/2 z-10 scale-[0.7]"
         style={{ transformOrigin: 'right center' }}
       >
-        <Image
+        <CachedImage
           src={rightSrc}
           alt={`${alt} Right`}
           width={320}

@@ -9,7 +9,7 @@ import { apiRequest } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { OptimizedImage } from "@/components/ui/optimized-image";
+import { CachedImage } from "@/components/ui/cached-image";
 
 interface Trip {
   id: number;
@@ -313,13 +313,14 @@ export default function TripHighlight() {
                           whileHover={{ scale: 1.05 }}
                           transition={{ duration: 0.5, ease: "easeInOut" }}
                         >
-                          <OptimizedImage
+                          <CachedImage
                             src={imageUrl}
                             alt={highlight.name || 'Trip Image'}
                             fill
                             className="object-cover rounded-sm"
                             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                             quality={85}
+                            fallbackSrc="/img/default-trip.jpg"
                             onError={() => {
                               console.error(`Image failed to load for trip ${highlight.id}: ${imageUrl}`);
                               handleImageError(highlight.id);

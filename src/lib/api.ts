@@ -1,5 +1,6 @@
 // lib/api.ts
 import axios, { AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
+import { apiCache } from './browserCache';
 
 // Untuk debugging
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.gongkomodotour.com';
@@ -48,8 +49,20 @@ export async function apiRequest<T>(
   method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',
   url: string,
   data?: Record<string, unknown> | FormData,
-  config?: AxiosRequestConfig
+  config?: AxiosRequestConfig & { useCache?: boolean; cacheTTL?: number }
 ): Promise<T> {
+  // Untuk GET requests, cek cache terlebih dahulu
+  const useCache = method === 'GET' && (config?.useCache !== false);
+  const cacheTTL = config?.cacheTTL || 5 * 60 * 1000; // Default 5 menit
+
+  if (useCache && typeof window !== 'undefined') {
+    const cached = apiCache.get<T>(url);
+    if (cached) {
+      console.log(`Cache hit for ${url}`);
+      return cached;
+    }
+  }
+
   try {
     console.log(`Making ${method} request to ${url}`);
     console.log('Request config:', { method, url, data, config });
@@ -75,6 +88,12 @@ export async function apiRequest<T>(
     });
     console.log(`Successful response from ${url}`, response.status);
     console.log('Response data:', response.data);
+    
+    // Cache GET responses
+    if (useCache && typeof window !== 'undefined') {
+      apiCache.set(url, response.data, cacheTTL);
+    }
+    
     return response.data;
   } catch (error: unknown) {
     const axiosError = error as { 

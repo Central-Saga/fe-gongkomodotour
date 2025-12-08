@@ -4,6 +4,7 @@ import { Star, Quote } from "lucide-react";
 import { useRef, useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { CachedImage } from "@/components/ui/cached-image";
 import { apiRequest } from "@/lib/api";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { GoogleProfileImage } from "@/components/ui/google-profile-image";
@@ -374,7 +375,7 @@ export default function Testimoni() {
                       } else {
                         // Gunakan Next.js Image dengan unoptimized untuk gambar lain dari remote
                         return (
-                          <Image
+                          <CachedImage
                             src={photoUrl}
                             alt={review.author_name}
                             fill

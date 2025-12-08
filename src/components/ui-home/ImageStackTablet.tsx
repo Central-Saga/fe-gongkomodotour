@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { CachedImage } from "@/components/ui/cached-image";
 import { motion } from "framer-motion";
 
 interface ImageStackTabletProps {
@@ -27,7 +27,7 @@ export default function ImageStackTablet({ imageSrcs, alt }: ImageStackTabletPro
         className="absolute left-0 top-1/2 -translate-y-1/2 z-10 scale-[0.5]"
         style={{ transformOrigin: 'left center' }}
       >
-        <Image
+        <CachedImage
           src={leftSrc}
           alt={`${alt} Left`}
           width={320}
@@ -50,7 +50,7 @@ export default function ImageStackTablet({ imageSrcs, alt }: ImageStackTabletPro
         viewport={{ once: true, margin: "-100px" }}
         className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 scale-120"
       >
-        <Image
+        <CachedImage
           src={middleSrc}
           alt={`${alt} Middle`}
           width={420}
@@ -75,7 +75,7 @@ export default function ImageStackTablet({ imageSrcs, alt }: ImageStackTabletPro
         className="absolute right-0 top-1/2 -translate-y-1/2 z-10 scale-[0.5]"
         style={{ transformOrigin: 'right center' }}
       >
-        <Image
+        <CachedImage
           src={rightSrc}
           alt={`${alt} Right`}
           width={320}

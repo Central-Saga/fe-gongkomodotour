@@ -1,7 +1,7 @@
 "use client";
 
 import Head from "next/head";
-import Image from "next/image";
+import { CachedImage } from "@/components/ui/cached-image";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -84,13 +84,13 @@ export default function WhyChooseUs() {
             className="relative w-full lg:w-1/3 m-0 p-0 order-1 lg:order-2"
           >
             <div className="relative w-full h-full min-h-[300px] lg:min-h-[400px]">
-              <Image
+              <CachedImage
                 src="/img/whychooseus.jpg"
                 alt="Professional team of Gong Komodo Tour ready to serve your journey"
                 fill
                 className="object-cover"
                 quality={85}
-                priority
+                priority={true}
                 sizes="(max-width: 768px) 100vw, 50vw"
               />
               <motion.div 
@@ -136,7 +136,7 @@ export default function WhyChooseUs() {
                   whileHover={{ rotate: [0, -10, 10, -10, 0] }}
                   transition={{ duration: 0.5 }}
                 >
-                  <Image
+                  <CachedImage
                     src={reason.icon}
                     alt={`${reason.title} animation`}
                     fill

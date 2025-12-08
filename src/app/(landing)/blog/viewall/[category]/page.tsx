@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, use } from "react";
-import Image from "next/image";
+import { CachedImage } from "@/components/ui/cached-image";
 import Link from "next/link";
 import { FaUser, FaRegCalendarAlt } from "react-icons/fa";
 import { motion } from "framer-motion";
@@ -143,13 +143,14 @@ const ViewAllCategory = ({ params }: PageProps) => {
                 >
                   {post.assets?.[0] && (
                     <div className="relative h-64 w-full">
-                      <Image
+                      <CachedImage
                         src={post.assets[0].file_url}
                         alt={post.title}
                         fill
                         className="object-cover rounded-md transition-transform duration-300 hover:scale-105"
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         unoptimized
+                        fallbackSrc="/placeholder-image.png"
                       />
                     </div>
                   )}

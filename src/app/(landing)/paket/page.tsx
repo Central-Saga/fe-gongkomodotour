@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import LandingHeader from '@/components/LandingHeader';
-import Image from 'next/image';
+import { CachedImage } from '@/components/ui/cached-image';
 
 export default function PackagesPage() {
   return (
@@ -26,7 +26,7 @@ export default function PackagesPage() {
             {/* Open Trip Card */}
             <Link href="/paket/open-trip" className="block bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
               <div className="relative">
-                <Image src="/img/open-trip-hero.jpg" alt="Open Trip" width={600} height={400} className="w-full h-48 object-cover" />
+                <CachedImage src="/img/open-trip-hero.jpg" alt="Open Trip" width={600} height={400} className="w-full h-48 object-cover" />
                 <span className="absolute top-2 left-2 bg-orange-500 text-white text-xs font-semibold px-2 py-1 rounded">
                   Open Trip
                 </span>
@@ -42,7 +42,7 @@ export default function PackagesPage() {
             {/* Private Trip Card */}
             <Link href="/paket/private-trip" className="block bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
               <div className="relative">
-                <Image src="/img/private-trip-hero.jpg" alt="Private Trip" width={600} height={400} className="w-full h-48 object-cover" />
+                <CachedImage src="/img/private-trip-hero.jpg" alt="Private Trip" width={600} height={400} className="w-full h-48 object-cover" />
                 <span className="absolute top-2 left-2 bg-orange-500 text-white text-xs font-semibold px-2 py-1 rounded">
                   Private Trip
                 </span>
@@ -62,7 +62,7 @@ export default function PackagesPage() {
       <footer className="bg-blue-900 text-white py-10">
         <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-6">
           <div>
-            <Image 
+            <CachedImage 
               src="/img/logo.png" 
               alt="Gong Komodo Tour Logo" 
               width={120}

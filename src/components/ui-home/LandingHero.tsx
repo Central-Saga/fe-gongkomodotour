@@ -8,7 +8,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { OptimizedImage } from "@/components/ui/optimized-image";
+import { CachedImage } from "@/components/ui/cached-image";
 
 // Impor gaya Swiper
 import "swiper/css";
@@ -263,7 +263,7 @@ export default function LandingHero() {
             return (
             <SwiperSlide key={carouselItem.id}>
               <div className="h-full w-full relative overflow-hidden">
-                <OptimizedImage
+                <CachedImage
                   src={imageUrl}
                   alt={carouselItem.title || 'Carousel Image'}
                   fill

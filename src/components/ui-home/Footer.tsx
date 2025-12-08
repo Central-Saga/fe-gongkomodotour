@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { CachedImage } from "@/components/ui/cached-image";
 import { FaFacebookF, FaInstagram, FaTwitter } from "react-icons/fa";
 
 interface FooterProps {
@@ -16,7 +16,7 @@ export default function Footer({ children }: FooterProps) {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             {/* Logo dan Media Sosial */}
             <div className="space-y-4">
-              <Image
+              <CachedImage
                 src="/img/logo.png"
                 alt="Gong Komodo Tour Logo"
                 width={180}
