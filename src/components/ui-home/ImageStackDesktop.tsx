@@ -12,7 +12,7 @@ export default function ImageStackDesktop({ imageSrcs, alt }: ImageStackDesktopP
   const [leftSrc, middleSrc, rightSrc] = imageSrcs;
   
   return (
-    <div className="relative h-[400px] w-full max-w-[900px] mx-auto flex justify-center items-center">
+    <div className="relative h-[350px] w-full max-w-[800px] mx-auto flex justify-center items-center">
       {/* Gambar Kiri - Desktop Layout */}
       <motion.div 
         initial={{ opacity: 0, rotate: -15, x: -100 }}
@@ -24,15 +24,15 @@ export default function ImageStackDesktop({ imageSrcs, alt }: ImageStackDesktopP
           stiffness: 100
         }}
         viewport={{ once: true, margin: "-100px" }}
-        className="absolute left-0 top-1/2 -translate-y-1/2 z-10 scale-100"
+        className="absolute left-20 top-1/2 -translate-y-1/2 z-10 scale-100"
         style={{ transformOrigin: 'left center' }}
       >
         <CachedImage
           src={leftSrc}
           alt={`${alt} Left`}
-          width={320}
-          height={400}
-          className="rounded-lg shadow-xl object-cover hover:shadow-2xl transition-all duration-300 w-[320px] h-[400px]"
+          width={280}
+          height={350}
+          className="rounded-lg shadow-xl object-cover hover:shadow-2xl transition-all duration-300 w-[280px] h-[350px]"
         />
       </motion.div>
 
@@ -53,9 +53,9 @@ export default function ImageStackDesktop({ imageSrcs, alt }: ImageStackDesktopP
         <CachedImage
           src={middleSrc}
           alt={`${alt} Middle`}
-          width={320}
-          height={400}
-          className="rounded-lg shadow-xl object-cover hover:shadow-2xl transition-all duration-300 w-[320px] h-[400px]"
+          width={280}
+          height={350}
+          className="rounded-lg shadow-xl object-cover hover:shadow-2xl transition-all duration-300 w-[280px] h-[350px]"
           priority={true}
         />
       </motion.div>
@@ -72,15 +72,15 @@ export default function ImageStackDesktop({ imageSrcs, alt }: ImageStackDesktopP
           stiffness: 100
         }}
         viewport={{ once: true, margin: "-100px" }}
-        className="absolute right-0 top-1/2 -translate-y-1/2 z-10 scale-100"
+        className="absolute right-20 top-1/2 -translate-y-1/2 z-10 scale-100"
         style={{ transformOrigin: 'right center' }}
       >
         <CachedImage
           src={rightSrc}
           alt={`${alt} Right`}
-          width={320}
-          height={400}
-          className="rounded-lg shadow-xl object-cover hover:shadow-2xl transition-all duration-300 w-[320px] h-[400px]"
+          width={280}
+          height={350}
+          className="rounded-lg shadow-xl object-cover hover:shadow-2xl transition-all duration-300 w-[280px] h-[350px]"
         />
       </motion.div>
     </div>
