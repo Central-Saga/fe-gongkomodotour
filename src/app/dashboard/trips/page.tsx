@@ -4,9 +4,10 @@ import { columns } from "./columns"
 import { DataTable } from "./data-table"
 import { Trip } from "@/types/trips"
 import { apiRequest } from "@/lib/api"
-import { useEffect, useState } from "react"
+import { apiCache } from "@/lib/browserCache"
+import { useEffect, useState, useCallback } from "react"
 import { toast } from "sonner"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,15 +30,20 @@ export default function TripPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [tripToDelete, setTripToDelete] = useState<Trip | null>(null)
 
-  const fetchTrips = async () => {
+  const fetchTrips = useCallback(async () => {
     try {
       setLoading(true)
       console.log('Fetching trips...')
+      // Clear cache untuk memastikan data fresh
+      apiCache.clear('/api/trips')
       const response: TripResponse = await apiRequest<TripResponse>(
         'GET',
-        '/api/trips'
+        '/api/trips',
+        undefined,
+        { useCache: false } // Disable cache untuk memastikan data fresh
       )
       console.log('Raw API Response:', response)
       console.log('Response data:', response.data)
@@ -68,11 +74,23 @@ export default function TripPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     fetchTrips()
-  }, [])
+  }, [searchParams, fetchTrips])
+
+  // Re-fetch ketika window mendapat focus (user kembali ke tab/halaman)
+  useEffect(() => {
+    const handleFocus = () => {
+      fetchTrips()
+    }
+
+    window.addEventListener('focus', handleFocus)
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [fetchTrips])
 
   const handleDelete = async (trip: Trip) => {
     setTripToDelete(trip)

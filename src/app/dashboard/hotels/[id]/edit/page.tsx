@@ -22,7 +22,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
-import { Loader2, Plus, Trash } from "lucide-react"
+import { Loader2, Plus, Trash, ChevronUp, ChevronDown } from "lucide-react"
 import { toast } from "sonner"
 import { apiRequest } from "@/lib/api"
 import { Hotel } from "@/types/hotels"
@@ -238,24 +238,46 @@ export default function EditHotelPage({ params }: { params: Promise<{ id: string
                         <FormItem>
                           <FormLabel>Harga</FormLabel>
                           <FormControl>
-                            <Input 
-                              type="number"
-                              min="0"
-                              step="1"
-                              placeholder="Masukkan harga"
-                              value={field.value ?? 0}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                if (value === '') {
-                                  field.onChange(0);
-                                } else {
-                                  const numValue = Number(value);
-                                  if (!isNaN(numValue) && numValue >= 0) {
-                                    field.onChange(numValue);
+                            <div className="relative">
+                              <Input 
+                                type="number"
+                                min="0"
+                                step="1"
+                                placeholder="Masukkan harga"
+                                value={field.value ?? 0}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  if (value === '') {
+                                    field.onChange(0);
+                                  } else {
+                                    const numValue = Number(value);
+                                    if (!isNaN(numValue) && numValue >= 0) {
+                                      field.onChange(numValue);
+                                    }
                                   }
-                                }
-                              }}
-                            />
+                                }}
+                                onWheel={(e) => e.currentTarget.blur()}
+                                className="pr-8"
+                              />
+                              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col">
+                                <button
+                                  type="button"
+                                  onClick={() => field.onChange((field.value ?? 0) + 1)}
+                                  className="h-3 w-4 flex items-center justify-center hover:bg-gray-100 rounded-t"
+                                  tabIndex={-1}
+                                >
+                                  <ChevronUp className="h-3 w-3 text-gray-500" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => field.onChange(Math.max(0, (field.value ?? 0) - 1))}
+                                  className="h-3 w-4 flex items-center justify-center hover:bg-gray-100 rounded-b"
+                                  tabIndex={-1}
+                                >
+                                  <ChevronDown className="h-3 w-3 text-gray-500" />
+                                </button>
+                              </div>
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -390,23 +412,45 @@ export default function EditHotelPage({ params }: { params: Promise<{ id: string
                               <FormItem>
                                 <FormLabel>Surcharge Price</FormLabel>
                                 <FormControl>
-                                  <Input 
-                                    type="number"
-                                    min="0"
-                                    step="1"
-                                    value={field.value ?? 0}
-                                    onChange={(e) => {
-                                      const value = e.target.value;
-                                      if (value === '') {
-                                        field.onChange(0);
-                                      } else {
-                                        const numValue = Number(value);
-                                        if (!isNaN(numValue) && numValue >= 0) {
-                                          field.onChange(numValue);
+                                  <div className="relative">
+                                    <Input 
+                                      type="number"
+                                      min="0"
+                                      step="1"
+                                      value={field.value ?? 0}
+                                      onChange={(e) => {
+                                        const value = e.target.value;
+                                        if (value === '') {
+                                          field.onChange(0);
+                                        } else {
+                                          const numValue = Number(value);
+                                          if (!isNaN(numValue) && numValue >= 0) {
+                                            field.onChange(numValue);
+                                          }
                                         }
-                                      }
-                                    }}
-                                  />
+                                      }}
+                                      onWheel={(e) => e.currentTarget.blur()}
+                                      className="pr-8"
+                                    />
+                                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col">
+                                      <button
+                                        type="button"
+                                        onClick={() => field.onChange((field.value ?? 0) + 1)}
+                                        className="h-3 w-4 flex items-center justify-center hover:bg-gray-100 rounded-t"
+                                        tabIndex={-1}
+                                      >
+                                        <ChevronUp className="h-3 w-3 text-gray-500" />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => field.onChange(Math.max(0, (field.value ?? 0) - 1))}
+                                        className="h-3 w-4 flex items-center justify-center hover:bg-gray-100 rounded-b"
+                                        tabIndex={-1}
+                                      >
+                                        <ChevronDown className="h-3 w-3 text-gray-500" />
+                                      </button>
+                                    </div>
+                                  </div>
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>

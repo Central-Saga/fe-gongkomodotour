@@ -22,9 +22,10 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
-import { Loader2, Plus, Trash } from "lucide-react"
+import { Loader2, Plus, Trash, ChevronUp, ChevronDown } from "lucide-react"
 import { toast } from "sonner"
 import { apiRequest } from "@/lib/api"
+import { apiCache } from "@/lib/browserCache"
 import { FileUpload } from "@/components/ui/file-upload"
 import { ApiResponse } from "@/types/role"
 import { TipTapEditor } from "@/components/ui/tiptap-editor"
@@ -198,9 +199,9 @@ export default function CreateTripPage() {
     }
   }, [hasHotel, form])
 
-  // Jika jadwal fleksibel No, kosongkan hari operasional
+  // Jika jadwal fleksibel Yes, kosongkan hari operasional (karena fleksibel tidak perlu pilih hari)
   useEffect(() => {
-    if (tentation === "No") {
+    if (tentation === "Yes") {
       form.setValue("operational_days", [])
     }
   }, [tentation, form])
@@ -377,8 +378,10 @@ export default function CreateTripPage() {
           )
         }
 
+        // Clear cache trips sebelum redirect
+        apiCache.clear('/api/trips')
         toast.success("Trip berhasil dibuat")
-        router.push("/dashboard/trips")
+        router.push("/dashboard/trips?refresh=" + Date.now())
         router.refresh()
       }
     } catch (error: unknown) {
@@ -607,12 +610,35 @@ export default function CreateTripPage() {
                         <FormItem>
                           <FormLabel>Jumlah Destinasi</FormLabel>
                           <FormControl>
-                            <Input 
-                              type="number"
-                              min="0"
-                              {...field}
-                              onChange={e => field.onChange(parseInt(e.target.value))}
-                            />
+                            <div className="relative">
+                              <Input 
+                                type="number"
+                                min="0"
+                                {...field}
+                                value={field.value || 0}
+                                onChange={e => field.onChange(parseInt(e.target.value) || 0)}
+                                onWheel={(e) => e.currentTarget.blur()}
+                                className="pr-8"
+                              />
+                              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col">
+                                <button
+                                  type="button"
+                                  onClick={() => field.onChange((field.value || 0) + 1)}
+                                  className="h-3 w-4 flex items-center justify-center hover:bg-gray-100 rounded-t"
+                                  tabIndex={-1}
+                                >
+                                  <ChevronUp className="h-3 w-3 text-gray-500" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => field.onChange(Math.max(0, (field.value || 0) - 1))}
+                                  className="h-3 w-4 flex items-center justify-center hover:bg-gray-100 rounded-b"
+                                  tabIndex={-1}
+                                >
+                                  <ChevronDown className="h-3 w-3 text-gray-500" />
+                                </button>
+                              </div>
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -819,7 +845,7 @@ export default function CreateTripPage() {
                 )} */}
 
                 {/* Operational Days */}
-                {tentation === "Yes" && (
+                {tentation === "No" && (
                   <div>
                     <h2 className="text-xl font-semibold text-gray-900 mb-6">Hari Operasional</h2>
                     
@@ -1047,23 +1073,45 @@ export default function CreateTripPage() {
                               <FormItem>
                                 <FormLabel>Jumlah Hari</FormLabel>
                                 <FormControl>
-                                  <Input 
-                                    type="number" 
-                                    min="1"
-                                    step="1"
-                                    value={field.value ?? 1}
-                                    onChange={e => {
-                                      const value = e.target.value;
-                                      if (value === '') {
-                                        field.onChange(1);
-                                      } else {
-                                        const numValue = Number(value);
-                                        if (!isNaN(numValue) && numValue >= 1) {
-                                          field.onChange(numValue);
+                                  <div className="relative">
+                                    <Input 
+                                      type="number" 
+                                      min="1"
+                                      step="1"
+                                      value={field.value ?? 1}
+                                      onChange={e => {
+                                        const value = e.target.value;
+                                        if (value === '') {
+                                          field.onChange(1);
+                                        } else {
+                                          const numValue = Number(value);
+                                          if (!isNaN(numValue) && numValue >= 1) {
+                                            field.onChange(numValue);
+                                          }
                                         }
-                                      }
-                                    }}
-                                  />
+                                      }}
+                                      onWheel={(e) => e.currentTarget.blur()}
+                                      className="pr-8"
+                                    />
+                                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col">
+                                      <button
+                                        type="button"
+                                        onClick={() => field.onChange((field.value ?? 1) + 1)}
+                                        className="h-3 w-4 flex items-center justify-center hover:bg-gray-100 rounded-t"
+                                        tabIndex={-1}
+                                      >
+                                        <ChevronUp className="h-3 w-3 text-gray-500" />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => field.onChange(Math.max(1, (field.value ?? 1) - 1))}
+                                        className="h-3 w-4 flex items-center justify-center hover:bg-gray-100 rounded-b"
+                                        tabIndex={-1}
+                                      >
+                                        <ChevronDown className="h-3 w-3 text-gray-500" />
+                                      </button>
+                                    </div>
+                                  </div>
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -1076,23 +1124,45 @@ export default function CreateTripPage() {
                               <FormItem>
                                 <FormLabel>Jumlah Malam</FormLabel>
                                 <FormControl>
-                                  <Input 
-                                    type="number"
-                                    min="0"
-                                    step="1"
-                                    value={field.value ?? 0}
-                                    onChange={e => {
-                                      const value = e.target.value;
-                                      if (value === '') {
-                                        field.onChange(0);
-                                      } else {
-                                        const numValue = Number(value);
-                                        if (!isNaN(numValue) && numValue >= 0) {
-                                          field.onChange(numValue);
+                                  <div className="relative">
+                                    <Input 
+                                      type="number"
+                                      min="0"
+                                      step="1"
+                                      value={field.value ?? 0}
+                                      onChange={e => {
+                                        const value = e.target.value;
+                                        if (value === '') {
+                                          field.onChange(0);
+                                        } else {
+                                          const numValue = Number(value);
+                                          if (!isNaN(numValue) && numValue >= 0) {
+                                            field.onChange(numValue);
+                                          }
                                         }
-                                      }
-                                    }}
-                                  />
+                                      }}
+                                      onWheel={(e) => e.currentTarget.blur()}
+                                      className="pr-8"
+                                    />
+                                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col">
+                                      <button
+                                        type="button"
+                                        onClick={() => field.onChange((field.value ?? 0) + 1)}
+                                        className="h-3 w-4 flex items-center justify-center hover:bg-gray-100 rounded-t"
+                                        tabIndex={-1}
+                                      >
+                                        <ChevronUp className="h-3 w-3 text-gray-500" />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => field.onChange(Math.max(0, (field.value ?? 0) - 1))}
+                                        className="h-3 w-4 flex items-center justify-center hover:bg-gray-100 rounded-b"
+                                        tabIndex={-1}
+                                      >
+                                        <ChevronDown className="h-3 w-3 text-gray-500" />
+                                      </button>
+                                    </div>
+                                  </div>
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -1226,23 +1296,45 @@ export default function CreateTripPage() {
                                     <FormItem>
                                       <FormLabel>Minimal Pax</FormLabel>
                                       <FormControl>
-                                        <Input 
-                                          type="number"
-                                          min="1"
-                                          step="1"
-                                          value={field.value ?? 1}
-                                          onChange={e => {
-                                            const value = e.target.value;
-                                            if (value === '') {
-                                              field.onChange(1);
-                                            } else {
-                                              const numValue = Number(value);
-                                              if (!isNaN(numValue) && numValue >= 1) {
-                                                field.onChange(numValue);
+                                        <div className="relative">
+                                          <Input 
+                                            type="number"
+                                            min="1"
+                                            step="1"
+                                            value={field.value ?? 1}
+                                            onChange={e => {
+                                              const value = e.target.value;
+                                              if (value === '') {
+                                                field.onChange(1);
+                                              } else {
+                                                const numValue = Number(value);
+                                                if (!isNaN(numValue) && numValue >= 1) {
+                                                  field.onChange(numValue);
+                                                }
                                               }
-                                            }
-                                          }}
-                                        />
+                                            }}
+                                            onWheel={(e) => e.currentTarget.blur()}
+                                            className="pr-8"
+                                          />
+                                          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col">
+                                            <button
+                                              type="button"
+                                              onClick={() => field.onChange((field.value ?? 1) + 1)}
+                                              className="h-3 w-4 flex items-center justify-center hover:bg-gray-100 rounded-t"
+                                              tabIndex={-1}
+                                            >
+                                              <ChevronUp className="h-3 w-3 text-gray-500" />
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={() => field.onChange(Math.max(1, (field.value ?? 1) - 1))}
+                                              className="h-3 w-4 flex items-center justify-center hover:bg-gray-100 rounded-b"
+                                              tabIndex={-1}
+                                            >
+                                              <ChevronDown className="h-3 w-3 text-gray-500" />
+                                            </button>
+                                          </div>
+                                        </div>
                                       </FormControl>
                                       <FormMessage />
                                     </FormItem>
@@ -1255,23 +1347,45 @@ export default function CreateTripPage() {
                                     <FormItem>
                                       <FormLabel>Maksimal Pax</FormLabel>
                                       <FormControl>
-                                        <Input 
-                                          type="number"
-                                          min="1"
-                                          step="1"
-                                          value={field.value ?? 1}
-                                          onChange={e => {
-                                            const value = e.target.value;
-                                            if (value === '') {
-                                              field.onChange(1);
-                                            } else {
-                                              const numValue = Number(value);
-                                              if (!isNaN(numValue) && numValue >= 1) {
-                                                field.onChange(numValue);
+                                        <div className="relative">
+                                          <Input 
+                                            type="number"
+                                            min="1"
+                                            step="1"
+                                            value={field.value ?? 1}
+                                            onChange={e => {
+                                              const value = e.target.value;
+                                              if (value === '') {
+                                                field.onChange(1);
+                                              } else {
+                                                const numValue = Number(value);
+                                                if (!isNaN(numValue) && numValue >= 1) {
+                                                  field.onChange(numValue);
+                                                }
                                               }
-                                            }
-                                          }}
-                                        />
+                                            }}
+                                            onWheel={(e) => e.currentTarget.blur()}
+                                            className="pr-8"
+                                          />
+                                          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col">
+                                            <button
+                                              type="button"
+                                              onClick={() => field.onChange((field.value ?? 1) + 1)}
+                                              className="h-3 w-4 flex items-center justify-center hover:bg-gray-100 rounded-t"
+                                              tabIndex={-1}
+                                            >
+                                              <ChevronUp className="h-3 w-3 text-gray-500" />
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={() => field.onChange(Math.max(1, (field.value ?? 1) - 1))}
+                                              className="h-3 w-4 flex items-center justify-center hover:bg-gray-100 rounded-b"
+                                              tabIndex={-1}
+                                            >
+                                              <ChevronDown className="h-3 w-3 text-gray-500" />
+                                            </button>
+                                          </div>
+                                        </div>
                                       </FormControl>
                                       <FormMessage />
                                     </FormItem>
@@ -1284,23 +1398,45 @@ export default function CreateTripPage() {
                                     <FormItem>
                                       <FormLabel>Harga per Pax</FormLabel>
                                       <FormControl>
-                                        <Input 
-                                          type="number"
-                                          min="0"
-                                          step="1"
-                                          value={field.value ?? 0}
-                                          onChange={e => {
-                                            const value = e.target.value;
-                                            if (value === '') {
-                                              field.onChange(0);
-                                            } else {
-                                              const numValue = Number(value);
-                                              if (!isNaN(numValue) && numValue >= 0) {
-                                                field.onChange(numValue);
+                                        <div className="relative">
+                                          <Input 
+                                            type="number"
+                                            min="0"
+                                            step="1"
+                                            value={field.value ?? 0}
+                                            onChange={e => {
+                                              const value = e.target.value;
+                                              if (value === '') {
+                                                field.onChange(0);
+                                              } else {
+                                                const numValue = Number(value);
+                                                if (!isNaN(numValue) && numValue >= 0) {
+                                                  field.onChange(numValue);
+                                                }
                                               }
-                                            }
-                                          }}
-                                        />
+                                            }}
+                                            onWheel={(e) => e.currentTarget.blur()}
+                                            className="pr-8"
+                                          />
+                                          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col">
+                                            <button
+                                              type="button"
+                                              onClick={() => field.onChange((field.value ?? 0) + 1)}
+                                              className="h-3 w-4 flex items-center justify-center hover:bg-gray-100 rounded-t"
+                                              tabIndex={-1}
+                                            >
+                                              <ChevronUp className="h-3 w-3 text-gray-500" />
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={() => field.onChange(Math.max(0, (field.value ?? 0) - 1))}
+                                              className="h-3 w-4 flex items-center justify-center hover:bg-gray-100 rounded-b"
+                                              tabIndex={-1}
+                                            >
+                                              <ChevronDown className="h-3 w-3 text-gray-500" />
+                                            </button>
+                                          </div>
+                                        </div>
                                       </FormControl>
                                       <FormMessage />
                                     </FormItem>
@@ -1578,23 +1714,45 @@ export default function CreateTripPage() {
                               <FormItem>
                                 <FormLabel>Harga</FormLabel>
                                 <FormControl>
-                                  <Input 
-                                    type="number"
-                                    min="0"
-                                    step="1"
-                                    value={field.value ?? 0}
-                                    onChange={e => {
-                                      const value = e.target.value;
-                                      if (value === '') {
-                                        field.onChange(0);
-                                      } else {
-                                        const numValue = Number(value);
-                                        if (!isNaN(numValue) && numValue >= 0) {
-                                          field.onChange(numValue);
+                                  <div className="relative">
+                                    <Input 
+                                      type="number"
+                                      min="0"
+                                      step="1"
+                                      value={field.value ?? 0}
+                                      onChange={e => {
+                                        const value = e.target.value;
+                                        if (value === '') {
+                                          field.onChange(0);
+                                        } else {
+                                          const numValue = Number(value);
+                                          if (!isNaN(numValue) && numValue >= 0) {
+                                            field.onChange(numValue);
+                                          }
                                         }
-                                      }
-                                    }}
-                                  />
+                                      }}
+                                      onWheel={(e) => e.currentTarget.blur()}
+                                      className="pr-8"
+                                    />
+                                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col">
+                                      <button
+                                        type="button"
+                                        onClick={() => field.onChange((field.value ?? 0) + 1)}
+                                        className="h-3 w-4 flex items-center justify-center hover:bg-gray-100 rounded-t"
+                                        tabIndex={-1}
+                                      >
+                                        <ChevronUp className="h-3 w-3 text-gray-500" />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => field.onChange(Math.max(0, (field.value ?? 0) - 1))}
+                                        className="h-3 w-4 flex items-center justify-center hover:bg-gray-100 rounded-b"
+                                        tabIndex={-1}
+                                      >
+                                        <ChevronDown className="h-3 w-3 text-gray-500" />
+                                      </button>
+                                    </div>
+                                  </div>
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -1656,23 +1814,45 @@ export default function CreateTripPage() {
                               <FormItem>
                                 <FormLabel>Minimal Pax</FormLabel>
                                 <FormControl>
-                                  <Input 
-                                    type="number"
-                                    min="1"
-                                    step="1"
-                                    value={field.value ?? 1}
-                                    onChange={e => {
-                                      const value = e.target.value;
-                                      if (value === '') {
-                                        field.onChange(1);
-                                      } else {
-                                        const numValue = Number(value);
-                                        if (!isNaN(numValue) && numValue >= 1) {
-                                          field.onChange(numValue);
+                                  <div className="relative">
+                                    <Input 
+                                      type="number"
+                                      min="1"
+                                      step="1"
+                                      value={field.value ?? 1}
+                                      onChange={e => {
+                                        const value = e.target.value;
+                                        if (value === '') {
+                                          field.onChange(1);
+                                        } else {
+                                          const numValue = Number(value);
+                                          if (!isNaN(numValue) && numValue >= 1) {
+                                            field.onChange(numValue);
+                                          }
                                         }
-                                      }
-                                    }}
-                                  />
+                                      }}
+                                      onWheel={(e) => e.currentTarget.blur()}
+                                      className="pr-8"
+                                    />
+                                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col">
+                                      <button
+                                        type="button"
+                                        onClick={() => field.onChange((field.value ?? 1) + 1)}
+                                        className="h-3 w-4 flex items-center justify-center hover:bg-gray-100 rounded-t"
+                                        tabIndex={-1}
+                                      >
+                                        <ChevronUp className="h-3 w-3 text-gray-500" />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => field.onChange(Math.max(1, (field.value ?? 1) - 1))}
+                                        className="h-3 w-4 flex items-center justify-center hover:bg-gray-100 rounded-b"
+                                        tabIndex={-1}
+                                      >
+                                        <ChevronDown className="h-3 w-3 text-gray-500" />
+                                      </button>
+                                    </div>
+                                  </div>
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -1685,23 +1865,45 @@ export default function CreateTripPage() {
                               <FormItem>
                                 <FormLabel>Maksimal Pax</FormLabel>
                                 <FormControl>
-                                  <Input 
-                                    type="number"
-                                    min="1"
-                                    step="1"
-                                    value={field.value ?? 1}
-                                    onChange={e => {
-                                      const value = e.target.value;
-                                      if (value === '') {
-                                        field.onChange(1);
-                                      } else {
-                                        const numValue = Number(value);
-                                        if (!isNaN(numValue) && numValue >= 1) {
-                                          field.onChange(numValue);
+                                  <div className="relative">
+                                    <Input 
+                                      type="number"
+                                      min="1"
+                                      step="1"
+                                      value={field.value ?? 1}
+                                      onChange={e => {
+                                        const value = e.target.value;
+                                        if (value === '') {
+                                          field.onChange(1);
+                                        } else {
+                                          const numValue = Number(value);
+                                          if (!isNaN(numValue) && numValue >= 1) {
+                                            field.onChange(numValue);
+                                          }
                                         }
-                                      }
-                                    }}
-                                  />
+                                      }}
+                                      onWheel={(e) => e.currentTarget.blur()}
+                                      className="pr-8"
+                                    />
+                                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col">
+                                      <button
+                                        type="button"
+                                        onClick={() => field.onChange((field.value ?? 1) + 1)}
+                                        className="h-3 w-4 flex items-center justify-center hover:bg-gray-100 rounded-t"
+                                        tabIndex={-1}
+                                      >
+                                        <ChevronUp className="h-3 w-3 text-gray-500" />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => field.onChange(Math.max(1, (field.value ?? 1) - 1))}
+                                        className="h-3 w-4 flex items-center justify-center hover:bg-gray-100 rounded-b"
+                                        tabIndex={-1}
+                                      >
+                                        <ChevronDown className="h-3 w-3 text-gray-500" />
+                                      </button>
+                                    </div>
+                                  </div>
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
