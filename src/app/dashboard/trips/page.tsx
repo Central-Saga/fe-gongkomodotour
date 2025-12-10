@@ -5,7 +5,7 @@ import { DataTable } from "./data-table"
 import { Trip } from "@/types/trips"
 import { apiRequest } from "@/lib/api"
 import { apiCache } from "@/lib/browserCache"
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, Suspense } from "react"
 import { toast } from "sonner"
 import { useRouter, useSearchParams } from "next/navigation"
 import {
@@ -25,7 +25,7 @@ interface TripResponse {
   status?: string
 }
 
-export default function TripPage() {
+function TripPageContent() {
   const [data, setData] = useState<Trip[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -149,5 +149,13 @@ export default function TripPage() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  )
+}
+
+export default function TripPage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto p-4">Loading...</div>}>
+      <TripPageContent />
+    </Suspense>
   )
 } 
