@@ -16,6 +16,23 @@ const ActionsCell = ({ hotel, onDelete }: { hotel: Hotel, onDelete: (hotel: Hote
   const router = useRouter();
 
   const handleEdit = () => {
+    // Simpan pagination state sebelum navigate ke edit page
+    if (typeof window !== 'undefined') {
+      // Coba ambil dari URL dulu
+      const urlParams = new URLSearchParams(window.location.search)
+      const pageParam = urlParams.get('page')
+      
+      if (pageParam !== null) {
+        sessionStorage.setItem('hotels_page', pageParam)
+      } else {
+        // Jika tidak ada di URL, cek sessionStorage
+        const savedPage = sessionStorage.getItem('hotels_page')
+        if (savedPage === null) {
+          // Jika tidak ada, simpan page 0 sebagai default
+          sessionStorage.setItem('hotels_page', '0')
+        }
+      }
+    }
     router.push(`/dashboard/hotels/${hotel.id}/edit`);
   };
 

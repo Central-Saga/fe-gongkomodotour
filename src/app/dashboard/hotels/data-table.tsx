@@ -42,7 +42,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { ChevronDown, FileDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Plus, MoreHorizontal, Pencil, Trash } from 'lucide-react'
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
 import { Hotel } from "@/types/hotels"
@@ -231,18 +232,123 @@ export function DataTable({
   setData,
 }: DataTableProps<Hotel>) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
   const [expanded, setExpanded] = useState<ExpandedState>({})
-  const [pagination, setPagination] = useState({
-    pageIndex: 0,
-    pageSize: 10,
-  })
+  
+  // Initialize pagination from URL or sessionStorage
+  const getInitialPagination = () => {
+    // Cek URL parameter dulu
+    const pageParam = searchParams.get('page')
+    if (pageParam !== null) {
+      const pageIndex = parseInt(pageParam, 10)
+      if (!isNaN(pageIndex) && pageIndex >= 0) {
+        return { pageIndex, pageSize: 10 }
+      }
+    }
+    
+    // Jika tidak ada di URL, cek sessionStorage
+    if (typeof window !== 'undefined') {
+      const savedPage = sessionStorage.getItem('hotels_page')
+      const savedPageSize = sessionStorage.getItem('hotels_pageSize')
+      if (savedPage !== null) {
+        const pageIndex = parseInt(savedPage, 10)
+        const pageSize = savedPageSize ? parseInt(savedPageSize, 10) : 10
+        if (!isNaN(pageIndex) && pageIndex >= 0) {
+          return { pageIndex, pageSize }
+        }
+      }
+    }
+    
+    return { pageIndex: 0, pageSize: 10 }
+  }
+  
+  const [pagination, setPagination] = useState(getInitialPagination())
   const [isDeleting, setIsDeleting] = useState(false)
 
+  // Restore pagination from URL on mount or when URL changes
+  useEffect(() => {
+    const pageParam = searchParams.get('page')
+    if (pageParam !== null) {
+      const pageIndex = parseInt(pageParam, 10)
+      if (!isNaN(pageIndex) && pageIndex >= 0) {
+        setPagination(prev => {
+          if (prev.pageIndex !== pageIndex) {
+            console.log('Restoring hotels pagination from URL:', pageIndex)
+            return { ...prev, pageIndex }
+          }
+          return prev
+        })
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('hotels_page', pageIndex.toString())
+        }
+      }
+    } else {
+      if (typeof window !== 'undefined') {
+        const savedPage = sessionStorage.getItem('hotels_page')
+        if (savedPage !== null) {
+          const pageIndex = parseInt(savedPage, 10)
+          if (!isNaN(pageIndex) && pageIndex >= 0) {
+            setPagination(prev => {
+              if (prev.pageIndex !== pageIndex) {
+                console.log('Restoring hotels pagination from sessionStorage:', pageIndex)
+                return { ...prev, pageIndex }
+              }
+              return prev
+            })
+            const newUrl = new URL(window.location.href)
+            if (pageIndex === 0) {
+              newUrl.searchParams.delete('page')
+            } else {
+              newUrl.searchParams.set('page', pageIndex.toString())
+            }
+            window.history.replaceState({}, '', newUrl.toString())
+          }
+        }
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
+
+  // Save pagination to sessionStorage and update URL whenever it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('hotels_page', pagination.pageIndex.toString())
+      sessionStorage.setItem('hotels_pageSize', pagination.pageSize.toString())
+      
+      const currentUrl = new URL(window.location.href)
+      const currentPage = currentUrl.searchParams.get('page')
+      
+      if (currentPage !== pagination.pageIndex.toString()) {
+        const newUrl = new URL(window.location.href)
+        if (pagination.pageIndex === 0) {
+          newUrl.searchParams.delete('page')
+        } else {
+          newUrl.searchParams.set('page', pagination.pageIndex.toString())
+        }
+        window.history.replaceState({}, '', newUrl.toString())
+      }
+    }
+  }, [pagination])
+
   const handleEdit = (hotel: Hotel) => {
+    // Simpan pagination state sebelum navigate ke edit page
+    if (typeof window !== 'undefined') {
+      const currentPage = pagination.pageIndex.toString()
+      console.log('Saving hotels pagination before edit:', currentPage)
+      sessionStorage.setItem('hotels_page', currentPage)
+      sessionStorage.setItem('hotels_pageSize', pagination.pageSize.toString())
+      const currentUrl = new URL(window.location.href)
+      if (pagination.pageIndex === 0) {
+        currentUrl.searchParams.delete('page')
+      } else {
+        currentUrl.searchParams.set('page', currentPage)
+      }
+      window.history.replaceState({}, '', currentUrl.toString())
+    }
     router.push(`/dashboard/hotels/${hotel.id}/edit`)
   }
 
@@ -337,7 +443,25 @@ export function DataTable({
     getExpandedRowModel: getExpandedRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
-    onPaginationChange: setPagination,
+    onPaginationChange: (updater) => {
+      // Handle pagination change dengan menyimpan ke sessionStorage
+      if (typeof updater === 'function') {
+        setPagination(prev => {
+          const newPagination = updater(prev)
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem('hotels_page', newPagination.pageIndex.toString())
+            sessionStorage.setItem('hotels_pageSize', newPagination.pageSize.toString())
+          }
+          return newPagination
+        })
+      } else {
+        setPagination(updater)
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('hotels_page', updater.pageIndex.toString())
+          sessionStorage.setItem('hotels_pageSize', updater.pageSize.toString())
+        }
+      }
+    },
     state: {
       sorting,
       columnFilters,
@@ -547,7 +671,12 @@ export function DataTable({
                 variant="outline"
                 size="icon"
                 className="h-8 w-8"
-                onClick={() => table.setPageIndex(0)}
+                onClick={() => {
+                  table.setPageIndex(0)
+                  if (typeof window !== 'undefined') {
+                    sessionStorage.setItem('hotels_page', '0')
+                  }
+                }}
                 disabled={!table.getCanPreviousPage()}
               >
                 <ChevronsLeft className="h-4 w-4" />
@@ -556,7 +685,13 @@ export function DataTable({
                 variant="outline"
                 size="icon"
                 className="h-8 w-8"
-                onClick={() => table.previousPage()}
+                onClick={() => {
+                  table.previousPage()
+                  if (typeof window !== 'undefined') {
+                    const newPage = Math.max(0, pagination.pageIndex - 1)
+                    sessionStorage.setItem('hotels_page', newPage.toString())
+                  }
+                }}
                 disabled={!table.getCanPreviousPage()}
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -565,7 +700,13 @@ export function DataTable({
                 variant="outline"
                 size="icon"
                 className="h-8 w-8"
-                onClick={() => table.nextPage()}
+                onClick={() => {
+                  table.nextPage()
+                  if (typeof window !== 'undefined') {
+                    const newPage = pagination.pageIndex + 1
+                    sessionStorage.setItem('hotels_page', newPage.toString())
+                  }
+                }}
                 disabled={!table.getCanNextPage()}
               >
                 <ChevronRight className="h-4 w-4" />
@@ -574,7 +715,13 @@ export function DataTable({
                 variant="outline"
                 size="icon"
                 className="h-8 w-8"
-                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+                onClick={() => {
+                  const lastPage = table.getPageCount() - 1
+                  table.setPageIndex(lastPage)
+                  if (typeof window !== 'undefined') {
+                    sessionStorage.setItem('hotels_page', lastPage.toString())
+                  }
+                }}
                 disabled={!table.getCanNextPage()}
               >
                 <ChevronsRight className="h-4 w-4" />

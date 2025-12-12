@@ -111,6 +111,23 @@ function TripPageContent() {
   }
 
   const handleEdit = (trip: Trip) => {
+    // Simpan pagination state sebelum navigate ke edit page
+    if (typeof window !== 'undefined') {
+      // Coba ambil dari URL dulu
+      const urlParams = new URLSearchParams(window.location.search)
+      const pageParam = urlParams.get('page')
+      
+      if (pageParam !== null) {
+        sessionStorage.setItem('trips_page', pageParam)
+      } else {
+        // Jika tidak ada di URL, cek sessionStorage
+        const savedPage = sessionStorage.getItem('trips_page')
+        if (savedPage === null) {
+          // Jika tidak ada, simpan page 0 sebagai default
+          sessionStorage.setItem('trips_page', '0')
+        }
+      }
+    }
     router.push(`/dashboard/trips/${trip.id}/edit`)
   }
 

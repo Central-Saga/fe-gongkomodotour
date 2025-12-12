@@ -114,8 +114,29 @@ export default function CreateHotelPage() {
       }
 
       toast.success("Hotel berhasil dibuat")
-      router.push("/dashboard/hotels")
-      router.refresh()
+      
+      // Ambil pagination state dari sessionStorage
+      let currentPage = '0'
+      if (typeof window !== 'undefined') {
+        currentPage = sessionStorage.getItem('hotels_page') || '0'
+        const pageIndex = parseInt(currentPage, 10)
+        if (isNaN(pageIndex) || pageIndex < 0) {
+          currentPage = '0'
+        }
+        console.log('Redirecting after hotel create - saved page:', currentPage)
+      }
+      
+      // Redirect dengan URL parameter yang benar
+      const redirectUrl = currentPage !== '0' ? `/dashboard/hotels?page=${currentPage}` : '/dashboard/hotels'
+      console.log('Redirecting to:', redirectUrl, 'with page:', currentPage)
+      
+      // Gunakan window.location untuk memastikan full page reload dan restore pagination
+      if (typeof window !== 'undefined') {
+        window.location.href = redirectUrl
+      } else {
+        router.push(redirectUrl)
+        router.refresh()
+      }
     } catch (error: unknown) {
       console.error('Error detail:', error)
       toast.error("Gagal membuat hotel")

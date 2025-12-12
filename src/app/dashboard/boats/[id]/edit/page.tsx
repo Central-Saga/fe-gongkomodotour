@@ -247,6 +247,8 @@ export default function EditBoatPage({ params }: EditBoatPageProps) {
       const cabins = response.data.cabin || []
 
       // Upload new boat files if any
+      // files state hanya berisi file baru yang diupload user, bukan file yang sudah ada
+      // File yang sudah ada ditampilkan melalui existingFiles prop di FileUpload component
       if (files.length > 0) {
         // Optimasi gambar sebelum upload untuk mempercepat upload
         setUploadProgress({
@@ -281,12 +283,13 @@ export default function EditBoatPage({ params }: EditBoatPageProps) {
         
         optimizedFiles.forEach((file: File, index: number) => {
           // Log file info untuk debugging
+          const originalFile = files[index]
           console.log(`Uploading optimized file ${index + 1}:`, {
             name: file.name,
             type: file.type,
             size: file.size,
-            originalSize: files[index].size,
-            compressionRatio: ((1 - file.size / files[index].size) * 100).toFixed(1) + '%'
+            originalSize: originalFile.size,
+            compressionRatio: ((1 - file.size / originalFile.size) * 100).toFixed(1) + '%'
           })
           
           // Pastikan file dikirim dengan nama yang benar
@@ -324,6 +327,7 @@ export default function EditBoatPage({ params }: EditBoatPageProps) {
       }
 
       // Upload new cabin files if any
+      // cabinFiles state hanya berisi file baru yang diupload user
       for (const [cabinIndex, cabinFilesList] of Object.entries(cabinFiles)) {
         if (cabinFilesList.length > 0) {
           const cabin = cabins[parseInt(cabinIndex)]
@@ -367,12 +371,13 @@ export default function EditBoatPage({ params }: EditBoatPageProps) {
           
           optimizedCabinFiles.forEach((file: File, index: number) => {
             // Log file info untuk debugging
+            const originalFile = cabinFilesList[index]
             console.log(`Uploading optimized cabin file ${index + 1} for cabin ${cabinId}:`, {
               name: file.name,
               type: file.type,
               size: file.size,
-              originalSize: cabinFilesList[index].size,
-              compressionRatio: ((1 - file.size / cabinFilesList[index].size) * 100).toFixed(1) + '%'
+              originalSize: originalFile.size,
+              compressionRatio: ((1 - file.size / originalFile.size) * 100).toFixed(1) + '%'
             })
             
             // Pastikan file dikirim dengan nama yang benar
@@ -410,9 +415,41 @@ export default function EditBoatPage({ params }: EditBoatPageProps) {
       }
 
       setUploadProgress(null) // Tutup progress indicator saat sukses
+      
+      // Reset semua state file setelah submit berhasil
+      setFiles([])
+      setFileTitles([])
+      setFileDescriptions([])
+      setCabinFiles({})
+      setCabinFileTitles({})
+      setCabinFileDescriptions({})
+      
       toast.success("Kapal berhasil diperbarui")
-      router.push("/dashboard/boats")
-      router.refresh()
+      
+      // Ambil pagination state dari sessionStorage
+      let currentPage = '0'
+      if (typeof window !== 'undefined') {
+        currentPage = sessionStorage.getItem('boats_page') || '0'
+        // Pastikan page index valid (0-based, jadi page 3 = index 2)
+        const pageIndex = parseInt(currentPage, 10)
+        if (isNaN(pageIndex) || pageIndex < 0) {
+          currentPage = '0'
+        }
+        console.log('Redirecting after edit - saved page:', currentPage)
+      }
+      
+      // Redirect dengan URL parameter yang benar
+      // Gunakan replace untuk menghindari history stack yang tidak perlu
+      const redirectUrl = currentPage !== '0' ? `/dashboard/boats?page=${currentPage}` : '/dashboard/boats'
+      console.log('Redirecting to:', redirectUrl, 'with page:', currentPage)
+      
+      // Gunakan window.location untuk memastikan full page reload dan restore pagination
+      if (typeof window !== 'undefined') {
+        window.location.href = redirectUrl
+      } else {
+        router.push(redirectUrl)
+        router.refresh()
+      }
     } catch (error: unknown) {
       console.error('Error detail:', error)
       setUploadProgress(null) // Tutup progress indicator saat error

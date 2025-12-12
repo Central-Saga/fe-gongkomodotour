@@ -381,8 +381,29 @@ export default function CreateTripPage() {
         // Clear cache trips sebelum redirect
         apiCache.clear('/api/trips')
         toast.success("Trip berhasil dibuat")
-        router.push("/dashboard/trips?refresh=" + Date.now())
-        router.refresh()
+        
+        // Ambil pagination state dari sessionStorage
+        let currentPage = '0'
+        if (typeof window !== 'undefined') {
+          currentPage = sessionStorage.getItem('trips_page') || '0'
+          const pageIndex = parseInt(currentPage, 10)
+          if (isNaN(pageIndex) || pageIndex < 0) {
+            currentPage = '0'
+          }
+          console.log('Redirecting after trip create - saved page:', currentPage)
+        }
+        
+        // Redirect dengan URL parameter yang benar
+        const redirectUrl = currentPage !== '0' ? `/dashboard/trips?page=${currentPage}` : '/dashboard/trips'
+        console.log('Redirecting to:', redirectUrl, 'with page:', currentPage)
+        
+        // Gunakan window.location untuk memastikan full page reload dan restore pagination
+        if (typeof window !== 'undefined') {
+          window.location.href = redirectUrl
+        } else {
+          router.push(redirectUrl)
+          router.refresh()
+        }
       }
     } catch (error: unknown) {
       console.error("Error creating trip:", error)

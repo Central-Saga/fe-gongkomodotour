@@ -69,12 +69,29 @@ export function FileUpload({
     console.log('Files accepted:', acceptedFiles.length, acceptedFiles)
     console.log('Current files state:', files.length)
     
-    if (files.length + acceptedFiles.length > maxFiles) {
-      toast.error(`Maksimal ${maxFiles} file`)
+    // Cek total file (existing + new) tidak melebihi maxFiles
+    const totalFiles = files.length + acceptedFiles.length
+    if (totalFiles > maxFiles) {
+      toast.error(`Maksimal ${maxFiles} file. Anda sudah memiliki ${files.length} file.`)
       return
     }
 
-    const newFiles = acceptedFiles.map(file => ({
+    // Filter file yang sudah ada berdasarkan nama dan ukuran untuk mencegah duplikasi
+    const existingFileNames = new Set(files.map(f => `${f.file.name}-${f.file.size}`))
+    const uniqueNewFiles = acceptedFiles.filter(file => {
+      const fileKey = `${file.name}-${file.size}`
+      if (existingFileNames.has(fileKey)) {
+        toast.warning(`File ${file.name} sudah ada dalam daftar`)
+        return false
+      }
+      return true
+    })
+
+    if (uniqueNewFiles.length === 0) {
+      return // Semua file sudah ada
+    }
+
+    const newFiles = uniqueNewFiles.map(file => ({
       file,
       preview: URL.createObjectURL(file),
       title: file.name,
@@ -87,8 +104,9 @@ export function FileUpload({
       const updated = [...prev, ...newFiles]
       console.log('Files state updated:', updated.length, updated)
       
-      // Call onUpload with updated files after state is set
-      setTimeout(() => {
+      // Call onUpload dengan file yang benar-benar baru saja
+      // Gunakan requestAnimationFrame untuk memastikan state sudah ter-update
+      requestAnimationFrame(() => {
         onUpload(
           updated.map(f => f.file),
           updated.map(f => f.title),
@@ -97,7 +115,7 @@ export function FileUpload({
           console.error('Error uploading files:', error)
           toast.error('Gagal mengupload file')
         })
-      }, 0)
+      })
       
       return updated
     })
@@ -134,6 +152,18 @@ export function FileUpload({
       setFiles(prev => {
         const newFiles = prev.filter((_, i) => i !== index)
         console.log('Files after removal:', newFiles)
+        
+        // Update onUpload dengan file yang tersisa
+        requestAnimationFrame(() => {
+          onUpload(
+            newFiles.map(f => f.file),
+            newFiles.map(f => f.title),
+            newFiles.map(f => f.description)
+          ).catch(error => {
+            console.error('Error updating files after removal:', error)
+          })
+        })
+        
         return newFiles
       })
     } else {

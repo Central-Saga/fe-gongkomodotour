@@ -43,7 +43,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { ChevronDown, FileDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Plus, MoreHorizontal, Pencil, Trash } from 'lucide-react'
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
 import { Boat, BoatAsset } from "@/types/boats"
@@ -213,19 +214,118 @@ export function DataTable({
   setData,
 }: DataTableProps<Boat>) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
   const [expanded, setExpanded] = useState<ExpandedState>({})
   const [selectedImage, setSelectedImage] = useState<BoatAsset | null>(null)
-  const [pagination, setPagination] = useState({
-    pageIndex: 0,
-    pageSize: 10,
-  })
+  
+  // Initialize pagination from URL or sessionStorage
+  const getInitialPagination = () => {
+    // Cek URL parameter dulu
+    const pageParam = searchParams.get('page')
+    if (pageParam !== null) {
+      const pageIndex = parseInt(pageParam, 10)
+      if (!isNaN(pageIndex) && pageIndex >= 0) {
+        return { pageIndex, pageSize: 10 }
+      }
+    }
+    
+    // Jika tidak ada di URL, cek sessionStorage
+    if (typeof window !== 'undefined') {
+      const savedPage = sessionStorage.getItem('boats_page')
+      const savedPageSize = sessionStorage.getItem('boats_pageSize')
+      if (savedPage !== null) {
+        const pageIndex = parseInt(savedPage, 10)
+        const pageSize = savedPageSize ? parseInt(savedPageSize, 10) : 10
+        if (!isNaN(pageIndex) && pageIndex >= 0) {
+          return { pageIndex, pageSize }
+        }
+      }
+    }
+    
+    return { pageIndex: 0, pageSize: 10 }
+  }
+  
+  const [pagination, setPagination] = useState(getInitialPagination())
   const [isDeleting, setIsDeleting] = useState(false)
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set())
   const [imageLoading, setImageLoading] = useState<Set<string>>(new Set())
+
+  // Restore pagination from URL on mount or when URL changes
+  useEffect(() => {
+    const pageParam = searchParams.get('page')
+    if (pageParam !== null) {
+      const pageIndex = parseInt(pageParam, 10)
+      if (!isNaN(pageIndex) && pageIndex >= 0) {
+        // Update pagination state - langsung set, tidak perlu cek prev
+        setPagination(prev => {
+          // Pastikan benar-benar update jika berbeda
+          if (prev.pageIndex !== pageIndex) {
+            console.log('Restoring pagination from URL:', pageIndex)
+            return { ...prev, pageIndex }
+          }
+          return prev
+        })
+        // Simpan ke sessionStorage juga
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('boats_page', pageIndex.toString())
+        }
+      }
+    } else {
+      // Jika tidak ada parameter page di URL, cek sessionStorage
+      if (typeof window !== 'undefined') {
+        const savedPage = sessionStorage.getItem('boats_page')
+        if (savedPage !== null) {
+          const pageIndex = parseInt(savedPage, 10)
+          if (!isNaN(pageIndex) && pageIndex >= 0) {
+            setPagination(prev => {
+              if (prev.pageIndex !== pageIndex) {
+                console.log('Restoring pagination from sessionStorage:', pageIndex)
+                return { ...prev, pageIndex }
+              }
+              return prev
+            })
+            // Update URL juga
+            const newUrl = new URL(window.location.href)
+            if (pageIndex === 0) {
+              newUrl.searchParams.delete('page')
+            } else {
+              newUrl.searchParams.set('page', pageIndex.toString())
+            }
+            window.history.replaceState({}, '', newUrl.toString())
+          }
+        }
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
+
+  // Save pagination to sessionStorage and update URL whenever it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('boats_page', pagination.pageIndex.toString())
+      sessionStorage.setItem('boats_pageSize', pagination.pageSize.toString())
+      
+      // Update URL dengan parameter page
+      const currentUrl = new URL(window.location.href)
+      const currentPage = currentUrl.searchParams.get('page')
+      
+      // Hanya update URL jika berbeda dengan state saat ini
+      if (currentPage !== pagination.pageIndex.toString()) {
+        const newUrl = new URL(window.location.href)
+        if (pagination.pageIndex === 0) {
+          newUrl.searchParams.delete('page')
+        } else {
+          newUrl.searchParams.set('page', pagination.pageIndex.toString())
+        }
+        // Update URL tanpa reload page
+        window.history.replaceState({}, '', newUrl.toString())
+      }
+    }
+  }, [pagination])
 
   // Fungsi untuk handle error gambar
   const handleImageError = (imageSrc: string) => {
@@ -266,6 +366,21 @@ export function DataTable({
   }
 
   const handleEdit = (boat: Boat) => {
+    // Simpan pagination state sebelum navigate ke edit page
+    if (typeof window !== 'undefined') {
+      const currentPage = pagination.pageIndex.toString()
+      console.log('Saving pagination before edit:', currentPage)
+      sessionStorage.setItem('boats_page', currentPage)
+      sessionStorage.setItem('boats_pageSize', pagination.pageSize.toString())
+      // Juga simpan ke URL untuk memastikan
+      const currentUrl = new URL(window.location.href)
+      if (pagination.pageIndex === 0) {
+        currentUrl.searchParams.delete('page')
+      } else {
+        currentUrl.searchParams.set('page', currentPage)
+      }
+      window.history.replaceState({}, '', currentUrl.toString())
+    }
     router.push(`/dashboard/boats/${boat.id}/edit`)
   }
 
@@ -360,7 +475,25 @@ export function DataTable({
     onRowSelectionChange: setRowSelection,
     onExpandedChange: setExpanded,
     getExpandedRowModel: getExpandedRowModel(),
-    onPaginationChange: setPagination,
+    onPaginationChange: (updater) => {
+      // Handle pagination change dengan menyimpan ke sessionStorage
+      if (typeof updater === 'function') {
+        setPagination(prev => {
+          const newPagination = updater(prev)
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem('boats_page', newPagination.pageIndex.toString())
+            sessionStorage.setItem('boats_pageSize', newPagination.pageSize.toString())
+          }
+          return newPagination
+        })
+      } else {
+        setPagination(updater)
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('boats_page', updater.pageIndex.toString())
+          sessionStorage.setItem('boats_pageSize', updater.pageSize.toString())
+        }
+      }
+    },
     state: {
       sorting,
       columnFilters,
@@ -370,6 +503,16 @@ export function DataTable({
       pagination,
     },
   })
+  
+  // Force update table pagination jika berbeda dengan state (hanya saat mount atau URL berubah)
+  useEffect(() => {
+    const tablePageIndex = table.getState().pagination.pageIndex
+    if (tablePageIndex !== pagination.pageIndex) {
+      console.log('Syncing table pagination with state:', pagination.pageIndex, 'current table:', tablePageIndex)
+      table.setPageIndex(pagination.pageIndex)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pagination.pageIndex])
 
   const renderSubComponent = ({ row }: { row: Row<Boat> }) => {
     const boat = row.original as Boat
@@ -819,6 +962,7 @@ export function DataTable({
                 <React.Fragment key={row.id}>
                   <TableRow
                     data-state={row.getIsSelected() && "selected"}
+                    className={row.getIsSelected() ? "bg-muted/50" : ""}
                   >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id} className="break-words">
@@ -887,7 +1031,13 @@ export function DataTable({
                 variant="outline"
                 size="icon"
                 className="h-8 w-8"
-                onClick={() => table.setPageIndex(0)}
+                onClick={() => {
+                  table.setPageIndex(0)
+                  // Simpan ke sessionStorage langsung
+                  if (typeof window !== 'undefined') {
+                    sessionStorage.setItem('boats_page', '0')
+                  }
+                }}
                 disabled={!table.getCanPreviousPage()}
               >
                 <ChevronsLeft className="h-4 w-4" />
@@ -896,7 +1046,14 @@ export function DataTable({
                 variant="outline"
                 size="icon"
                 className="h-8 w-8"
-                onClick={() => table.previousPage()}
+                onClick={() => {
+                  table.previousPage()
+                  // Simpan ke sessionStorage langsung
+                  if (typeof window !== 'undefined') {
+                    const newPage = Math.max(0, pagination.pageIndex - 1)
+                    sessionStorage.setItem('boats_page', newPage.toString())
+                  }
+                }}
                 disabled={!table.getCanPreviousPage()}
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -905,7 +1062,14 @@ export function DataTable({
                 variant="outline"
                 size="icon"
                 className="h-8 w-8"
-                onClick={() => table.nextPage()}
+                onClick={() => {
+                  table.nextPage()
+                  // Simpan ke sessionStorage langsung
+                  if (typeof window !== 'undefined') {
+                    const newPage = pagination.pageIndex + 1
+                    sessionStorage.setItem('boats_page', newPage.toString())
+                  }
+                }}
                 disabled={!table.getCanNextPage()}
               >
                 <ChevronRight className="h-4 w-4" />
@@ -914,7 +1078,14 @@ export function DataTable({
                 variant="outline"
                 size="icon"
                 className="h-8 w-8"
-                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+                onClick={() => {
+                  const lastPage = table.getPageCount() - 1
+                  table.setPageIndex(lastPage)
+                  // Simpan ke sessionStorage langsung
+                  if (typeof window !== 'undefined') {
+                    sessionStorage.setItem('boats_page', lastPage.toString())
+                  }
+                }}
                 disabled={!table.getCanNextPage()}
               >
                 <ChevronsRight className="h-4 w-4" />

@@ -13,6 +13,24 @@ const ActionsCell = ({ row }: { row: { original: Boat } }) => {
   const boat = row.original
 
   const handleEdit = () => {
+    // Simpan pagination state sebelum navigate ke edit page
+    // Ambil dari table state jika ada, atau dari sessionStorage
+    if (typeof window !== 'undefined') {
+      // Coba ambil dari URL dulu
+      const urlParams = new URLSearchParams(window.location.search)
+      const pageParam = urlParams.get('page')
+      
+      if (pageParam !== null) {
+        sessionStorage.setItem('boats_page', pageParam)
+      } else {
+        // Jika tidak ada di URL, cek sessionStorage
+        const savedPage = sessionStorage.getItem('boats_page')
+        if (savedPage === null) {
+          // Jika tidak ada, simpan page 0 sebagai default
+          sessionStorage.setItem('boats_page', '0')
+        }
+      }
+    }
     router.push(`/dashboard/boats/${boat.id}/edit`)
   }
 
