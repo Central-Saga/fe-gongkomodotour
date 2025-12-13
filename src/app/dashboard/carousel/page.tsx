@@ -5,8 +5,9 @@ import { apiRequest } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Trash2, Upload, Plus, Pencil } from "lucide-react";
+import { Trash2, Upload, Plus, Pencil, Loader2 } from "lucide-react";
 import Image from "next/image";
+import { optimizeImages } from "@/lib/imageOptimization";
 import {
   Dialog,
   DialogContent,
@@ -73,6 +74,12 @@ export default function CarouselAdmin() {
   const [message, setMessage] = useState<{text: string, type: 'success' | 'error'} | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{
+    current: number
+    total: number
+    message: string
+    stage: 'optimizing' | 'uploading'
+  } | null>(null);
   
   // Refs untuk file input
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -132,33 +139,108 @@ export default function CarouselAdmin() {
       setIsUploading(true);
       let carouselId = null;
       
-      // 1. Submit data utama carousel (tanpa gambar)
-      const carouselPayload = {
-        title: newTitle,
-        order_num: parseInt(newOrderNum),
-        is_active: newIsActive === '1',
-      };
-      const response = await apiRequest('POST', '/api/carousels', carouselPayload);
-      
-      // Ambil id dari response
-      carouselId = (response as { data?: { id: number } })?.data?.id ?? null;
-      if (!carouselId) throw new Error('Gagal mendapatkan ID carousel');
-
-      // 2. Upload gambar jika ada file
+      // 2. Upload gambar jika ada file (dengan optimasi seperti boats/trips/galleries/blogs)
       if (newImageFile) {
+        // Optimasi gambar sebelum upload - set progress indicator SEBELUM optimasi
+        // Set progress indicator SEBELUM optimasi dimulai
+        setUploadProgress({
+          current: 0,
+          total: 1,
+          message: 'Mengoptimasi gambar...',
+          stage: 'optimizing'
+        })
+        
+        // Beri waktu sedikit agar UI bisa render progress indicator
+        await new Promise(resolve => setTimeout(resolve, 200))
+
+        const optimizedFiles = await optimizeImages(
+          [newImageFile],
+          {
+            maxWidth: 1920,
+            maxHeight: 1920,
+            quality: 0.85,
+            maxSizeMB: 2
+          },
+          (current, total) => {
+            // Update progress selama optimasi
+            setUploadProgress({
+              current,
+              total,
+              message: `Mengoptimasi gambar ${current}/${total}...`,
+              stage: 'optimizing'
+            })
+          }
+        )
+        
+        // Set progress ke 100% setelah optimasi selesai
+        setUploadProgress({
+          current: 1,
+          total: 1,
+          message: 'Optimasi selesai, mempersiapkan upload...',
+          stage: 'optimizing'
+        })
+        
+        // Beri waktu sedikit untuk menampilkan progress 100%
+        await new Promise(resolve => setTimeout(resolve, 200))
+
+        const optimizedFile = optimizedFiles[0]
+        
+        // Log file info untuk debugging
+        console.log('Uploading optimized file:', {
+          name: optimizedFile.name,
+          type: optimizedFile.type,
+          size: optimizedFile.size,
+          originalSize: newImageFile.size,
+          compressionRatio: ((1 - optimizedFile.size / newImageFile.size) * 100).toFixed(1) + '%'
+        })
+
+        // 1. Submit data utama carousel (setelah optimasi gambar)
+        const carouselPayload = {
+          title: newTitle,
+          order_num: parseInt(newOrderNum),
+          is_active: newIsActive === '1',
+        };
+        const response = await apiRequest('POST', '/api/carousels', carouselPayload);
+        
+        // Ambil id dari response
+        carouselId = (response as { data?: { id: number } })?.data?.id ?? null;
+        if (!carouselId) throw new Error('Gagal mendapatkan ID carousel');
+
         const formData = new FormData();
         formData.append('model_type', 'carousel');
         formData.append('model_id', carouselId.toString());
         formData.append('is_external', '0');
-        formData.append('files[]', newImageFile);
+        
+        setUploadProgress({
+          current: 0,
+          total: 1,
+          message: 'Mengupload gambar...',
+          stage: 'uploading'
+        })
+        
+        // Beri waktu sedikit untuk menampilkan progress upload
+        await new Promise(resolve => setTimeout(resolve, 200))
+        
+        formData.append('files[]', optimizedFile, optimizedFile.name);
         formData.append('file_titles[]', newTitle);
         formData.append('file_descriptions[]', '');
         
         try {
           await apiRequest('POST', '/api/assets/multiple', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
+            timeout: 120000, // 2 menit untuk upload file
           });
+          console.log('Carousel file uploaded successfully')
+          setUploadProgress({
+            current: 1,
+            total: 1,
+            message: 'Upload selesai!',
+            stage: 'uploading'
+          })
+          // Beri waktu untuk menampilkan progress 100%
+          await new Promise(resolve => setTimeout(resolve, 300))
+          setUploadProgress(null)
         } catch (assetErr: unknown) {
+          setUploadProgress(null)
           let errorMsg = 'Unknown error';
           if (assetErr && typeof assetErr === 'object' && 'message' in assetErr) {
             errorMsg = String(assetErr.message);
@@ -177,6 +259,17 @@ export default function CarouselAdmin() {
           return;
         }
       } else if (newImageUrl) {
+        // 1. Submit data utama carousel (tanpa gambar)
+        const carouselPayload = {
+          title: newTitle,
+          order_num: parseInt(newOrderNum),
+          is_active: newIsActive === '1',
+        };
+        const response = await apiRequest('POST', '/api/carousels', carouselPayload);
+        
+        // Ambil id dari response
+        carouselId = (response as { data?: { id: number } })?.data?.id ?? null;
+        if (!carouselId) throw new Error('Gagal mendapatkan ID carousel');
         // Jika hanya URL, update carousel dengan assets eksternal
         await apiRequest('PUT', `/api/carousels/${carouselId}`, {
           assets: [
@@ -189,6 +282,8 @@ export default function CarouselAdmin() {
         });
       }
 
+      setUploadProgress(null) // Tutup progress indicator saat sukses
+      
       setNewImageUrl("");
       setNewImageFile(null);
       setNewTitle("");
@@ -201,6 +296,7 @@ export default function CarouselAdmin() {
       setIsAddDialogOpen(false);
       fetchCarouselImages();
     } catch (error) {
+      setUploadProgress(null) // Tutup progress indicator saat error
       setMessage({
         text: "Gagal menambahkan gambar ke carousel",
         type: "error"
@@ -208,6 +304,7 @@ export default function CarouselAdmin() {
       console.error("Error adding image:", error);
     } finally {
       setIsUploading(false);
+      setUploadProgress(null) // Pastikan progress indicator ditutup
     }
   };
 
@@ -269,25 +366,99 @@ export default function CarouselAdmin() {
         is_active: editIsActive === '1',
       };
 
-      // 2. Jika ada file baru, upload dulu dan hapus asset lama
+      // 2. Jika ada file baru, upload dulu dan hapus asset lama (dengan optimasi)
       if (editImageFile) {
         // Hapus asset lama terlebih dahulu (jika ada)
         await cleanupOldAssets(currentItem.id, currentItem.assets);
+
+        // Optimasi gambar sebelum upload - set progress indicator SEBELUM optimasi
+        setUploadProgress({
+          current: 0,
+          total: 1,
+          message: 'Mengoptimasi gambar...',
+          stage: 'optimizing'
+        })
+        
+        // Beri waktu sedikit agar UI bisa render progress indicator
+        await new Promise(resolve => setTimeout(resolve, 200))
+
+        const optimizedFiles = await optimizeImages(
+          [editImageFile],
+          {
+            maxWidth: 1920,
+            maxHeight: 1920,
+            quality: 0.85,
+            maxSizeMB: 2
+          },
+          (current, total) => {
+            // Update progress selama optimasi
+            setUploadProgress({
+              current,
+              total,
+              message: `Mengoptimasi gambar ${current}/${total}...`,
+              stage: 'optimizing'
+            })
+          }
+        )
+        
+        // Set progress ke 100% setelah optimasi selesai
+        setUploadProgress({
+          current: 1,
+          total: 1,
+          message: 'Optimasi selesai, mempersiapkan upload...',
+          stage: 'optimizing'
+        })
+        
+        // Beri waktu sedikit untuk menampilkan progress 100%
+        await new Promise(resolve => setTimeout(resolve, 300))
+
+        const optimizedFile = optimizedFiles[0]
+        
+        // Log file info untuk debugging
+        console.log('Uploading optimized file:', {
+          name: optimizedFile.name,
+          type: optimizedFile.type,
+          size: optimizedFile.size,
+          originalSize: editImageFile.size,
+          compressionRatio: ((1 - optimizedFile.size / editImageFile.size) * 100).toFixed(1) + '%'
+        })
 
         // Upload asset baru
         const formData = new FormData();
         formData.append('model_type', 'carousel');
         formData.append('model_id', currentItem.id.toString());
         formData.append('is_external', '0');
-        formData.append('files[]', editImageFile);
+        
+        setUploadProgress({
+          current: 0,
+          total: 1,
+          message: 'Mengupload gambar...',
+          stage: 'uploading'
+        })
+        
+        // Beri waktu sedikit untuk menampilkan progress upload
+        await new Promise(resolve => setTimeout(resolve, 200))
+        
+        formData.append('files[]', optimizedFile, optimizedFile.name);
         formData.append('file_titles[]', editTitle);
         formData.append('file_descriptions[]', '');
         
         try {
           await apiRequest('POST', '/api/assets/multiple', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
+            timeout: 120000, // 2 menit untuk upload file
           });
+          console.log('Carousel file uploaded successfully')
+          setUploadProgress({
+            current: 1,
+            total: 1,
+            message: 'Upload selesai!',
+            stage: 'uploading'
+          })
+          // Beri waktu untuk menampilkan progress 100%
+          await new Promise(resolve => setTimeout(resolve, 300))
+          setUploadProgress(null)
         } catch (assetErr: unknown) {
+          setUploadProgress(null)
           let errorMsg = 'Unknown error';
           if (assetErr && typeof assetErr === 'object' && 'message' in assetErr) {
             errorMsg = String(assetErr.message);
@@ -324,6 +495,8 @@ export default function CarouselAdmin() {
       // 3. Update carousel
       await apiRequest('PUT', `/api/carousels/${currentItem.id}`, updatePayload);
       
+      setUploadProgress(null) // Tutup progress indicator saat sukses
+      
       setMessage({
         text: "Gambar berhasil diperbarui",
         type: "success"
@@ -331,6 +504,7 @@ export default function CarouselAdmin() {
       setIsEditDialogOpen(false);
       fetchCarouselImages();
     } catch (error: unknown) {
+      setUploadProgress(null) // Tutup progress indicator saat error
       let errorMsg = 'Gagal memperbarui gambar';
       if (error && typeof error === 'object' && 'message' in error) {
         errorMsg = String(error.message);
@@ -348,6 +522,7 @@ export default function CarouselAdmin() {
       console.error("Error editing image:", error);
     } finally {
       setIsUploading(false);
+      setUploadProgress(null) // Pastikan progress indicator ditutup
       setEditImageIndex(null);
       setEditImageUrl("");
       setEditImageFile(null);
@@ -393,6 +568,32 @@ export default function CarouselAdmin() {
 
   return (
     <div className="container mx-auto py-10">
+      {/* Progress Indicator */}
+      {uploadProgress && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <div className="flex items-center gap-4 mb-4">
+              <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+              <div className="flex-1">
+                <p className="font-semibold text-gray-900">
+                  {uploadProgress.stage === 'optimizing' ? 'Mengoptimasi Gambar' : 'Mengupload Gambar'}
+                </p>
+                <p className="text-sm text-gray-600">{uploadProgress.message}</p>
+              </div>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2.5">
+              <div
+                className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }}
+              />
+            </div>
+            <p className="text-xs text-gray-500 mt-2 text-center">
+              {uploadProgress.current} dari {uploadProgress.total} file
+            </p>
+          </div>
+        </div>
+      )}
+
       <h1 className="text-3xl font-bold mb-6">Kelola Gambar Carousel</h1>
 
       {message && (
