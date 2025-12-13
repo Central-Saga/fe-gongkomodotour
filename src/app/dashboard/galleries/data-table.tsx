@@ -51,6 +51,7 @@ import { useRouter } from "next/navigation"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
 import { apiRequest } from "@/lib/api"
+import { apiCache } from "@/lib/browserCache"
 import Image from "next/image"
 import { ImageModal } from "@/components/ui/image-modal"
 
@@ -155,14 +156,61 @@ export function DataTable({
   })
   const [isDeleting, setIsDeleting] = useState(false)
   const [selectedImage, setSelectedImage] = useState<GalleryAsset | null>(null)
+  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set())
+  const [imageLoading, setImageLoading] = useState<Set<string>>(new Set())
+
+  // Fungsi untuk handle error gambar
+  const handleImageError = (imageSrc: string) => {
+    console.error("Image failed to load:", imageSrc)
+    setImageErrors(prev => new Set(prev).add(imageSrc))
+    setImageLoading(prev => {
+      const newSet = new Set(prev)
+      newSet.delete(imageSrc)
+      return newSet
+    })
+  }
+
+  // Fungsi untuk handle loading gambar
+  const handleImageLoad = (imageSrc: string) => {
+    setImageLoading(prev => {
+      const newSet = new Set(prev)
+      newSet.delete(imageSrc)
+      return newSet
+    })
+  }
+
+  // Fungsi untuk mendapatkan safe image source
+  const getSafeImageSrc = (imageSrc: string, fallback: string = '/placeholder-image.png') => {
+    if (!imageSrc || imageErrors.has(imageSrc)) {
+      return fallback
+    }
+    return imageSrc
+  }
+
+  // Fungsi untuk retry loading gambar
+  const retryImageLoad = (imageSrc: string) => {
+    setImageErrors(prev => {
+      const newSet = new Set(prev)
+      newSet.delete(imageSrc)
+      return newSet
+    })
+    setImageLoading(prev => new Set(prev).add(imageSrc))
+  }
 
   const handleDelete = async (gallery: Gallery) => {
     try {
       setIsDeleting(true)
       await apiRequest('DELETE', `/api/galleries/${gallery.id}`)
+      // Clear cache galleries sebelum refetch
+      apiCache.clear('/api/galleries')
       toast.success("Gallery berhasil dihapus")
-      // Refresh data dengan memanggil ulang API
-      const response = await apiRequest<{ data: Gallery[] }>('GET', '/api/galleries')
+      // Refresh data dengan memanggil ulang API (tanpa cache)
+      const response = await apiRequest<{ data: Gallery[] }>(
+        'GET', 
+        '/api/galleries',
+        undefined,
+        { useCache: false }
+      )
       setData(response.data || [])
     } catch (error) {
       console.error("Error deleting gallery:", error)
@@ -280,40 +328,63 @@ export function DataTable({
               <div className="flex justify-center">
                 {gallery.assets.slice(0, 1).map((asset, index) => {
                   const imageUrl = getImageUrl(asset.file_url)
-                  console.log('Gallery asset:', {
-                    asset,
-                    originalFileUrl: asset.file_url,
-                    constructedImageUrl: imageUrl
-                  })
+                  const isError = imageErrors.has(imageUrl)
+                  const isLoading = imageLoading.has(imageUrl)
+                  
                   return (
                     <div 
                       key={index} 
                       className="space-y-2 cursor-pointer group max-w-md"
-                      onClick={() => setSelectedImage(asset)}
+                      onClick={() => !isError && setSelectedImage(asset)}
                     >
                       <div className="relative aspect-[4/3] rounded-lg overflow-hidden border border-gray-200">
-                        <Image
-                          src={imageUrl}
-                          alt={asset.title || `Gambar Gallery`}
-                          fill
-                          sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 400px"
-                          className="object-cover transition-transform duration-200 group-hover:scale-105"
-                          onError={(e) => {
-                            console.error(`Error loading image:`, e)
-                            console.error(`Failed URL:`, imageUrl)
-                            const target = e.target as HTMLImageElement
-                            target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5YTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlIE5vdCBGb3VuZDwvdGV4dD48L3N2Zz4='
-                          }}
-                          onLoad={() => {
-                            console.log(`Image loaded successfully:`, imageUrl)
-                          }}
-                          unoptimized={true}
-                        />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200" />
+                        {isLoading && (
+                          <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                          </div>
+                        )}
+                        {isError ? (
+                          <div className="absolute inset-0 bg-gray-100 flex flex-col items-center justify-center p-2">
+                            <div className="text-gray-400 mb-2">
+                              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                retryImageLoad(imageUrl)
+                              }}
+                              className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 transition-colors"
+                            >
+                              Retry
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <Image
+                              src={getSafeImageSrc(imageUrl)}
+                              alt={asset.title || `Gambar Gallery`}
+                              fill
+                              sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 400px"
+                              className="object-cover transition-transform duration-200 group-hover:scale-105"
+                              onError={() => handleImageError(imageUrl)}
+                              onLoad={() => handleImageLoad(imageUrl)}
+                              unoptimized={true}
+                              priority={index === 0}
+                            />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200" />
+                          </>
+                        )}
                       </div>
                       {asset.title && (
-                        <p className="text-sm text-gray-600 text-center truncate" title={asset.title}>
+                        <p className="text-sm text-gray-600 text-center break-words" title={asset.title}>
                           {asset.title}
+                        </p>
+                      )}
+                      {asset.description && (
+                        <p className="text-xs text-gray-500 text-center break-words" title={asset.description}>
+                          {asset.description}
                         </p>
                       )}
                     </div>
@@ -328,8 +399,9 @@ export function DataTable({
             <ImageModal
               isOpen={!!selectedImage}
               onClose={() => setSelectedImage(null)}
-              imageUrl={getImageUrl(selectedImage.file_url)}
+              imageUrl={getSafeImageSrc(getImageUrl(selectedImage.file_url))}
               title={selectedImage.title}
+              description={selectedImage.description || undefined}
             />
           )}
         </div>

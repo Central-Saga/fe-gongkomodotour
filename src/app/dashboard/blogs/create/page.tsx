@@ -25,9 +25,11 @@ import { useState, useEffect } from "react"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { apiRequest } from "@/lib/api"
+import { apiCache } from "@/lib/browserCache"
 import { FileUpload } from "@/components/ui/file-upload"
 import { ApiResponse } from "@/types/role"
 import { TipTapEditor } from "@/components/ui/tiptap-editor"
+import { optimizeImages } from "@/lib/imageOptimization"
 
 interface UserData {
   id: number
@@ -51,6 +53,12 @@ export default function CreateBlogPage() {
   const [fileTitles, setFileTitles] = useState<string[]>([])
   const [fileDescriptions, setFileDescriptions] = useState<string[]>([])
   const [userData, setUserData] = useState<UserData | null>(null)
+  const [uploadProgress, setUploadProgress] = useState<{
+    current: number
+    total: number
+    message: string
+    stage: 'optimizing' | 'uploading'
+  } | null>(null)
 
   useEffect(() => {
     // Ambil data user dari localStorage saat komponen dimount
@@ -108,8 +116,9 @@ export default function CreateBlogPage() {
   const onSubmit = async (values: z.infer<typeof blogSchema>) => {
     try {
       setIsSubmitting(true)
-      
-      // Debug log untuk melihat data user saat submit
+      console.log('Creating new blog')
+      console.log('Form values:', values)
+      console.log('New files to upload:', files.length)
       console.log('User data at submit:', userData)
       
       if (!userData?.id) {
@@ -117,7 +126,7 @@ export default function CreateBlogPage() {
         throw new Error('User ID tidak ditemukan')
       }
 
-      // 1. Create blog dulu untuk mendapatkan blog_id
+      // 1. Create blog dulu untuk mendapatkan blog_id (seperti trips/galleries - tanpa headers)
       const blogData = {
         title: values.title,
         content: values.content,
@@ -126,17 +135,12 @@ export default function CreateBlogPage() {
         author_id: userData.id
       }
 
-      console.log('Blog data to be sent:', blogData) // Debug log
+      console.log('Sending POST request to API with payload:', blogData)
 
       const response = await apiRequest<ApiResponse<{ id: number }>>(
         'POST',
         '/api/blogs',
-        blogData,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
+        blogData
       )
 
       if (!response || !response.data) {
@@ -144,45 +148,147 @@ export default function CreateBlogPage() {
       }
 
       const blogId = response.data.id
+      console.log('Blog created with ID:', blogId)
 
-      // 2. Upload blog files jika ada
+      // 2. Upload blog files jika ada (dengan optimasi seperti boats)
       if (files.length > 0) {
+        // Optimasi gambar sebelum upload
+        setUploadProgress({
+          current: 0,
+          total: files.length,
+          message: 'Mengoptimasi gambar...',
+          stage: 'optimizing'
+        })
+
+        const optimizedFiles = await optimizeImages(
+          files,
+          {
+            maxWidth: 1920,
+            maxHeight: 1920,
+            quality: 0.85,
+            maxSizeMB: 2
+          },
+          (current, total) => {
+            setUploadProgress({
+              current,
+              total,
+              message: `Mengoptimasi gambar ${current}/${total}...`,
+              stage: 'optimizing'
+            })
+          }
+        )
+
         const formData = new FormData()
         formData.append('model_type', 'blog')
         formData.append('model_id', blogId.toString())
         formData.append('is_external', '0')
         
-        files.forEach((file: File, index: number) => {
-          formData.append('files[]', file)
-          formData.append('file_titles[]', fileTitles[index])
+        setUploadProgress({
+          current: 0,
+          total: optimizedFiles.length,
+          message: 'Mengupload gambar...',
+          stage: 'uploading'
+        })
+        
+        optimizedFiles.forEach((file: File, index: number) => {
+          // Log file info untuk debugging
+          const originalFile = files[index]
+          console.log(`Uploading optimized file ${index + 1}:`, {
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            originalSize: originalFile.size,
+            compressionRatio: ((1 - file.size / originalFile.size) * 100).toFixed(1) + '%'
+          })
+          
+          formData.append('files[]', file, file.name)
+          formData.append('file_titles[]', fileTitles[index] || file.name)
           formData.append('file_descriptions[]', fileDescriptions[index] || '')
         })
 
-        await apiRequest(
-          'POST',
-          '/api/assets/multiple',
-          formData,
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-          }
-        )
+        try {
+          await apiRequest(
+            'POST',
+            '/api/assets/multiple',
+            formData,
+            {
+              timeout: 120000, // 2 menit untuk upload file
+            }
+          )
+          console.log('Blog files uploaded successfully')
+          setUploadProgress(null)
+        } catch (uploadError: unknown) {
+          console.error('Error uploading blog files:', uploadError)
+          setUploadProgress(null)
+          throw uploadError
+        }
       }
 
+      setUploadProgress(null) // Tutup progress indicator saat sukses
+
+      // Clear cache blogs sebelum redirect
+      apiCache.clear('/api/blogs')
       toast.success("Blog berhasil dibuat")
-      router.push("/dashboard/blogs")
-      router.refresh()
+      
+      // Delay sebentar agar user bisa membaca toast notification sebelum redirect
+      await new Promise(resolve => setTimeout(resolve, 1000)) // 1 detik delay
+      
+      // Redirect setelah delay
+      if (typeof window !== 'undefined') {
+        window.location.href = '/dashboard/blogs'
+      } else {
+        router.push("/dashboard/blogs")
+        router.refresh()
+      }
     } catch (error: unknown) {
-      console.error('Error detail:', error)
-      toast.error("Gagal membuat blog")
+      console.error("Error creating blog:", error)
+      setUploadProgress(null) // Tutup progress indicator saat error
+      
+      if (error && typeof error === 'object' && 'response' in error) {
+        const apiError = error as { response: { data?: { message?: string }, statusText?: string } }
+        console.error("API Error Response:", apiError.response.data)
+        toast.error(`Gagal membuat blog: ${apiError.response.data?.message || apiError.response.statusText}`)
+      } else if (error && typeof error === 'object' && 'request' in error) {
+        console.error("Network Error:", error)
+        toast.error("Gagal membuat blog: Tidak dapat terhubung ke server")
+      } else {
+        console.error("Other Error:", error)
+        toast.error("Gagal membuat blog: Terjadi kesalahan yang tidak diketahui")
+      }
     } finally {
       setIsSubmitting(false)
+      setUploadProgress(null) // Pastikan progress indicator ditutup
     }
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Progress Indicator */}
+      {uploadProgress && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <div className="flex items-center gap-4 mb-4">
+              <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+              <div className="flex-1">
+                <p className="font-semibold text-gray-900">
+                  {uploadProgress.stage === 'optimizing' ? 'Mengoptimasi Gambar' : 'Mengupload Gambar'}
+                </p>
+                <p className="text-sm text-gray-600">{uploadProgress.message}</p>
+              </div>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2.5">
+              <div
+                className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }}
+              />
+            </div>
+            <p className="text-xs text-gray-500 mt-2 text-center">
+              {uploadProgress.current} dari {uploadProgress.total} file
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="container max-w-7xl mx-auto px-4 py-10">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Tambah Blog Baru</h1>

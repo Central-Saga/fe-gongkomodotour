@@ -1,23 +1,40 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, Suspense } from "react"
 import { DataTable } from "./data-table"
 import { columns } from "./columns"
 import { Gallery } from "@/types/galleries"
 import { apiRequest } from "@/lib/api"
+import { apiCache } from "@/lib/browserCache"
+import { useSearchParams } from "next/navigation"
 
-export default function GalleryPage() {
+interface GalleryResponse {
+  data: Gallery[]
+  message?: string
+  status?: string
+}
+
+function GalleryPageContent() {
   const [data, setData] = useState<Gallery[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const searchParams = useSearchParams()
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true)
-      const response = await apiRequest<{ data: Gallery[] }>(
+      console.log('Fetching galleries...')
+      // Clear cache untuk memastikan data fresh (seperti trips)
+      apiCache.clear('/api/galleries')
+      const response: GalleryResponse = await apiRequest<GalleryResponse>(
         'GET',
-        '/api/galleries'
+        '/api/galleries',
+        undefined,
+        { useCache: false } // Disable cache untuk memastikan data fresh
       )
+      console.log('Raw API Response:', response)
+      console.log('Response data:', response.data)
+      
       setData(response.data || [])
       setError(null)
     } catch (err: unknown) {
@@ -27,11 +44,23 @@ export default function GalleryPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     fetchData()
-  }, [])
+  }, [searchParams, fetchData])
+
+  // Re-fetch ketika window mendapat focus (user kembali ke tab/halaman)
+  useEffect(() => {
+    const handleFocus = () => {
+      fetchData()
+    }
+
+    window.addEventListener('focus', handleFocus)
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [fetchData])
 
   if (loading) return <div className="container mx-auto p-4">Loading...</div>
   if (error) return <div className="container mx-auto p-4 text-red-600">{error}</div>
@@ -52,5 +81,13 @@ export default function GalleryPage() {
         />
       </div>
     </div>
+  )
+}
+
+export default function GalleryPage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto p-4">Loading...</div>}>
+      <GalleryPageContent />
+    </Suspense>
   )
 }

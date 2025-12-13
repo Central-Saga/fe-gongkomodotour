@@ -32,6 +32,7 @@ import { TipTapEditor } from "@/components/ui/tiptap-editor"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Boat } from "@/types/boats"
 import { Hotel } from "@/types/hotels"
+import { optimizeImages } from "@/lib/imageOptimization"
 
 interface BoatResponse {
   data: Boat[]
@@ -135,6 +136,12 @@ export default function CreateTripPage() {
   const [isLoadingBoats, setIsLoadingBoats] = useState(true)
   const [hotels, setHotels] = useState<Hotel[]>([])
   const [isLoadingHotels, setIsLoadingHotels] = useState(true)
+  const [uploadProgress, setUploadProgress] = useState<{
+    current: number
+    total: number
+    message: string
+    stage: 'optimizing' | 'uploading'
+  } | null>(null)
 
   const defaultValues: TripFormType = {
     name: "",
@@ -353,30 +360,81 @@ export default function CreateTripPage() {
       if (response) {
         const tripId = (response as ApiResponse<{ id: number }>).data.id
 
-        // 2. Upload files jika ada
+        // 2. Upload files jika ada (dengan optimasi seperti boats)
         if (files.length > 0) {
+          // Optimasi gambar sebelum upload
+          setUploadProgress({
+            current: 0,
+            total: files.length,
+            message: 'Mengoptimasi gambar...',
+            stage: 'optimizing'
+          })
+
+          const optimizedFiles = await optimizeImages(
+            files,
+            {
+              maxWidth: 1920,
+              maxHeight: 1920,
+              quality: 0.85,
+              maxSizeMB: 2
+            },
+            (current, total) => {
+              setUploadProgress({
+                current,
+                total,
+                message: `Mengoptimasi gambar ${current}/${total}...`,
+                stage: 'optimizing'
+              })
+            }
+          )
+
           const formData = new FormData()
           formData.append('model_type', 'trip')
           formData.append('model_id', tripId.toString())
           formData.append('is_external', '0')
           
-          files.forEach((file: File, index: number) => {
-            formData.append('files[]', file)
-            formData.append('file_titles[]', fileTitles[index])
+          setUploadProgress({
+            current: 0,
+            total: optimizedFiles.length,
+            message: 'Mengupload gambar...',
+            stage: 'uploading'
+          })
+          
+          optimizedFiles.forEach((file: File, index: number) => {
+            // Log file info untuk debugging
+            const originalFile = files[index]
+            console.log(`Uploading optimized file ${index + 1}:`, {
+              name: file.name,
+              type: file.type,
+              size: file.size,
+              originalSize: originalFile.size,
+              compressionRatio: ((1 - file.size / originalFile.size) * 100).toFixed(1) + '%'
+            })
+            
+            formData.append('files[]', file, file.name)
+            formData.append('file_titles[]', fileTitles[index] || file.name)
             formData.append('file_descriptions[]', fileDescriptions[index] || '')
           })
 
-          await apiRequest(
-            'POST',
-            '/api/assets/multiple',
-            formData,
-            {
-              headers: {
-                'Content-Type': 'multipart/form-data',
-              },
-            }
-          )
+          try {
+            await apiRequest(
+              'POST',
+              '/api/assets/multiple',
+              formData,
+              {
+                timeout: 120000, // 2 menit untuk upload file
+              }
+            )
+            console.log('Trip files uploaded successfully')
+            setUploadProgress(null)
+          } catch (uploadError: unknown) {
+            console.error('Error uploading trip files:', uploadError)
+            setUploadProgress(null)
+            throw uploadError
+          }
         }
+
+        setUploadProgress(null) // Tutup progress indicator saat sukses
 
         // Clear cache trips sebelum redirect
         apiCache.clear('/api/trips')
@@ -407,6 +465,7 @@ export default function CreateTripPage() {
       }
     } catch (error: unknown) {
       console.error("Error creating trip:", error)
+      setUploadProgress(null) // Tutup progress indicator saat error
       
       if (error && typeof error === 'object' && 'response' in error) {
         const apiError = error as { response: { data?: { message?: string }, statusText?: string } }
@@ -421,6 +480,7 @@ export default function CreateTripPage() {
       }
     } finally {
       setIsSubmitting(false)
+      setUploadProgress(null) // Pastikan progress indicator ditutup
     }
   }
 
@@ -458,6 +518,32 @@ export default function CreateTripPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Progress Indicator */}
+      {uploadProgress && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <div className="flex items-center gap-4 mb-4">
+              <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+              <div className="flex-1">
+                <p className="font-semibold text-gray-900">
+                  {uploadProgress.stage === 'optimizing' ? 'Mengoptimasi Gambar' : 'Mengupload Gambar'}
+                </p>
+                <p className="text-sm text-gray-600">{uploadProgress.message}</p>
+              </div>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2.5">
+              <div
+                className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }}
+              />
+            </div>
+            <p className="text-xs text-gray-500 mt-2 text-center">
+              {uploadProgress.current} dari {uploadProgress.total} file
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="container max-w-7xl mx-auto px-4 py-10">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Tambah Trip Baru</h1>

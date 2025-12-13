@@ -25,9 +25,11 @@ import { useState } from "react"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { apiRequest } from "@/lib/api"
+import { apiCache } from "@/lib/browserCache"
 import { FileUpload } from "@/components/ui/file-upload"
 import { ApiResponse } from "@/types/role"
 import { TipTapEditor } from "@/components/ui/tiptap-editor"
+import { optimizeImages } from "@/lib/imageOptimization"
 
 const gallerySchema = z.object({
   title: z.string().min(1, "Judul harus diisi"),
@@ -42,6 +44,12 @@ export default function CreateGalleryPage() {
   const [files, setFiles] = useState<File[]>([])
   const [fileTitles, setFileTitles] = useState<string[]>([])
   const [fileDescriptions, setFileDescriptions] = useState<string[]>([])
+  const [uploadProgress, setUploadProgress] = useState<{
+    current: number
+    total: number
+    message: string
+    stage: 'optimizing' | 'uploading'
+  } | null>(null)
 
   const defaultValues: z.infer<typeof gallerySchema> = {
     title: "",
@@ -109,44 +117,157 @@ export default function CreateGalleryPage() {
         throw new Error('ID gallery tidak ditemukan dalam response')
       }
 
-      // 2. Upload gallery files jika ada
+      // 2. Upload gallery files jika ada (dengan optimasi)
       if (files.length > 0) {
+        // Optimasi gambar sebelum upload
+        setUploadProgress({
+          current: 0,
+          total: files.length,
+          message: 'Mengoptimasi gambar...',
+          stage: 'optimizing'
+        })
+
+        const optimizedFiles = await optimizeImages(
+          files,
+          {
+            maxWidth: 1920,
+            maxHeight: 1920,
+            quality: 0.85,
+            maxSizeMB: 2
+          },
+          (current, total) => {
+            setUploadProgress({
+              current,
+              total,
+              message: `Mengoptimasi gambar ${current}/${total}...`,
+              stage: 'optimizing'
+            })
+          }
+        )
+
         const formData = new FormData()
         formData.append('model_type', 'gallery')
         formData.append('model_id', galleryId.toString())
         formData.append('is_external', '0')
         
-        files.forEach((file: File, index: number) => {
-          formData.append('files[]', file)
-          formData.append('file_titles[]', fileTitles[index])
+        setUploadProgress({
+          current: 0,
+          total: optimizedFiles.length,
+          message: 'Mengupload gambar...',
+          stage: 'uploading'
+        })
+        
+        optimizedFiles.forEach((file: File, index: number) => {
+          formData.append('files[]', file, file.name)
+          formData.append('file_titles[]', fileTitles[index] || file.name)
           formData.append('file_descriptions[]', fileDescriptions[index] || '')
         })
 
+        try {
         await apiRequest(
           'POST',
           '/api/assets/multiple',
           formData,
           {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-          }
-        )
+              timeout: 120000, // 2 menit untuk upload file
+            }
+          )
+          console.log('Gallery files uploaded successfully')
+          setUploadProgress(null)
+        } catch (uploadError: unknown) {
+          console.error('Error uploading gallery files:', uploadError)
+          setUploadProgress(null)
+          throw uploadError
+        }
       }
 
+      setUploadProgress(null) // Tutup progress indicator saat sukses
+
+      // Clear cache galleries sebelum redirect
+      apiCache.clear('/api/galleries')
       toast.success("Gallery berhasil dibuat")
+      
+      // Delay sebentar agar user bisa membaca toast notification sebelum redirect
+      await new Promise(resolve => setTimeout(resolve, 1000)) // 1 detik delay
+      
+      // Redirect setelah delay
+      if (typeof window !== 'undefined') {
+        window.location.href = '/dashboard/galleries'
+      } else {
       router.push("/dashboard/galleries")
       router.refresh()
+      }
     } catch (error: unknown) {
       console.error('Error detail:', error)
+      setUploadProgress(null) // Tutup progress indicator saat error
+      
+      // Handle error response dari backend
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } }
+        const errorData = axiosError.response?.data
+        
+        if (errorData?.errors) {
+          // Tampilkan error validasi dari backend
+          const errorMessages: string[] = []
+          Object.entries(errorData.errors).forEach(([field, messages]) => {
+            messages.forEach(msg => {
+              if (field.includes('files')) {
+                errorMessages.push(`File: ${msg}`)
+              } else {
+                errorMessages.push(`${field}: ${msg}`)
+              }
+            })
+          })
+          toast.error(errorMessages.join(', ') || "Gagal membuat gallery")
+        } else if (errorData?.message) {
+          toast.error(errorData.message)
+        } else {
+          toast.error("Gagal membuat gallery")
+        }
+      } else if (error && typeof error === 'object' && 'message' in error) {
+        const errorMessage = (error as { message: string }).message
+        if (errorMessage.includes('timeout')) {
+          toast.error("Upload file timeout. Coba lagi dengan file yang lebih kecil atau periksa koneksi internet Anda.")
+        } else {
+          toast.error(errorMessage || "Gagal membuat gallery")
+        }
+      } else {
       toast.error("Gagal membuat gallery")
+      }
     } finally {
       setIsSubmitting(false)
+      setUploadProgress(null) // Pastikan progress indicator ditutup
     }
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Progress Indicator */}
+      {uploadProgress && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <div className="flex items-center gap-4 mb-4">
+              <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+              <div className="flex-1">
+                <p className="font-semibold text-gray-900">
+                  {uploadProgress.stage === 'optimizing' ? 'Mengoptimasi Gambar' : 'Mengupload Gambar'}
+                </p>
+                <p className="text-sm text-gray-600">{uploadProgress.message}</p>
+              </div>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2.5">
+              <div
+                className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }}
+              />
+            </div>
+            <p className="text-xs text-gray-500 mt-2 text-center">
+              {uploadProgress.current} dari {uploadProgress.total} file
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="container max-w-7xl mx-auto px-4 py-10">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Tambah Gallery Baru</h1>
