@@ -544,7 +544,8 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
         boat_id: values.boat_ids && values.boat_ids.length > 0 ? values.boat_ids[0] : null, // Tambahkan boat_id untuk kompatibilitas
         hotel_ids: values.hotel_ids || [], // Ensure hotel_ids is included
         hotel_id: values.hotel_ids && values.hotel_ids.length > 0 ? values.hotel_ids[0] : null, // Tambahkan hotel_id untuk kompatibilitas
-        operational_days: values.operational_days || [],
+        // Jika tentation Yes, pastikan operational_days selalu array kosong
+        operational_days: values.tentation === "Yes" ? [] : (values.operational_days || []),
         additional_fees: values.additional_fees?.map(fee => ({
           ...fee,
           is_required: Boolean(fee.is_required),

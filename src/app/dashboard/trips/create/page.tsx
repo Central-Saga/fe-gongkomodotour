@@ -319,7 +319,8 @@ export default function CreateTripPage() {
         destination_count: Number(values.destination_count) || 0,
         is_highlight: values.is_highlight === "Yes" ? "Yes" : "No",
         tentation: values.tentation === "Yes" ? "Yes" : "No",
-        operational_days: values.operational_days || [],
+        // Jika tentation Yes, pastikan operational_days selalu array kosong
+        operational_days: values.tentation === "Yes" ? [] : (values.operational_days || []),
         trip_durations: values.trip_durations.map(duration => ({
           ...duration,
           duration_days: Number(duration.duration_days) || 1,

@@ -183,16 +183,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader className="flex items-center justify-center">
+      <SidebarHeader className="flex items-center justify-center shrink-0">
         <Image src={logo} alt="Gong Komodo Tour Logo" width={250} height={250} />
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="flex-1 min-h-0">
         <NavMain items={data.navMain} />
         {filteredAdminAccess.length > 0 && (
           <NavAdmin adminAccess={filteredAdminAccess} />
         )}
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className="mt-auto shrink-0">
         {user && <NavUser user={{ ...user, avatar: '' }} />}
       </SidebarFooter>
       <SidebarRail />
