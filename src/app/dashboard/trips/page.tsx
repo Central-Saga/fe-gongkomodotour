@@ -48,7 +48,7 @@ function TripPageContent() {
       console.log('Raw API Response:', response)
       console.log('Response data:', response.data)
       
-      // Log detail assets untuk debugging
+      // Log detail assets dan operational data untuk debugging
       if (response.data && response.data.length > 0) {
         response.data.forEach((trip, index) => {
           console.log(`Trip ${index} (${trip.name}):`, {
@@ -60,7 +60,9 @@ function TripPageContent() {
               title: a.title,
               file_url: a.file_url,
               description: a.description
-            })) || []
+            })) || [],
+            operational_days: trip.operational_days,
+            tentation: trip.tentation
           })
         })
       }

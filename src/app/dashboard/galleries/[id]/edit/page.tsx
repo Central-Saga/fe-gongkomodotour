@@ -228,11 +228,11 @@ export default function EditGalleryPage({ params }: EditGalleryPageProps) {
         })
 
         try {
-          await apiRequest(
-            'POST',
-            '/api/assets/multiple',
-            formData,
-            {
+        await apiRequest(
+          'POST',
+          '/api/assets/multiple',
+          formData,
+          {
               timeout: 120000, // 2 menit untuk upload file
             }
           )
@@ -258,8 +258,8 @@ export default function EditGalleryPage({ params }: EditGalleryPageProps) {
       if (typeof window !== 'undefined') {
         window.location.href = '/dashboard/galleries'
       } else {
-        router.push("/dashboard/galleries")
-        router.refresh()
+      router.push("/dashboard/galleries")
+      router.refresh()
       }
     } catch (error: unknown) {
       console.error("Error updating gallery:", error)

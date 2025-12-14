@@ -207,11 +207,11 @@ export default function CreateBlogPage() {
         })
 
         try {
-          await apiRequest(
-            'POST',
-            '/api/assets/multiple',
-            formData,
-            {
+        await apiRequest(
+          'POST',
+          '/api/assets/multiple',
+          formData,
+          {
               timeout: 120000, // 2 menit untuk upload file
             }
           )
@@ -237,8 +237,8 @@ export default function CreateBlogPage() {
       if (typeof window !== 'undefined') {
         window.location.href = '/dashboard/blogs'
       } else {
-        router.push("/dashboard/blogs")
-        router.refresh()
+      router.push("/dashboard/blogs")
+      router.refresh()
       }
     } catch (error: unknown) {
       console.error("Error creating blog:", error)

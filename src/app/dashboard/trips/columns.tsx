@@ -282,7 +282,10 @@ export const columns = ({ onDelete, onEdit }: ColumnsProps): ColumnDef<Trip>[] =
     accessorKey: "operational_days",
     header: "Hari Operasional",
     cell: ({ row }) => {
-      const operationalDays = row.getValue("operational_days") as string[]
+      const trip = row.original as Trip
+      // Ambil dari trip.operational_days untuk memastikan data terambil dengan benar
+      const operationalDays = trip.operational_days || (row.getValue("operational_days") as string[] | undefined) || []
+      
       const dayLabels: { [key: string]: string } = {
         "Monday": "Sen",
         "Tuesday": "Sel", 
@@ -298,10 +301,10 @@ export const columns = ({ onDelete, onEdit }: ColumnsProps): ColumnDef<Trip>[] =
       const weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
       const weekend = ["Saturday", "Sunday"];
       
-      const isAllDays = operationalDays && allDays.every(day => operationalDays.includes(day));
-      const isWeekdaysOnly = operationalDays && weekdays.every(day => operationalDays.includes(day)) && 
+      const isAllDays = Array.isArray(operationalDays) && operationalDays.length > 0 && allDays.every(day => operationalDays.includes(day));
+      const isWeekdaysOnly = Array.isArray(operationalDays) && operationalDays.length > 0 && weekdays.every(day => operationalDays.includes(day)) && 
                            !weekend.some(day => operationalDays.includes(day));
-      const isWeekendOnly = operationalDays && weekend.every(day => operationalDays.includes(day)) && 
+      const isWeekendOnly = Array.isArray(operationalDays) && operationalDays.length > 0 && weekend.every(day => operationalDays.includes(day)) && 
                           !weekdays.some(day => operationalDays.includes(day));
 
       return (
@@ -317,12 +320,12 @@ export const columns = ({ onDelete, onEdit }: ColumnsProps): ColumnDef<Trip>[] =
               lineHeight: '1.2'
             }}
           >
-            {operationalDays && operationalDays.length > 0 
-              ? operationalDays.map(day => dayLabels[day]).join(", ")
+            {Array.isArray(operationalDays) && operationalDays.length > 0 
+              ? operationalDays.map(day => dayLabels[day] || day).join(", ")
               : "Tidak ada"
             }
           </div>
-          {operationalDays && operationalDays.length > 0 && (
+          {Array.isArray(operationalDays) && operationalDays.length > 0 && (
             <div className="flex gap-1 mt-1 flex-wrap">
               {isAllDays ? (
                 <Badge className="bg-blue-500 text-white text-xs px-1 py-0.5">Semua Hari</Badge>
@@ -343,11 +346,15 @@ export const columns = ({ onDelete, onEdit }: ColumnsProps): ColumnDef<Trip>[] =
     accessorKey: "tentation",
     header: "Jadwal Fleksibel",
     cell: ({ row }) => {
-      const tentation = row.getValue("tentation") as "Yes" | "No"
+      const trip = row.original as Trip
+      // Ambil dari trip.tentation untuk memastikan data terambil dengan benar
+      const tentation = trip.tentation || (row.getValue("tentation") as "Yes" | "No" | undefined) || "No"
+      const isFlexible = tentation === "Yes"
+      
       return (
         <div className="w-full flex justify-center px-1">
-          <Badge className={`${tentation === "Yes" ? "bg-green-500" : "bg-gray-500"} text-white text-xs px-2 py-1`}>
-            {tentation === "Yes" ? "Ya" : "Tidak"}
+          <Badge className={`${isFlexible ? "bg-green-500" : "bg-gray-500"} text-white text-xs px-2 py-1`}>
+            {isFlexible ? "Ya" : "Tidak"}
           </Badge>
         </div>
       )

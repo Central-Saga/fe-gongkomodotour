@@ -260,11 +260,11 @@ export default function EditBlogPage({ params }: EditBlogPageProps) {
         })
 
         try {
-          await apiRequest(
-            'POST',
-            '/api/assets/multiple',
-            formData,
-            {
+        await apiRequest(
+          'POST',
+          '/api/assets/multiple',
+          formData,
+          {
               timeout: 120000, // 2 menit untuk upload file
             }
           )
@@ -290,8 +290,8 @@ export default function EditBlogPage({ params }: EditBlogPageProps) {
       if (typeof window !== 'undefined') {
         window.location.href = '/dashboard/blogs'
       } else {
-        router.push("/dashboard/blogs")
-        router.refresh()
+      router.push("/dashboard/blogs")
+      router.refresh()
       }
     } catch (error: unknown) {
       console.error("Error updating blog:", error)

@@ -493,46 +493,7 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
 
           <div className="flex items-center space-x-4 mt-6 md:mt-0 w-full md:w-auto justify-center">
             {data.tentation === "Yes" ? (
-              <>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="border-gold hover:border-gold/80 text-gold px-6 py-2 rounded-lg"
-                    >
-                      {selectedDate ? format(selectedDate, "PPP") : "Select Date"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    {" "}
-                    <Calendar
-                      mode="single"
-                      selected={selectedDate}
-                      onSelect={setSelectedDate}
-                      disabled={disabledByOperationalDays}
-                      initialFocus
-                      className="rounded-md border"
-                      showOutsideDays={false}
-                      captionLayout="dropdown"
-                    />
-                  </PopoverContent>
-                </Popover>
-                {selectedDate && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <Button
-                      onClick={() => handleBookNow(data.id)}
-                      className="bg-gold text-white px-8 py-2 rounded-lg font-semibold text-sm hover:bg-gold-dark-20 hover:scale-95 transition-all duration-300"
-                    >
-                      Book Now
-                    </Button>
-                  </motion.div>
-                )}
-              </>
-            ) : (
+              // Jika jadwal fleksibel (Yes), tampilkan button WhatsApp
               <Button
                 onClick={() => window.open("https://wa.me/628123867588?text=Halo,%20saya%20tertarik%20dengan%20paket%20" + encodeURIComponent(data.title), "_blank")}
                 className="bg-green-500 hover:bg-green-600 text-white px-8 py-2 rounded-lg font-semibold text-sm transition-all duration-300 flex items-center gap-2"
@@ -548,6 +509,69 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
                 </svg>
                 Hubungi via WhatsApp
               </Button>
+            ) : (
+              // Jika jadwal tidak fleksibel (No), tampilkan calendar dan jadwal operasional
+              <div className="flex flex-col items-center gap-4">
+                {/* Tampilkan jadwal operasional jika ada */}
+                {data.operational_days && data.operational_days.length > 0 && (
+                  <div className="bg-gold/10 border border-gold/30 rounded-lg p-3 mb-2">
+                    <p className="text-sm font-semibold text-gold mb-1">Jadwal Operasional:</p>
+                    <p className="text-xs text-gray-700">
+                      {data.operational_days.map(day => {
+                        const dayLabels: { [key: string]: string } = {
+                          "Monday": "Senin",
+                          "Tuesday": "Selasa", 
+                          "Wednesday": "Rabu",
+                          "Thursday": "Kamis",
+                          "Friday": "Jumat",
+                          "Saturday": "Sabtu",
+                          "Sunday": "Minggu"
+                        };
+                        return dayLabels[day] || day;
+                      }).join(", ")}
+                    </p>
+                  </div>
+                )}
+                <div className="flex items-center gap-3">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="border-gold hover:border-gold/80 text-gold px-6 py-2 rounded-lg"
+                      >
+                        {selectedDate ? format(selectedDate, "PPP") : "Select Date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      {" "}
+                      <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={setSelectedDate}
+                        disabled={disabledByOperationalDays}
+                        initialFocus
+                        className="rounded-md border"
+                        showOutsideDays={false}
+                        captionLayout="dropdown"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  {selectedDate && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <Button
+                        onClick={() => handleBookNow(data.id)}
+                        className="bg-gold text-white px-8 py-2 rounded-lg font-semibold text-sm hover:bg-gold-dark-20 hover:scale-95 transition-all duration-300"
+                      >
+                        Book Now
+                      </Button>
+                    </motion.div>
+                  )}
+                </div>
+              </div>
             )}
           </div>
         </div>

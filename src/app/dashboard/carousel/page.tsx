@@ -195,16 +195,16 @@ export default function CarouselAdmin() {
         })
 
         // 1. Submit data utama carousel (setelah optimasi gambar)
-        const carouselPayload = {
-          title: newTitle,
-          order_num: parseInt(newOrderNum),
-          is_active: newIsActive === '1',
-        };
-        const response = await apiRequest('POST', '/api/carousels', carouselPayload);
-        
-        // Ambil id dari response
-        carouselId = (response as { data?: { id: number } })?.data?.id ?? null;
-        if (!carouselId) throw new Error('Gagal mendapatkan ID carousel');
+      const carouselPayload = {
+        title: newTitle,
+        order_num: parseInt(newOrderNum),
+        is_active: newIsActive === '1',
+      };
+      const response = await apiRequest('POST', '/api/carousels', carouselPayload);
+      
+      // Ambil id dari response
+      carouselId = (response as { data?: { id: number } })?.data?.id ?? null;
+      if (!carouselId) throw new Error('Gagal mendapatkan ID carousel');
 
         const formData = new FormData();
         formData.append('model_type', 'carousel');
@@ -283,7 +283,7 @@ export default function CarouselAdmin() {
       }
 
       setUploadProgress(null) // Tutup progress indicator saat sukses
-      
+
       setNewImageUrl("");
       setNewImageFile(null);
       setNewTitle("");

@@ -245,7 +245,9 @@ export default function DetailPrivateTrip() {
     destination_count: selectedPackage.destination_count || 0,
     boat_ids: selectedPackage.boat_ids || [],
     operational_days: selectedPackage.operational_days || [],
-    tentation: selectedPackage.tentation || "No",
+    tentation: (selectedPackage.tentation === "Yes" || selectedPackage.tentation === "No") 
+      ? selectedPackage.tentation 
+      : "No",
     flightInfo: {
       guideFee1:
         selectedPackage.additional_fees
