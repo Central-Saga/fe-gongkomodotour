@@ -25,6 +25,7 @@ import { useState } from "react"
 import { Loader2, Plus, Trash, ChevronUp, ChevronDown } from "lucide-react"
 import { toast } from "sonner"
 import { apiRequest } from "@/lib/api"
+import { apiCache } from "@/lib/browserCache"
 import { Hotel } from "@/types/hotels"
 
 const hotelSchema = z.object({
@@ -113,6 +114,8 @@ export default function CreateHotelPage() {
         throw new Error('Response tidak valid dari server')
       }
 
+      // Clear semua cache hotels sebelum redirect untuk memastikan data fresh
+      apiCache.clearByPattern('hotels')
       toast.success("Hotel berhasil dibuat")
       
       // Ambil pagination state dari sessionStorage

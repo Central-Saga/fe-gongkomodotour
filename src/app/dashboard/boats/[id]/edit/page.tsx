@@ -25,6 +25,7 @@ import { useEffect, useState } from "react"
 import { Loader2, Plus, Trash, ChevronUp, ChevronDown } from "lucide-react"
 import { toast } from "sonner"
 import { apiRequest } from "@/lib/api"
+import { apiCache } from "@/lib/browserCache"
 import { FileUpload } from "@/components/ui/file-upload"
 import { ApiResponse } from "@/types/role"
 import { TipTapEditor } from "@/components/ui/tiptap-editor"
@@ -424,6 +425,9 @@ export default function EditBoatPage({ params }: EditBoatPageProps) {
       setCabinFileTitles({})
       setCabinFileDescriptions({})
       
+      // Clear semua cache boats dan cabins sebelum redirect untuk memastikan data fresh
+      apiCache.clearByPattern('boats')
+      apiCache.clearByPattern('cabins')
       toast.success("Kapal berhasil diperbarui")
       
       // Ambil pagination state dari sessionStorage

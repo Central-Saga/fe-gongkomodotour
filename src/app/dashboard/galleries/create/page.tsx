@@ -183,9 +183,9 @@ export default function CreateGalleryPage() {
 
       setUploadProgress(null) // Tutup progress indicator saat sukses
 
-      // Clear cache galleries sebelum redirect
-      apiCache.clear('/api/galleries')
-      toast.success("Gallery berhasil dibuat")
+      // Clear semua cache galleries sebelum redirect untuk memastikan data fresh
+        apiCache.clearByPattern('galleries')
+        toast.success("Gallery berhasil dibuat")
       
       // Delay sebentar agar user bisa membaca toast notification sebelum redirect
       await new Promise(resolve => setTimeout(resolve, 1000)) // 1 detik delay

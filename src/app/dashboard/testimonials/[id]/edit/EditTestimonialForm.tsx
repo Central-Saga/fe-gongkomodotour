@@ -8,6 +8,7 @@ import * as z from "zod"
 import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
 import { apiRequest } from "@/lib/api"
+import { apiCache } from "@/lib/browserCache"
 import { Testimonial } from "@/types/testimonials"
 import { ApiResponse } from "@/types/role"
 
@@ -169,9 +170,16 @@ export default function EditTestimonialForm({ id }: { id: string }) {
         payload
       )
 
+      // Clear semua cache testimonials sebelum redirect untuk memastikan data fresh
+      apiCache.clearByPattern('testimonials')
       toast.success("Testimonial berhasil diupdate")
-      router.push("/dashboard/testimonials")
-      router.refresh()
+      
+      if (typeof window !== 'undefined') {
+        window.location.href = '/dashboard/testimonials'
+      } else {
+        router.push("/dashboard/testimonials")
+        router.refresh()
+      }
     } catch (error: any) {
       console.error("Error updating testimonial:", error)
       

@@ -25,6 +25,7 @@ import { useState } from "react"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { apiRequest } from "@/lib/api"
+import { apiCache } from "@/lib/browserCache"
 import { FAQ } from "@/types/faqs"
 
 const faqSchema = z.object({
@@ -90,9 +91,16 @@ export default function CreateFAQPage() {
         throw new Error('Response tidak valid dari server')
       }
 
+      // Clear semua cache faqs sebelum redirect untuk memastikan data fresh
+      apiCache.clearByPattern('faqs')
       toast.success("FAQ berhasil dibuat")
-      router.push("/dashboard/faqs")
-      router.refresh()
+      
+      if (typeof window !== 'undefined') {
+        window.location.href = '/dashboard/faqs'
+      } else {
+        router.push("/dashboard/faqs")
+        router.refresh()
+      }
     } catch (error: unknown) {
       console.error('Error detail:', error)
       toast.error("Gagal membuat FAQ")

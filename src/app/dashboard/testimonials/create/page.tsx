@@ -26,6 +26,7 @@ import { useState } from "react"
 import { Loader2, Star } from "lucide-react"
 import { toast } from "sonner"
 import { apiRequest } from "@/lib/api"
+import { apiCache } from "@/lib/browserCache"
 
 // Helper function to validate trip_id
 const validateTripId = (tripId: string | undefined): boolean => {
@@ -120,9 +121,16 @@ export default function CreateTestimonialPage() {
         throw new Error('Response tidak valid dari server')
       }
 
+      // Clear semua cache testimonials sebelum redirect untuk memastikan data fresh
+      apiCache.clearByPattern('testimonials')
       toast.success("Testimonial berhasil dibuat")
-      router.push("/dashboard/testimonials")
-      router.refresh()
+      
+      if (typeof window !== 'undefined') {
+        window.location.href = '/dashboard/testimonials'
+      } else {
+        router.push("/dashboard/testimonials")
+        router.refresh()
+      }
     } catch (error: any) {
       console.error('Error detail:', error)
       

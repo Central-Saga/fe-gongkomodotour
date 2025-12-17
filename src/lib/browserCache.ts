@@ -191,6 +191,20 @@ export const apiCache = {
       clearCacheByPrefix('api_cache_', false);
     }
   },
+
+  // Clear semua cache yang mengandung pattern tertentu
+  clearByPattern: (pattern: string) => {
+    if (typeof window === 'undefined') return;
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.includes('api_cache_') && key.includes(pattern)) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+    console.log(`Cleared ${keysToRemove.length} cache entries matching pattern: ${pattern}`);
+  },
 };
 
 

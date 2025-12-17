@@ -279,8 +279,8 @@ export default function EditBlogPage({ params }: EditBlogPageProps) {
 
       setUploadProgress(null) // Tutup progress indicator saat sukses
 
-      // Clear cache blogs sebelum redirect
-      apiCache.clear('/api/blogs')
+      // Clear semua cache blogs sebelum redirect untuk memastikan data fresh
+      apiCache.clearByPattern('blogs')
       toast.success("Blog berhasil diperbarui")
       
       // Delay sebentar agar user bisa membaca toast notification sebelum redirect

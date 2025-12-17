@@ -686,8 +686,8 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
 
       setUploadProgress(null) // Tutup progress indicator saat sukses
 
-      // Clear cache trips sebelum redirect
-      apiCache.clear('/api/trips')
+      // Clear semua cache trips sebelum redirect untuk memastikan data fresh
+      apiCache.clearByPattern('trips')
       toast.success("Trip berhasil diupdate")
       
       // Ambil pagination state dari sessionStorage

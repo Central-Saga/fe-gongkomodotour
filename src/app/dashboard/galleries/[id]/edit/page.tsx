@@ -247,8 +247,8 @@ export default function EditGalleryPage({ params }: EditGalleryPageProps) {
 
       setUploadProgress(null) // Tutup progress indicator saat sukses
 
-      // Clear cache galleries sebelum redirect
-      apiCache.clear('/api/galleries')
+      // Clear semua cache galleries sebelum redirect untuk memastikan data fresh
+      apiCache.clearByPattern('galleries')
       toast.success("Gallery berhasil diperbarui")
       
       // Delay sebentar agar user bisa membaca toast notification sebelum redirect

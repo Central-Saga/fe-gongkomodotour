@@ -25,6 +25,7 @@ import { useState, useEffect } from "react"
 import { Loader2, Plus, Trash, ChevronUp, ChevronDown } from "lucide-react"
 import { toast } from "sonner"
 import { apiRequest } from "@/lib/api"
+import { apiCache } from "@/lib/browserCache"
 import { Hotel } from "@/types/hotels"
 import { use } from "react"
 
@@ -132,6 +133,8 @@ export default function EditHotelPage({ params }: { params: Promise<{ id: string
         throw new Error('Response tidak valid dari server')
       }
 
+      // Clear semua cache hotels sebelum redirect untuk memastikan data fresh
+      apiCache.clearByPattern('hotels')
       toast.success("Hotel berhasil diperbarui")
       
       // Ambil pagination state dari sessionStorage

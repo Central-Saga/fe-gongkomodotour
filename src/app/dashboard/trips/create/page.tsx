@@ -437,8 +437,8 @@ export default function CreateTripPage() {
 
         setUploadProgress(null) // Tutup progress indicator saat sukses
 
-        // Clear cache trips sebelum redirect
-        apiCache.clear('/api/trips')
+        // Clear semua cache trips sebelum redirect untuk memastikan data fresh
+        apiCache.clearByPattern('trips')
         toast.success("Trip berhasil dibuat")
         
         // Ambil pagination state dari sessionStorage
