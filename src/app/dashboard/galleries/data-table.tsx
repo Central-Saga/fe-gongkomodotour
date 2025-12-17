@@ -383,8 +383,8 @@ export function DataTable({
                         </p>
                       )}
                       {asset.description && (
-                        <p className="text-xs text-gray-500 text-center break-words" title={asset.description}>
-                          {asset.description}
+                        <p className="text-xs text-gray-500 text-center break-words" title={stripHtmlTags(asset.description)}>
+                          {stripHtmlTags(asset.description)}
                         </p>
                       )}
                     </div>
@@ -401,7 +401,7 @@ export function DataTable({
               onClose={() => setSelectedImage(null)}
               imageUrl={getSafeImageSrc(getImageUrl(selectedImage.file_url))}
               title={selectedImage.title}
-              description={selectedImage.description || undefined}
+              description={selectedImage.description ? stripHtmlTags(selectedImage.description) : undefined}
             />
           )}
         </div>

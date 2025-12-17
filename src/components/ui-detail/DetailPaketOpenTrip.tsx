@@ -512,26 +512,6 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
             ) : (
               // Jika jadwal tidak fleksibel (No), tampilkan calendar dan jadwal operasional
               <div className="flex flex-col items-center gap-4">
-                {/* Tampilkan jadwal operasional jika ada */}
-                {data.operational_days && data.operational_days.length > 0 && (
-                  <div className="bg-gold/10 border border-gold/30 rounded-lg p-3 mb-2">
-                    <p className="text-sm font-semibold text-gold mb-1">Jadwal Operasional:</p>
-                    <p className="text-xs text-gray-700">
-                      {data.operational_days.map(day => {
-                        const dayLabels: { [key: string]: string } = {
-                          "Monday": "Senin",
-                          "Tuesday": "Selasa", 
-                          "Wednesday": "Rabu",
-                          "Thursday": "Kamis",
-                          "Friday": "Jumat",
-                          "Saturday": "Sabtu",
-                          "Sunday": "Minggu"
-                        };
-                        return dayLabels[day] || day;
-                      }).join(", ")}
-                    </p>
-                  </div>
-                )}
                 <div className="flex items-center gap-3">
                   <Popover>
                     <PopoverTrigger asChild>

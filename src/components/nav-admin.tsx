@@ -8,6 +8,7 @@ import {
   Edit,
   type LucideIcon,
 } from "lucide-react"
+import { usePathname } from "next/navigation"
 
 import {
   DropdownMenu,
@@ -50,6 +51,9 @@ export function NavAdmin({
   }[]
 }) {
   const { isMobile } = useSidebar()
+  const pathname = usePathname()
+
+  const isActivePath = (url: string) => pathname.startsWith(url)
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
@@ -57,7 +61,10 @@ export function NavAdmin({
       <SidebarMenu>
         {adminAccess.map((item) => (
           <SidebarMenuItem key={item.name}>
-            <SidebarMenuButton asChild>
+            <SidebarMenuButton 
+              asChild
+              className={isActivePath(item.url) ? "bg-slate-100 dark:bg-slate-800 font-medium" : ""}
+            >
               <a href={item.url}>
                 <item.icon />
                 <span>{item.name}</span>
