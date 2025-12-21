@@ -3,9 +3,11 @@
 import { columns } from "./columns"
 import { DataTable } from "./data-table"
 import { apiRequest } from "@/lib/api"
+import { apiCache } from "@/lib/browserCache"
 import { FAQ } from "@/types/faqs"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback, Suspense } from "react"
 import { toast } from "sonner"
+import { useSearchParams } from "next/navigation"
 
 interface FAQResponse {
   data: FAQ[]
@@ -13,18 +15,22 @@ interface FAQResponse {
   status?: string
 }
 
-export default function FAQPage() {
+function FAQPageContent() {
   const [data, setData] = useState<FAQ[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const searchParams = useSearchParams()
 
-  const fetchFAQs = async () => {
+  const fetchFAQs = useCallback(async () => {
     try {
       setLoading(true)
       console.log('Fetching FAQs...')
+      // Gunakan cache browser untuk mempercepat loading
       const response: FAQResponse = await apiRequest<FAQResponse>(
         'GET',
-        '/api/faqs'
+        '/api/faqs',
+        undefined,
+        { useCache: true } // Aktifkan cache browser
       )
       console.log('Raw API Response:', response)
       console.log('Response data:', response.data)
@@ -38,16 +44,32 @@ export default function FAQPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     fetchFAQs()
-  }, [])
+  }, [searchParams, fetchFAQs])
+
+  // Re-fetch ketika window mendapat focus (user kembali ke tab/halaman)
+  useEffect(() => {
+    const handleFocus = () => {
+      // Clear cache dan refresh data saat window mendapat focus
+      apiCache.clear('/api/faqs')
+      fetchFAQs()
+    }
+
+    window.addEventListener('focus', handleFocus)
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [fetchFAQs])
 
   const handleDelete = async (faq: FAQ) => {
     try {
       await apiRequest('DELETE', `/api/faqs/${faq.id}`)
       toast.success("FAQ berhasil dihapus")
+      // Clear cache setelah delete untuk memastikan data fresh
+      apiCache.clear('/api/faqs')
       fetchFAQs()
     } catch (err) {
       toast.error("Gagal menghapus FAQ")
@@ -74,5 +96,13 @@ export default function FAQPage() {
         />
       </div>
     </div>
+  )
+}
+
+export default function FAQPage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto p-4">Loading...</div>}>
+      <FAQPageContent />
+    </Suspense>
   )
 }

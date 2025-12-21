@@ -24,6 +24,7 @@ import { useEffect, useState, use } from "react"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { apiRequest } from "@/lib/api"
+import { apiCache } from "@/lib/browserCache"
 import { Booking } from "@/types/bookings"
 import { ApiResponse } from "@/types/role"
 
@@ -54,9 +55,12 @@ export default function EditBookingPage({ params }: EditBookingPageProps) {
     const fetchBooking = async () => {
       try {
         setIsLoading(true)
+        // Gunakan cache browser untuk mempercepat loading
         const response = await apiRequest<ApiResponse<Booking>>(
           'GET',
-          `/api/bookings/${resolvedParams.id}`
+          `/api/bookings/${resolvedParams.id}`,
+          undefined,
+          { useCache: true } // Aktifkan cache browser
         )
 
         if (!response || !response.data) {
@@ -104,6 +108,9 @@ export default function EditBookingPage({ params }: EditBookingPageProps) {
       }
 
       toast.success("Status booking berhasil diperbarui")
+      // Clear cache setelah update untuk memastikan data fresh
+      apiCache.clear('/api/bookings')
+      apiCache.clear(`/api/bookings/${resolvedParams.id}`)
       router.push("/dashboard/bookings")
       router.refresh()
     } catch (error: unknown) {

@@ -50,6 +50,7 @@ import { FAQ } from "@/types/faqs"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { apiRequest } from "@/lib/api"
+import { apiCache } from "@/lib/browserCache"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 
 interface DataTableProps<TData> {
@@ -195,6 +196,8 @@ export function DataTable({
       setIsDeleting(true)
       await apiRequest('DELETE', `/api/faqs/${faq.id}`)
       toast.success("FAQ berhasil dihapus")
+      // Clear cache setelah delete untuk memastikan data fresh
+      apiCache.clear('/api/faqs')
       // Refresh data dengan memanggil ulang API
       const response = await apiRequest<FAQResponse>('GET', '/api/faqs')
       setData(response.data || [])

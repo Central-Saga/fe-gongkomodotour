@@ -52,6 +52,7 @@ import { useRouter } from "next/navigation"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
 import { apiRequest } from "@/lib/api"
+import { apiCache } from "@/lib/browserCache"
 import Image from "next/image"
 import { ImageModal } from "@/components/ui/image-modal"
 
@@ -164,6 +165,8 @@ export function DataTable({
       setIsDeleting(true)
       await apiRequest('DELETE', `/api/blogs/${blog.id}`)
       toast.success("Blog berhasil dihapus")
+      // Clear cache setelah delete untuk memastikan data fresh
+      apiCache.clear('/api/blogs')
       // Refresh data dengan memanggil ulang API
       const response = await apiRequest<{ data: Blog[] }>('GET', '/api/blogs')
       setData(response.data || [])

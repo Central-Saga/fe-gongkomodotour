@@ -3,9 +3,11 @@
 import { columns } from "./columns"
 import { DataTable } from "./data-table"
 import { apiRequest } from "@/lib/api"
+import { apiCache } from "@/lib/browserCache"
 import { Transaction } from "@/types/transactions"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback, Suspense } from "react"
 import { toast } from "sonner"
+import { useSearchParams } from "next/navigation"
 
 interface TransactionResponse {
   data: Transaction[]
@@ -13,39 +15,28 @@ interface TransactionResponse {
   status?: string
 }
 
-export default function TransactionsPage() {
+function TransactionsPageContent() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const searchParams = useSearchParams()
 
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
     try {
       setIsLoading(true)
-      console.log('Starting to fetch transactions...')
+      console.log('Fetching transactions...')
       
+      // Gunakan cache browser untuk mempercepat loading
       const response = await apiRequest<TransactionResponse>(
         'GET',
-        '/api/transactions'
+        '/api/transactions',
+        undefined,
+        { useCache: true } // Aktifkan cache browser
       )
 
-      console.log('API Response for transactions:', response)
-      console.log('Response type:', typeof response)
-      console.log('Response keys:', Object.keys(response || {}))
+      console.log('Raw API Response:', response)
+      console.log('Response data:', response.data)
       
       if (response?.data) {
-        console.log('Transactions data:', response.data)
-        console.log('Number of transactions:', response.data.length)
-        
-        // Log each transaction's payment_proof
-        response.data.forEach((transaction, index) => {
-          console.log(`Transaction ${index + 1}:`, {
-            id: transaction.id,
-            payment_proof: transaction.payment_proof,
-            payment_status: transaction.payment_status,
-            customer_name: transaction.booking?.customer_name,
-            has_payment_proof: !!transaction.payment_proof,
-            payment_proof_length: transaction.payment_proof?.length || 0
-          })
-        })
         setTransactions(response.data)
       } else {
         console.warn('No data in response:', response)
@@ -53,20 +44,30 @@ export default function TransactionsPage() {
       }
     } catch (error) {
       console.error('Error fetching transactions:', error)
-      console.error('Error details:', {
-        message: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined
-      })
       toast.error("Gagal mengambil data transaksi")
       setTransactions([])
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     fetchTransactions()
-  }, [])
+  }, [searchParams, fetchTransactions])
+
+  // Re-fetch ketika window mendapat focus (user kembali ke tab/halaman)
+  useEffect(() => {
+    const handleFocus = () => {
+      // Clear cache dan refresh data saat window mendapat focus
+      apiCache.clear('/api/transactions')
+      fetchTransactions()
+    }
+
+    window.addEventListener('focus', handleFocus)
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [fetchTransactions])
 
   if (isLoading) {
     return (
@@ -93,10 +94,20 @@ export default function TransactionsPage() {
           setData={setTransactions}
           onStatusUpdate={(transactionId, newStatus) => {
             console.log(`Status updated for transaction ${transactionId} to ${newStatus}`)
-            // Additional logic can be added here if needed
+            // Clear cache setelah update status untuk memastikan data fresh
+            apiCache.clear('/api/transactions')
+            fetchTransactions()
           }}
         />
       </div>
     </div>
+  )
+}
+
+export default function TransactionsPage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto py-10"><div className="flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div></div></div>}>
+      <TransactionsPageContent />
+    </Suspense>
   )
 }

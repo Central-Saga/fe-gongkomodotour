@@ -3,9 +3,11 @@
 import { columns } from "./columns"
 import { DataTable } from "./data-table"
 import { apiRequest } from "@/lib/api"
+import { apiCache } from "@/lib/browserCache"
 import { Booking } from "@/types/bookings"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback, Suspense } from "react"
 import { toast } from "sonner"
+import { useSearchParams } from "next/navigation"
 import {
   Select,
   SelectContent,
@@ -21,16 +23,20 @@ interface BookingResponse {
   status?: string
 }
 
-export default function BookingsPage() {
+function BookingsPageContent() {
   const [bookings, setBookings] = useState<Booking[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const searchParams = useSearchParams()
 
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     try {
       setIsLoading(true)
+      // Gunakan cache browser untuk mempercepat loading
       const response = await apiRequest<BookingResponse>(
         'GET',
-        '/api/bookings'
+        '/api/bookings',
+        undefined,
+        { useCache: true } // Aktifkan cache browser
       )
 
       if (response?.data) {
@@ -42,7 +48,7 @@ export default function BookingsPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [])
 
   const handleStatusChange = async (bookingId: number, newStatus: string) => {
     try {
@@ -54,6 +60,8 @@ export default function BookingsPage() {
 
       if (response?.data) {
         toast.success("Status booking berhasil diperbarui")
+        // Clear cache setelah update status untuk memastikan data fresh
+        apiCache.clear('/api/bookings')
         fetchBookings() // Refresh data
       }
     } catch (error) {
@@ -64,7 +72,21 @@ export default function BookingsPage() {
 
   useEffect(() => {
     fetchBookings()
-  }, [])
+  }, [searchParams, fetchBookings])
+
+  // Re-fetch ketika window mendapat focus (user kembali ke tab/halaman)
+  useEffect(() => {
+    const handleFocus = () => {
+      // Clear cache dan refresh data saat window mendapat focus
+      apiCache.clear('/api/bookings')
+      fetchBookings()
+    }
+
+    window.addEventListener('focus', handleFocus)
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [fetchBookings])
 
   const columnsWithStatus: ColumnDef<Booking>[] = [
     ...columns(),
@@ -118,5 +140,13 @@ export default function BookingsPage() {
         />
       </div>
     </div>
+  )
+}
+
+export default function BookingsPage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto py-10"><div className="flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div></div></div>}>
+      <BookingsPageContent />
+    </Suspense>
   )
 }

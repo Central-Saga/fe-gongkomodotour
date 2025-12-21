@@ -49,6 +49,7 @@ import autoTable from "jspdf-autotable"
 import { Transaction, TransactionAsset } from "@/types/transactions"
 import { toast } from "sonner"
 import { apiRequest } from "@/lib/api"
+import { apiCache } from "@/lib/browserCache"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import Image from "next/image"
 import { ImageModal } from "@/components/ui/image-modal"
@@ -224,6 +225,8 @@ export function DataTable({
       setIsDeleting(true)
       await apiRequest('DELETE', `/api/transactions/${transaction.id}`)
       toast.success("Transaksi berhasil dihapus")
+      // Clear cache setelah delete untuk memastikan data fresh
+      apiCache.clear('/api/transactions')
       // Refresh data dengan memanggil ulang API
       const response = await apiRequest<TransactionResponse>('GET', '/api/transactions')
       setData(response.data || [])
@@ -275,6 +278,9 @@ export function DataTable({
         console.log('Updated data for transaction:', updatedData.find(t => t.id === transactionId))
         return updatedData
       })
+      
+      // Clear cache setelah update status untuk memastikan data fresh
+      apiCache.clear('/api/transactions')
       
       // Show success notification
       toast.success(`Status pembayaran berhasil diubah menjadi "${newStatus}"`)

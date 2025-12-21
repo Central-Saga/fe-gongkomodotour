@@ -51,6 +51,7 @@ import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import { apiRequest } from "@/lib/api"
+import { apiCache } from "@/lib/browserCache"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 
 interface DataTableProps<TData> {
@@ -190,6 +191,8 @@ export function DataTable({
       setIsDeleting(true)
       await apiRequest('DELETE', `/api/bookings/${booking.id}`)
       toast.success("Booking berhasil dihapus")
+      // Clear cache setelah delete untuk memastikan data fresh
+      apiCache.clear('/api/bookings')
       // Refresh data dengan memanggil ulang API
       const response = await apiRequest<BookingResponse>('GET', '/api/bookings')
       setData(response.data || [])

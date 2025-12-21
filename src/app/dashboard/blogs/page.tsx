@@ -24,13 +24,12 @@ function BlogPageContent() {
     try {
       setLoading(true)
       console.log('Fetching blogs...')
-      // Clear cache untuk memastikan data fresh (seperti trips/galleries)
-      apiCache.clear('/api/blogs')
+      // Gunakan cache browser untuk mempercepat loading
       const response: BlogResponse = await apiRequest<BlogResponse>(
         'GET',
         '/api/blogs',
         undefined,
-        { useCache: false } // Disable cache untuk memastikan data fresh
+        { useCache: true } // Aktifkan cache browser
       )
       console.log('Raw API Response:', response)
       console.log('Response data:', response.data)
@@ -53,6 +52,8 @@ function BlogPageContent() {
   // Re-fetch ketika window mendapat focus (user kembali ke tab/halaman)
   useEffect(() => {
     const handleFocus = () => {
+      // Clear cache dan refresh data saat window mendapat focus
+      apiCache.clear('/api/blogs')
       fetchData()
     }
 
