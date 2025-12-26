@@ -312,6 +312,23 @@ export default function CarouselAdmin() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validasi mime type dan ekstensi
+      const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/avif", "image/heic"];
+      const ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif", ".heic"];
+      
+      const lowerName = file.name.toLowerCase();
+      const hasAllowedExt = ALLOWED_EXTENSIONS.some(ext => lowerName.endsWith(ext));
+      const hasAllowedMime = ALLOWED_MIME_TYPES.includes(file.type);
+      
+      if (!hasAllowedExt || !hasAllowedMime) {
+        setMessage({
+          text: `File ${file.name} tidak didukung. Gunakan format JPG, JPEG, PNG, GIF, WEBP, AVIF, atau HEIC.`,
+          type: "error"
+        });
+        if (e.target) e.target.value = "";
+        return;
+      }
+      
       setNewImageFile(file);
       setNewImageUrl(URL.createObjectURL(file)); // Tampilkan preview lokal
     }
@@ -321,6 +338,23 @@ export default function CarouselAdmin() {
   const handleEditFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validasi mime type dan ekstensi
+      const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/avif", "image/heic"];
+      const ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif", ".heic"];
+      
+      const lowerName = file.name.toLowerCase();
+      const hasAllowedExt = ALLOWED_EXTENSIONS.some(ext => lowerName.endsWith(ext));
+      const hasAllowedMime = ALLOWED_MIME_TYPES.includes(file.type);
+      
+      if (!hasAllowedExt || !hasAllowedMime) {
+        setMessage({
+          text: `File ${file.name} tidak didukung. Gunakan format JPG, JPEG, PNG, GIF, WEBP, AVIF, atau HEIC.`,
+          type: "error"
+        });
+        if (e.target) e.target.value = "";
+        return;
+      }
+      
       setEditImageFile(file);
       setEditImageUrl(URL.createObjectURL(file)); // Tampilkan preview lokal
     }
@@ -745,7 +779,7 @@ export default function CarouselAdmin() {
               <input
                 type="file"
                 ref={fileInputRef}
-                accept="image/*"
+                accept="image/jpeg,image/png,image/gif,image/webp,image/avif,image/heic"
                 className="hidden"
                 onChange={handleFileChange}
               />
@@ -838,7 +872,7 @@ export default function CarouselAdmin() {
               <input
                 type="file"
                 ref={editFileInputRef}
-                accept="image/*"
+                accept="image/jpeg,image/png,image/gif,image/webp,image/avif,image/heic"
                 className="hidden"
                 onChange={handleEditFileChange}
               />

@@ -213,8 +213,8 @@ export default function Payment({
   date,
   tripCount,
 }: PaymentProps) {
-  const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/jpg", "image/avif", "image/webp"];
-  const ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".avif", ".webp"];
+  const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/jpg", "image/gif", "image/webp", "image/avif", "image/heic"];
+  const ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif", ".heic"];
   const [isUploaded, setIsUploaded] = useState(false);
   const [bookingData, setBookingData] = useState<BookingData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -409,7 +409,7 @@ export default function Payment({
       const hasAllowedExt = ALLOWED_EXTENSIONS.some(ext => lowerName.endsWith(ext));
       const hasAllowedMime = ALLOWED_MIME_TYPES.includes(file.type);
       if (!hasAllowedExt || !hasAllowedMime) {
-        setSubmitError("Format file tidak didukung. Gunakan JPG/ JPEG/ PNG.");
+        setSubmitError("Format file tidak didukung. Gunakan JPG, JPEG, PNG, GIF, WEBP, AVIF, atau HEIC.");
         setIsUploaded(false);
         setPaymentProof(null);
         setAssets([]);
@@ -951,7 +951,7 @@ export default function Payment({
                     type="file"
                     ref={fileInputRef}
                     style={{ display: "none" }}
-                    accept="image/jpeg,image/png,image/jpg,image/avif,image/webp"
+                    accept="image/jpeg,image/png,image/jpg,image/gif,image/webp,image/avif,image/heic"
                     onChange={handleFileChange}
                     disabled={isFinalized}
                   />

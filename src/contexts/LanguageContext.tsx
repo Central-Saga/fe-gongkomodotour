@@ -277,14 +277,17 @@ interface LanguageProviderProps {
 }
 
 export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) => {
-  const [language, setLanguageState] = useState<Language>('id');
+  // Default to English to prevent hydration mismatch
+  const [language, setLanguageState] = useState<Language>('en');
+  const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
-    // Load language from localStorage on mount
+    // Load language from localStorage on mount (client-side only)
     const savedLanguage = localStorage.getItem('language') as Language;
     if (savedLanguage && (savedLanguage === 'en' || savedLanguage === 'id')) {
       setLanguageState(savedLanguage);
     }
+    setIsHydrated(true);
   }, []);
 
   const setLanguage = (lang: Language) => {
@@ -293,6 +296,8 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
   };
 
   const t = (key: string): string => {
+    // Always use current language state
+    // Server and client both start with 'en' default, preventing hydration mismatch
     return translations[language][key as keyof typeof translations.en] || key;
   };
 

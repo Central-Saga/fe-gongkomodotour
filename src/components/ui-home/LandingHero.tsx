@@ -281,7 +281,7 @@ export default function LandingHero() {
                     className="absolute inset-0 bg-black/20"
                   />
                   <motion.div 
-                    variants={staggerContainer}
+                    variants={ staggerContainer}
                     initial="initial"
                     animate="animate"
                     className="relative z-10 flex flex-col items-start gap-2 sm:gap-4"
