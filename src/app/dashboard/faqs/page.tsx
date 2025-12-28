@@ -69,7 +69,7 @@ function FAQPageContent() {
       await apiRequest('DELETE', `/api/faqs/${faq.id}`)
       toast.success("FAQ berhasil dihapus")
       // Clear cache setelah delete untuk memastikan data fresh
-      apiCache.clear('/api/faqs')
+      apiCache.clearByPattern('faqs')
       fetchFAQs()
     } catch (err) {
       toast.error("Gagal menghapus FAQ")

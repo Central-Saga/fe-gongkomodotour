@@ -107,12 +107,16 @@ export default function EditBookingPage({ params }: EditBookingPageProps) {
         throw new Error('Response tidak valid dari server')
       }
 
+      // Clear semua cache bookings sebelum redirect untuk memastikan data fresh
+      apiCache.clearByPattern('bookings')
       toast.success("Status booking berhasil diperbarui")
-      // Clear cache setelah update untuk memastikan data fresh
-      apiCache.clear('/api/bookings')
-      apiCache.clear(`/api/bookings/${resolvedParams.id}`)
-      router.push("/dashboard/bookings")
-      router.refresh()
+      
+      if (typeof window !== 'undefined') {
+        window.location.href = '/dashboard/bookings'
+      } else {
+        router.push("/dashboard/bookings")
+        router.refresh()
+      }
     } catch (error: unknown) {
       console.error('Error detail:', error)
       toast.error("Gagal memperbarui status booking")

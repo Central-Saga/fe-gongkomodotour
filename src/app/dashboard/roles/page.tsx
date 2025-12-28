@@ -1,8 +1,9 @@
 "use client";
 
 import { apiRequest } from '@/lib/api';
+import { apiCache } from '@/lib/browserCache';
 import { Role, ApiResponse } from '@/types/role';
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { columns } from "./columns";
 import { DataTable } from "./data-table";
 import { RoleDialog } from "./role-dialog";
@@ -18,12 +19,15 @@ export default function RolePages() {
   const [selectedRole, setSelectedRole] = useState<Role | undefined>();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const fetchRoles = async () => {
+  const fetchRoles = useCallback(async () => {
     try {
       setLoading(true);
+      // Gunakan cache browser untuk mempercepat loading
       const response: ApiResponse<Role[]> = await apiRequest<ApiResponse<Role[]>>(
         'GET',
-        '/api/roles'
+        '/api/roles',
+        undefined,
+        { useCache: true } // Aktifkan cache browser
       );
       setData(response.data || []);
       setError(null);
@@ -34,11 +38,25 @@ export default function RolePages() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchRoles();
-  }, []);
+  }, [fetchRoles]);
+
+  // Re-fetch ketika window mendapat focus (user kembali ke tab/halaman)
+  useEffect(() => {
+    const handleFocus = () => {
+      // Clear cache dan refresh data saat window mendapat focus
+      apiCache.clear('/api/roles')
+      fetchRoles()
+    }
+
+    window.addEventListener('focus', handleFocus)
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [fetchRoles])
 
   const handleCreate = () => {
     setSelectedRole(undefined);
@@ -56,6 +74,8 @@ export default function RolePages() {
     try {
       await apiRequest('DELETE', `/api/roles/${role.id}`);
       toast.success("Role deleted successfully");
+      // Clear cache setelah delete untuk memastikan data fresh
+      apiCache.clearByPattern('roles')
       fetchRoles();
     } catch (err) {
       toast.error("Failed to delete role");
@@ -74,6 +94,8 @@ export default function RolePages() {
         toast.success("Role created successfully");
       }
       setDialogOpen(false);
+      // Clear cache setelah create/update untuk memastikan data fresh
+      apiCache.clearByPattern('roles')
       fetchRoles();
     } catch (err) {
       toast.error(selectedRole ? "Failed to update role" : "Failed to create role");

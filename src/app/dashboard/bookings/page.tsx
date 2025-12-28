@@ -61,7 +61,7 @@ function BookingsPageContent() {
       if (response?.data) {
         toast.success("Status booking berhasil diperbarui")
         // Clear cache setelah update status untuk memastikan data fresh
-        apiCache.clear('/api/bookings')
+        apiCache.clearByPattern('bookings')
         fetchBookings() // Refresh data
       }
     } catch (error) {

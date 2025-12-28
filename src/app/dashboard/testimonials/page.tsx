@@ -3,8 +3,9 @@
 import { columns } from "./columns"
 import { DataTable } from "./data-table"
 import { apiRequest } from "@/lib/api"
+import { apiCache } from "@/lib/browserCache"
 import { Testimonial } from "@/types/testimonials"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { toast } from "sonner"
 
 interface TestimonialResponse {
@@ -18,10 +19,16 @@ export default function TestimonialPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchTestimonials = async () => {
+  const fetchTestimonials = useCallback(async () => {
     try {
       setLoading(true)
-      const response = await apiRequest<TestimonialResponse>('GET', '/api/testimonials')
+      // Gunakan cache browser untuk mempercepat loading
+      const response = await apiRequest<TestimonialResponse>(
+        'GET',
+        '/api/testimonials',
+        undefined,
+        { useCache: true } // Aktifkan cache browser
+      )
       setData(response.data || [])
       setError(null)
     } catch (err: unknown) {
@@ -31,16 +38,32 @@ export default function TestimonialPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     fetchTestimonials()
-  }, [])
+  }, [fetchTestimonials])
+
+  // Re-fetch ketika window mendapat focus (user kembali ke tab/halaman)
+  useEffect(() => {
+    const handleFocus = () => {
+      // Clear cache dan refresh data saat window mendapat focus
+      apiCache.clear('/api/testimonials')
+      fetchTestimonials()
+    }
+
+    window.addEventListener('focus', handleFocus)
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [fetchTestimonials])
 
   const handleDelete = async (testimonial: Testimonial) => {
     try {
       await apiRequest('DELETE', `/api/testimonials/${testimonial.id}`)
       toast.success("Testimonial berhasil dihapus")
+      // Clear cache setelah delete untuk memastikan data fresh
+      apiCache.clearByPattern('testimonials')
       fetchTestimonials()
     } catch (err) {
       toast.error("Gagal menghapus testimonial")

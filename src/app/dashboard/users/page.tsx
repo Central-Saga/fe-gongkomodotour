@@ -1,8 +1,9 @@
 "use client";
 
 import { apiRequest } from '@/lib/api';
+import { apiCache } from '@/lib/browserCache';
 import { User, ApiResponse } from '@/types/user';
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
 import * as z from "zod";
 import { createFormSchema } from "./user-form";
@@ -23,12 +24,15 @@ export default function UserPages() {
   const [currentUser, setCurrentUser] = useState<{ id?: number; roles?: string[] } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
+      // Gunakan cache browser untuk mempercepat loading
       const response: ApiResponse<User[]> = await apiRequest<ApiResponse<User[]>>(
         'GET',
-        '/api/users'
+        '/api/users',
+        undefined,
+        { useCache: true } // Aktifkan cache browser
       );
       setData(response.data || []);
       setError(null);
@@ -39,7 +43,7 @@ export default function UserPages() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchUsers();
@@ -57,7 +61,21 @@ export default function UserPages() {
         console.error('Error parsing user data:', error);
       }
     }
-  }, []);
+  }, [fetchUsers]);
+
+  // Re-fetch ketika window mendapat focus (user kembali ke tab/halaman)
+  useEffect(() => {
+    const handleFocus = () => {
+      // Clear cache dan refresh data saat window mendapat focus
+      apiCache.clear('/api/users')
+      fetchUsers()
+    }
+
+    window.addEventListener('focus', handleFocus)
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [fetchUsers])
 
   const handleCreate = () => {
     setSelectedUser(undefined);
@@ -117,6 +135,8 @@ export default function UserPages() {
       setIsDeleting(true);
       await apiRequest('DELETE', `/api/users/${user.id}`);
       toast.success("User berhasil dihapus");
+      // Clear cache setelah delete untuk memastikan data fresh
+      apiCache.clearByPattern('users')
       fetchUsers();
     } catch (err) {
       toast.error("Gagal menghapus user");
@@ -137,6 +157,8 @@ export default function UserPages() {
         toast.success("User created successfully");
       }
       setDialogOpen(false);
+      // Clear cache setelah create/update untuk memastikan data fresh
+      apiCache.clearByPattern('users')
       fetchUsers();
     } catch (err) {
       toast.error(selectedUser ? "Failed to update user" : "Failed to create user");
