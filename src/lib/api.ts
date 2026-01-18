@@ -3,7 +3,7 @@ import axios, { AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
 import { apiCache } from './browserCache';
 
 // Untuk debugging
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.gongkomodotour.com';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://sandbox.api.gongkomodotour.com';
 console.log('API Base URL:', API_BASE_URL);
 
 // 1. Buat Axios instance

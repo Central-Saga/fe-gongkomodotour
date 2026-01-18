@@ -353,7 +353,7 @@ export default function DetailOpenTrip() {
   console.log("Testing getImageUrl function:");
   console.log("Input: '/storage/trip/1754741902_pulau-padar.jpg'");
   console.log("Output:", getImageUrl('/storage/trip/1754741902_pulau-padar.jpg'));
-  console.log("Expected: https://api.gongkomodotour.com/storage/trip/1754741902_pulau-padar.jpg");
+  console.log("Expected: https://sandbox.api.gongkomodotour.com/storage/trip/1754741902_pulau-padar.jpg");
 
   return (
     <div>

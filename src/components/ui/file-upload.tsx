@@ -25,7 +25,7 @@ interface FileUploadProps {
   accept?: Record<string, string[]>
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.gongkomodotour.com'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://sandbox.api.gongkomodotour.com'
 
 // Fungsi untuk membersihkan HTML tags dari teks
 const stripHtmlTags = (html: string) => {

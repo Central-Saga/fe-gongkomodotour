@@ -121,7 +121,7 @@ export default function LandingHero() {
         return encodeURI(url);
       }
       // Relative path dari API
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.gongkomodotour.com';
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://sandbox.api.gongkomodotour.com';
       const fullUrl = `${API_URL}${url}`;
       return encodeURI(fullUrl);
     } catch (error) {

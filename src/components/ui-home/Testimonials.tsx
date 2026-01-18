@@ -458,7 +458,7 @@ export default function Testimoni() {
                             className="object-cover rounded-full"
                             quality={85}
                             sizes="48px"
-                            unoptimized={photoUrl.includes('api.gongkomodotour.com') || photoUrl.includes('http')}
+                            unoptimized={photoUrl.includes('sandbox.api.gongkomodotour.com') || photoUrl.includes('http')}
                             onError={() => {
                               // Hanya log jika belum di error set untuk menghindari spam
                               if (!imageErrors.has(photoUrl)) {

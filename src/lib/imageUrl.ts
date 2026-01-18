@@ -1,7 +1,7 @@
 /**
  * Helper function to get full image URL from API
  */
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.gongkomodotour.com';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://sandbox.api.gongkomodotour.com';
 
 export function getImageUrl(url: string): string {
   if (!url) {

@@ -126,7 +126,7 @@ const getImageUrl = (fileUrl: string) => {
     return fileUrl
   }
   
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.gongkomodotour.com'
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://sandbox.api.gongkomodotour.com'
   
   // Pastikan fileUrl dimulai dengan slash
   const cleanUrl = fileUrl.startsWith('/') ? fileUrl : `/${fileUrl}`

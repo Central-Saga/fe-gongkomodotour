@@ -40,7 +40,7 @@ export function CachedImage({
 
   // Deteksi apakah gambar dari remote API yang mungkin bermasalah dengan Next.js Image Optimizer
   // Gunakan unoptimized untuk menghindari error 500 pada Next.js Image Optimizer
-  const isRemoteAPI = src.includes('api.gongkomodotour.com') || 
+  const isRemoteAPI = src.includes('sandbox.api.gongkomodotour.com') || 
                        src.includes('lh3.googleusercontent.com') ||
                        src.startsWith('http://') || 
                        src.startsWith('https://');

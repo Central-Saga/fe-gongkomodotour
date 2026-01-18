@@ -11,7 +11,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'api.gongkomodotour.com',
+        hostname: 'sandbox.api.gongkomodotour.com',
         pathname: '/storage/**',
       },
       {
@@ -35,7 +35,7 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
     ],
-    domains: ['localhost', 'lh3.googleusercontent.com', 'api.gongkomodotour.com', 'picsum.photos', 'images.unsplash.com', 'source.unsplash.com', 'via.placeholder.com'],
+    domains: ['localhost', 'lh3.googleusercontent.com', 'sandbox.api.gongkomodotour.com', 'picsum.photos', 'images.unsplash.com', 'source.unsplash.com', 'via.placeholder.com'],
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
@@ -63,7 +63,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'https://api.gongkomodotour.com/api/:path*',
+        destination: 'https://sandbox.api.gongkomodotour.com/api/:path*',
       },
     ];
   },
