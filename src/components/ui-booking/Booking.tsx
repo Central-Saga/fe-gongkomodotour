@@ -8,7 +8,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -38,6 +40,13 @@ const countryOptions = Object.entries(countryList).map(([code, name]) => ({
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
+// Klasifikasi kapasitas boat untuk pengelompokan di dropdown
+function getBoatCapacityClass(cap: number): 'kecil' | 'sedang' | 'besar' {
+  if (cap <= 10) return 'kecil';
+  if (cap <= 20) return 'sedang';
+  return 'besar';
+}
+
 interface TripPrice {
   id: number;
   trip_duration_id: number;
@@ -61,8 +70,8 @@ interface PackageData {
     durationLabel: string;
     days: { day: string; activities: string }[];
   }[];
-  boatImages?: { image: string; title: string; id: string }[];
   has_boat?: boolean;
+  boat_ids?: number[];
   has_hotel?: boolean;
   trip_durations?: {
     id: number;
@@ -299,10 +308,23 @@ export default function Booking() {
     return typeof value === "number" ? value : Number(value ?? 0);
   };
 
+  // Kapasitas tertinggi (total max_pax kabin aktif)
   const calculateTotalBoatCapacity = useCallback((boat: Boat) => {
     return boat.cabin
       .filter(cabin => isActive(cabin.status))
       .reduce((total, cabin) => total + toNumber(cabin.max_pax), 0);
+  }, []);
+
+  // Teks kapasitas boat: BUKAN dihitung (bukan dijumlah). Cukup:
+  // - cabin minimal terendah = min_pax terkecil di antara kabin aktif
+  // - cabin maximal terbesar = max_pax terbesar di antara kabin aktif
+  // Contoh: kabin 2-2, 2-2, 4-6 pax → 2 pax (min) dan 6 pax (max).
+  const getBoatCapacityRangeText = useCallback((boat: Boat) => {
+    const active = boat.cabin.filter(c => isActive(c.status));
+    if (!active.length) return "0 pax";
+    const min = Math.min(...active.map(c => toNumber(c.min_pax)));
+    const max = Math.max(...active.map(c => toNumber(c.max_pax)));
+    return min === max ? `${min} pax` : `${min}-${max} pax`;
   }, []);
 
   useEffect(() => {
@@ -312,9 +334,8 @@ export default function Booking() {
     const availableBoats = boats
       .filter(boat => isActive(boat.status))
       .filter(boat => {
-        const totalCapacity = calculateTotalBoatCapacity(boat);
-        const hasCabinWithMin = boat.cabin.some(cabin => isActive(cabin.status) && toNumber(cabin.min_pax) <= tripCount);
-        return totalCapacity >= tripCount && hasCabinWithMin;
+        const totalMax = calculateTotalBoatCapacity(boat);
+        return tripCount <= totalMax;
       });
     setFilteredBoats(availableBoats);
 
@@ -367,12 +388,8 @@ export default function Booking() {
                 activities: itinerary.activities
               })) || []
             })),
-            boatImages: trip.boat_assets?.map(asset => ({
-              image: getImageUrl(asset.file_url),
-              title: asset.title || "Boat",
-              id: asset.id.toString()
-            })),
             has_boat: trip.has_boat,
+            boat_ids: trip.boat_ids || [],
             has_hotel: trip.has_hotel,
             trip_durations: trip.trip_durations?.map(duration => ({
               id: duration.id,
@@ -649,30 +666,23 @@ export default function Booking() {
     const fetchBoats = async () => {
       try {
         setIsLoadingBoats(true);
-        console.log('Selected Package:', selectedPackage);
-        console.log('Has Boat:', selectedPackage?.has_boat);
-        console.log('Fetching boats...');
         const response = await apiRequest<BoatResponse>(
           'GET',
           '/api/landing-page/boats'
         );
-        console.log('Raw Boats Response:', response);
 
         if (response && response.data && Array.isArray(response.data)) {
-          // Filter hanya boat yang aktif (longgar terhadap variasi status)
-          const activeBoats = response.data.filter(boat => isActive(boat.status));
-          console.log('Active boats:', activeBoats);
-          console.log('Number of active boats:', activeBoats.length);
+          let activeBoats = response.data.filter(boat => isActive(boat.status));
+          // Filter oleh boat_ids trip jika ada (hanya tampilkan kapal yang terhubung ke trip)
+          if (selectedPackage?.boat_ids && selectedPackage.boat_ids.length > 0) {
+            activeBoats = activeBoats.filter(boat => selectedPackage.boat_ids!.includes(boat.id));
+          }
           setBoats(activeBoats);
-          // Set filtered langsung sesuai tripCount saat ini dan min_pax cabin
           const availableNow = activeBoats.filter(boat => {
-            const totalCapacity = calculateTotalBoatCapacity(boat);
-            const hasCabinWithMin = boat.cabin.some(cabin => isActive(cabin.status) && toNumber(cabin.min_pax) <= tripCount);
-            return totalCapacity >= tripCount && hasCabinWithMin;
+            const totalMax = calculateTotalBoatCapacity(boat);
+            return tripCount <= totalMax;
           });
           setFilteredBoats(availableNow);
-        } else {
-          console.log('Invalid response format:', response);
         }
       } catch (error) {
         console.error('Error fetching boats:', error);
@@ -682,10 +692,7 @@ export default function Booking() {
     };
 
     if (selectedPackage?.has_boat) {
-      console.log('Package has boat, fetching boats...');
       fetchBoats();
-    } else {
-      console.log('Package does not have boat, skipping fetch');
     }
   }, [selectedPackage, calculateTotalBoatCapacity, tripCount]);
 
@@ -702,16 +709,13 @@ export default function Booking() {
     const selectedBoatData = boats.find(boat => boat.id.toString() === selectedBoat);
     if (!selectedBoatData) return;
 
-    // Hitung total kapasitas cabin per boat
+    const activeCabins = selectedBoatData.cabin?.filter(c => isActive(c.status)) ?? [];
     const totalCabinCapacity = calculateTotalBoatCapacity(selectedBoatData);
+    // Jumlah cabin: pakai max_pax TERBESAR (cabin maximal terbesar), bukan dihitung/dijumlah
+    const largestMaxPax = activeCabins.length ? Math.max(...activeCabins.map(c => toNumber(c.max_pax))) : 1;
 
-    // Hitung jumlah boat yang dibutuhkan
-    const boatsNeeded = Math.ceil(tripCount / totalCabinCapacity);
-    setRequiredBoats(boatsNeeded);
-
-    // Hitung jumlah cabin yang dibutuhkan
-    const cabinsNeeded = Math.ceil(tripCount / selectedBoatData.cabin[0].max_pax);
-    setRequiredCabins(cabinsNeeded);
+    setRequiredBoats(Math.ceil(tripCount / totalCabinCapacity));
+    setRequiredCabins(Math.ceil(tripCount / largestMaxPax));
   }, [selectedBoat, tripCount, boats, calculateTotalBoatCapacity]);
 
   useEffect(() => {
@@ -860,18 +864,18 @@ export default function Booking() {
       const currentPax = currentRoom?.pax || 0;
       const remainingPax = tripCount - (totalPaxAllocated - currentPax);
 
-    if (!currentRoom) {
-      // Izinkan tambah kamar meski remainingPax < maxPaxPerRoom (contoh: pax 1, double occupancy)
-      if (!increment || remainingPax <= 0) return prev;
-      const initialPax = Math.min(maxPaxPerRoom, remainingPax);
-      return [...prev, { hotelId, rooms: 1, pax: initialPax }];
-    }
+      if (!currentRoom) {
+        // Izinkan tambah kamar meski remainingPax < maxPaxPerRoom (contoh: pax 1, double occupancy)
+        if (!increment || remainingPax <= 0) return prev;
+        const initialPax = Math.min(maxPaxPerRoom, remainingPax);
+        return [...prev, { hotelId, rooms: 1, pax: initialPax }];
+      }
 
-    if (increment) {
-      // Tambah kamar: naikkan rooms, alokasikan pax hingga sisa (remainingPax)
-      if (remainingPax <= 0) return prev;
-      const newRooms = currentRoom.rooms + 1;
-      const newPax = Math.min(currentPax + maxPaxPerRoom, Math.max(remainingPax, 0));
+      if (increment) {
+        // Tambah kamar: naikkan rooms, alokasikan pax hingga sisa (remainingPax)
+        if (remainingPax <= 0) return prev;
+        const newRooms = currentRoom.rooms + 1;
+        const newPax = Math.min(currentPax + maxPaxPerRoom, Math.max(remainingPax, 0));
         return prev.map(room =>
           room.hotelId === hotelId ? { ...room, rooms: newRooms, pax: newPax } : room
         );
@@ -880,7 +884,7 @@ export default function Booking() {
           return prev.filter(room => room.hotelId !== hotelId);
         }
         const newRooms = currentRoom.rooms - 1;
-      const newPax = Math.max(currentPax - maxPaxPerRoom, 0);
+        const newPax = Math.max(currentPax - maxPaxPerRoom, 0);
         return prev.map(room =>
           room.hotelId === hotelId ? { ...room, rooms: newRooms, pax: newPax } : room
         );
@@ -1083,16 +1087,36 @@ export default function Booking() {
                 transition={{ duration: 0.5, delay: 0.9 }}
                 className="space-y-6"
               >
-                {selectedPackage?.has_boat && selectedBoat && (
+                {selectedPackage?.has_boat && selectedBoat && (() => {
+                    const selectedBoatData = boats.find(boat => boat.id.toString() === selectedBoat);
+                    const activeCabins = selectedBoatData?.cabin?.filter(c => isActive(c.status)) ?? [];
+
+                    // Cabin terkecil & terbesar: JANGAN dihitung/dijumlah min pax tiap cabin.
+                    // Cukup: cabin yang minimalnya terendah → ambil nilai itu; cabin yang maximalnya terbesar → ambil nilai itu.
+                    // Contoh: kabin 2-2, 2-2, 4-6 pax → terkecil 2 (min terendah), terbesar 6 (max terbesar).
+                    const smallestMin = activeCabins.length ? Math.min(...activeCabins.map(c => toNumber(c.min_pax))) : 0;
+                    const largestMax = activeCabins.length ? Math.max(...activeCabins.map(c => toNumber(c.max_pax))) : 0;
+
+                    return (
                   <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
                     <h3 className="font-semibold text-lg">Detail Boat & Cabin</h3>
 
                     <div className="space-y-2">
                       <p className="text-sm text-gray-600">
+                        Cabin terkecil: {smallestMin} pax
+                        <span className="block text-xs text-gray-400 mt-0.5">(cabin yang minimalnya terendah, bukan dihitung)</span>
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        Cabin terbesar: {largestMax} pax
+                        <span className="block text-xs text-gray-400 mt-0.5">(cabin yang maximalnya terbesar, bukan dihitung)</span>
+                      </p>
+                      <p className="text-sm text-gray-600">
                         Jumlah Boat yang Dibutuhkan: {requiredBoats} boat
+                        <span className="block text-xs text-gray-400 mt-0.5">(dihitung dari Jumlah Pax ÷ total kapasitas boat)</span>
                       </p>
                       <p className="text-sm text-gray-600">
                         Jumlah Cabin yang Dibutuhkan: {requiredCabins} cabin
+                        <span className="block text-xs text-gray-400 mt-0.5">(dihitung dari Jumlah Pax ÷ cabin maximal terbesar)</span>
                       </p>
                     </div>
 
@@ -1145,7 +1169,8 @@ export default function Booking() {
                       </p>
                     </div>
                   </div>
-                )}
+                    );
+                  })()}
 
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <h3 className="font-semibold text-lg mb-4">Detail Pembayaran</h3>
@@ -1192,8 +1217,8 @@ export default function Booking() {
 
                 <Button
                   className={`w-full py-6 rounded-lg font-bold text-2xl transition-all duration-300 transform hover:scale-105 ${selectedDuration && selectedDate && tripCount > 0
-                      ? "bg-gold text-white hover:bg-gold-dark-20 shadow-lg hover:shadow-xl"
-                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    ? "bg-gold text-white hover:bg-gold-dark-20 shadow-lg hover:shadow-xl"
+                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
                     }`}
                   disabled={!selectedDuration || !selectedDate || tripCount === 0}
                   onClick={handleBooking}
@@ -1218,8 +1243,8 @@ export default function Booking() {
               className="flex justify-between mb-4"
             >
               <Badge variant="secondary" className={`${userRegion === "overseas"
-                  ? "bg-blue-100 text-blue-700 hover:bg-blue-100/80"
-                  : "bg-[#efe6e6] text-gray-700 hover:bg-[#efe6e6]/80"
+                ? "bg-blue-100 text-blue-700 hover:bg-blue-100/80"
+                : "bg-[#efe6e6] text-gray-700 hover:bg-[#efe6e6]/80"
                 }`}>
                 {userRegion === "overseas" ? "OVERSEAS" : "DOMESTIC"}
               </Badge>
@@ -1413,27 +1438,27 @@ export default function Booking() {
 
                   <div className="space-y-2">
                     <Label>Tanggal Keberangkatan</Label>
-                  <Popover>
+                    <Popover>
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"
-                          className={`w-full justify-start text-left font-normal ${!selectedDuration ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          className={`w-full justify-start text-left font-normal ${!selectedDuration ? "opacity-50 cursor-not-allowed" : ""}`}
                           disabled={!selectedDuration}
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />
                           {selectedDate ? format(selectedDate, "PPP") : "Pilih Tanggal"}
                         </Button>
                       </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start" onOpenAutoFocus={e => e.preventDefault()}>
+                      <PopoverContent className="w-auto p-0" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
                         <Calendar
                           mode="single"
                           selected={selectedDate}
                           onSelect={setSelectedDate}
-                        disabled={!selectedDuration ? true : disabledByOperationalDays}
-                        initialFocus
-                        className="rounded-md border"
-                        showOutsideDays={false}
-                        captionLayout="dropdown"
+                          disabled={!selectedDuration ? true : disabledByOperationalDays}
+                          initialFocus
+                          className="rounded-md border"
+                          showOutsideDays={false}
+                          captionLayout="dropdown"
                         />
                       </PopoverContent>
                     </Popover>
@@ -1460,20 +1485,27 @@ export default function Booking() {
                               <div className="p-2 text-center text-sm text-gray-500">
                                 {tripCount > 0 ? "Tidak ada boat yang tersedia untuk jumlah pax ini" : "Tidak ada boat tersedia"}
                               </div>
-                            ) : (
-                              filteredBoats.map((boat) => (
-                                <SelectItem
-                                  key={boat.id}
-                                  value={boat.id.toString()}
-                                  className="flex flex-col items-start"
-                                >
-                                  <span className="font-medium">{boat.boat_name}</span>
-                                  <span className="text-xs text-gray-500">
-                                    Kapasitas: {calculateTotalBoatCapacity(boat)} pax
-                                  </span>
-                                </SelectItem>
-                              ))
-                            )}
+                            ) : (() => {
+                              const byClass: Record<string, Boat[]> = { kecil: [], sedang: [], besar: [] };
+                              filteredBoats.forEach(boat => {
+                                const c = getBoatCapacityClass(calculateTotalBoatCapacity(boat));
+                                byClass[c].push(boat);
+                              });
+                              const labels: Record<string, string> = { kecil: "Kapasitas Kecil (1–10 pax)", sedang: "Kapasitas Sedang (11–20 pax)", besar: "Kapasitas Besar (21+ pax)" };
+                              return (["kecil", "sedang", "besar"] as const).map(cls =>
+                                byClass[cls].length === 0 ? null : (
+                                  <SelectGroup key={cls}>
+                                    <SelectLabel>{labels[cls]}</SelectLabel>
+                                    {byClass[cls].map(boat => (
+                                      <SelectItem key={boat.id} value={boat.id.toString()} className="flex flex-col items-start">
+                                        <span className="font-medium">{boat.boat_name}{boat.boat_type ? ` - ${boat.boat_type}` : ""}</span>
+                                        <span className="text-xs text-gray-500">Kapasitas: {getBoatCapacityRangeText(boat)}</span>
+                                      </SelectItem>
+                                    ))}
+                                  </SelectGroup>
+                                )
+                              );
+                            })()}
                           </SelectContent>
                         </Select>
                       </div>

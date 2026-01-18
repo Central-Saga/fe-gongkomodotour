@@ -490,7 +490,9 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
                 </div>
                 <div className="flex flex-col">
                   <span className="text-gold font-semibold">Kapal</span>
-                  <span className="text-gray-600">{data.boat_ids.length} kapal tersedia</span>
+                  <span className="text-gray-600">
+                    {data.boat_ids.length} kapal tersedia
+                  </span>
                 </div>
               </div>
             )}
@@ -731,7 +733,7 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 max-w-8xl mx-auto items-center mb-6">
                 {" "}
                 {data.boatImages?.map((boat, index) => (
-                  <Link key={index} href={`/detail-boat/${boat.id}`}>
+                  <Link key={index} href={`/detail-boat?id=${boat.id}`}>
                     <div className="relative group overflow-hidden rounded-lg shadow-lg cursor-pointer">
                       {/* Gambar Boat */}
                       <div className="relative h-[330px] w-full">

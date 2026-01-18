@@ -29,6 +29,7 @@ export interface BoatAsset {
 export interface Boat {
   id: number
   boat_name: string
+  boat_type?: string
   spesification: string
   cabin_information: string
   facilities: string

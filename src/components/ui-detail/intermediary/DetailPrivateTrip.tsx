@@ -309,13 +309,21 @@ export default function DetailPrivateTrip() {
           : "Not specified",
       },
     },
-    boatImages: boats.flatMap((boat) =>
-      boat.assets.map((asset) => ({
-        image: getImageUrl(asset.file_url),
-        title: boat.boat_name,
-        id: boat.id.toString(),
-      }))
-    ),
+    boatImages: boats
+      .filter((boat) => selectedPackage.boat_ids?.includes(boat.id))
+      .map((boat) => {
+        const firstAsset = boat.assets?.[0];
+        const imageUrl = firstAsset?.original_file_url
+          ? getImageUrl(firstAsset.original_file_url)
+          : firstAsset?.file_url
+          ? getImageUrl(firstAsset.file_url)
+          : "/img/default-trip.jpg";
+        return {
+          image: imageUrl,
+          title: boat.boat_name,
+          id: boat.id.toString(),
+        };
+      }),
   };
 
   return (
