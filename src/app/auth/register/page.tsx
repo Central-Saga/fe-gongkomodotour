@@ -26,7 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
-import { apiRequest, ensureCsrf } from "@/lib/api";
+import { apiRequest } from "@/lib/api";
 import countries from "i18n-iso-countries";
 import enLocale from "i18n-iso-countries/langs/en.json";
 
@@ -92,7 +92,6 @@ export default function RegisterPage() {
     try {
       setIsSubmitting(true);
 
-      await ensureCsrf();
       const response = await apiRequest("POST", "/api/register", {
         name: values.name,
         email: values.email,
