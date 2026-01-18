@@ -124,7 +124,7 @@ const response = await fetch('https://api.gongkomodotour.com/sanctum/csrf-cookie
 
 2. **Image Optimization**
    - Next.js Image component menggunakan domain ini untuk optimize images
-   - Configured dalam remotePatterns dan domains di next.config.ts
+   - Dikonfigurasi dalam remotePatterns dan domains di next.config.ts
 
 3. **API Proxy**
    - Next.js rewrites digunakan untuk proxy `/api/*` requests ke `https://api.gongkomodotour.com/api/*`
@@ -175,8 +175,8 @@ Ini adalah:
 
 Jika domain ini perlu diubah atau diganti, berikut lokasi yang perlu diupdate:
 1. Environment variable `NEXT_PUBLIC_API_URL`
-2. Fallback values di 19+ files (gunakan grep untuk mencari: `api\.gongkomodotour\.com`)
-3. next.config.ts configuration
-4. Documentation files
+2. Fallback values di 19+ file (cari menggunakan grep: `api\.gongkomodotour\.com`)
+3. Konfigurasi next.config.ts
+4. File dokumentasi
 
 **Rekomendasi:** Gunakan environment variable `NEXT_PUBLIC_API_URL` untuk semua references, sehingga lebih mudah mengganti domain di masa depan tanpa perlu mengubah banyak file.
