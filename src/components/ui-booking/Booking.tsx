@@ -1088,89 +1088,89 @@ export default function Booking() {
                 className="space-y-6"
               >
                 {selectedPackage?.has_boat && selectedBoat && (() => {
-                    const selectedBoatData = boats.find(boat => boat.id.toString() === selectedBoat);
-                    const activeCabins = selectedBoatData?.cabin?.filter(c => isActive(c.status)) ?? [];
+                  const selectedBoatData = boats.find(boat => boat.id.toString() === selectedBoat);
+                  const activeCabins = selectedBoatData?.cabin?.filter(c => isActive(c.status)) ?? [];
 
-                    // Cabin terkecil & terbesar: JANGAN dihitung/dijumlah min pax tiap cabin.
-                    // Cukup: cabin yang minimalnya terendah → ambil nilai itu; cabin yang maximalnya terbesar → ambil nilai itu.
-                    // Contoh: kabin 2-2, 2-2, 4-6 pax → terkecil 2 (min terendah), terbesar 6 (max terbesar).
-                    const smallestMin = activeCabins.length ? Math.min(...activeCabins.map(c => toNumber(c.min_pax))) : 0;
-                    const largestMax = activeCabins.length ? Math.max(...activeCabins.map(c => toNumber(c.max_pax))) : 0;
+                  // Cabin terkecil & terbesar: JANGAN dihitung/dijumlah min pax tiap cabin.
+                  // Cukup: cabin yang minimalnya terendah → ambil nilai itu; cabin yang maximalnya terbesar → ambil nilai itu.
+                  // Contoh: kabin 2-2, 2-2, 4-6 pax → terkecil 2 (min terendah), terbesar 6 (max terbesar).
+                  const smallestMin = activeCabins.length ? Math.min(...activeCabins.map(c => toNumber(c.min_pax))) : 0;
+                  const largestMax = activeCabins.length ? Math.max(...activeCabins.map(c => toNumber(c.max_pax))) : 0;
 
-                    return (
-                  <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
-                    <h3 className="font-semibold text-lg">Detail Boat & Cabin</h3>
+                  return (
+                    <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+                      <h3 className="font-semibold text-lg">Detail Boat & Cabin</h3>
 
-                    <div className="space-y-2">
-                      <p className="text-sm text-gray-600">
-                        Cabin terkecil: {smallestMin} pax
-                        <span className="block text-xs text-gray-400 mt-0.5">(cabin yang minimalnya terendah, bukan dihitung)</span>
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        Cabin terbesar: {largestMax} pax
-                        <span className="block text-xs text-gray-400 mt-0.5">(cabin yang maximalnya terbesar, bukan dihitung)</span>
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        Jumlah Boat yang Dibutuhkan: {requiredBoats} boat
-                        <span className="block text-xs text-gray-400 mt-0.5">(dihitung dari Jumlah Pax ÷ total kapasitas boat)</span>
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        Jumlah Cabin yang Dibutuhkan: {requiredCabins} cabin
-                        <span className="block text-xs text-gray-400 mt-0.5">(dihitung dari Jumlah Pax ÷ cabin maximal terbesar)</span>
-                      </p>
-                    </div>
+                      <div className="space-y-2">
+                        <p className="text-sm text-gray-600">
+                          Cabin terkecil: {smallestMin} pax
+                          <span className="block text-xs text-gray-400 mt-0.5">(cabin yang minimalnya terendah, bukan dihitung)</span>
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Cabin terbesar: {largestMax} pax
+                          <span className="block text-xs text-gray-400 mt-0.5">(cabin yang maximalnya terbesar, bukan dihitung)</span>
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Jumlah Boat yang Dibutuhkan: {requiredBoats} boat
+                          <span className="block text-xs text-gray-400 mt-0.5">(dihitung dari Jumlah Pax ÷ total kapasitas boat)</span>
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Jumlah Cabin yang Dibutuhkan: {requiredCabins} cabin
+                          <span className="block text-xs text-gray-400 mt-0.5">(dihitung dari Jumlah Pax ÷ cabin maximal terbesar)</span>
+                        </p>
+                      </div>
 
-                    <div className="space-y-2">
-                      <h4 className="font-medium">Distribusi Pax per Cabin:</h4>
-                      {selectedCabins.map((cabin, index) => {
-                        const cabinData = boats
-                          .find(boat => boat.id.toString() === selectedBoat)
-                          ?.cabin.find(c => c.id.toString() === cabin.cabinId);
+                      <div className="space-y-2">
+                        <h4 className="font-medium">Distribusi Pax per Cabin:</h4>
+                        {selectedCabins.map((cabin, index) => {
+                          const cabinData = boats
+                            .find(boat => boat.id.toString() === selectedBoat)
+                            ?.cabin.find(c => c.id.toString() === cabin.cabinId);
 
-                        if (!cabinData) return null;
+                          if (!cabinData) return null;
 
-                        const cabinPrice = calculateCabinPrice(cabinData, cabin.pax);
+                          const cabinPrice = calculateCabinPrice(cabinData, cabin.pax);
 
-                        return (
-                          <div key={index} className="flex flex-col p-2 bg-white rounded">
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm">
-                                {cabinData.cabin_name} ({cabinData.bed_type})
-                              </span>
-                              <span className="text-sm font-medium">
-                                {cabin.pax} pax
-                              </span>
-                            </div>
-                            <div className="text-sm text-gray-500 mt-1">
-                              {cabin.pax <= cabinData.min_pax ? (
-                                <span>Base Price: IDR {Number(cabinData.base_price).toLocaleString('id-ID')}</span>
-                              ) : (
-                                <>
+                          return (
+                            <div key={index} className="flex flex-col p-2 bg-white rounded">
+                              <div className="flex justify-between items-center">
+                                <span className="text-sm">
+                                  {cabinData.cabin_name} ({cabinData.bed_type})
+                                </span>
+                                <span className="text-sm font-medium">
+                                  {cabin.pax} pax
+                                </span>
+                              </div>
+                              <div className="text-sm text-gray-500 mt-1">
+                                {cabin.pax <= cabinData.min_pax ? (
                                   <span>Base Price: IDR {Number(cabinData.base_price).toLocaleString('id-ID')}</span>
-                                  <br />
-                                  <span>
-                                    Additional: {cabin.pax - cabinData.min_pax} pax × IDR {Number(cabinData.additional_price).toLocaleString('id-ID')}
-                                    = IDR {((cabin.pax - cabinData.min_pax) * Number(cabinData.additional_price)).toLocaleString('id-ID')}
-                                  </span>
-                                </>
-                              )}
+                                ) : (
+                                  <>
+                                    <span>Base Price: IDR {Number(cabinData.base_price).toLocaleString('id-ID')}</span>
+                                    <br />
+                                    <span>
+                                      Additional: {cabin.pax - cabinData.min_pax} pax × IDR {Number(cabinData.additional_price).toLocaleString('id-ID')}
+                                      = IDR {((cabin.pax - cabinData.min_pax) * Number(cabinData.additional_price)).toLocaleString('id-ID')}
+                                    </span>
+                                  </>
+                                )}
+                              </div>
+                              <div className="text-sm font-medium text-gold mt-1">
+                                Total: IDR {cabinPrice.toLocaleString('id-ID')}
+                              </div>
                             </div>
-                            <div className="text-sm font-medium text-gold mt-1">
-                              Total: IDR {cabinPrice.toLocaleString('id-ID')}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+                          );
+                        })}
+                      </div>
 
-                    <div className="pt-2 border-t">
-                      <p className="text-sm font-medium">
-                        Total Harga Cabin: IDR {calculateTotalCabinPrice().toLocaleString('id-ID')}
-                      </p>
+                      <div className="pt-2 border-t">
+                        <p className="text-sm font-medium">
+                          Total Harga Cabin: IDR {calculateTotalCabinPrice().toLocaleString('id-ID')}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                    );
-                  })()}
+                  );
+                })()}
 
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <h3 className="font-semibold text-lg mb-4">Detail Pembayaran</h3>

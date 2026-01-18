@@ -31,14 +31,14 @@ const dayNameToIndex: Record<string, number> = {
 const formatPrice = (price: string): string => {
   // Hapus semua karakter non-digit kecuali titik
   const cleanPrice = price.replace(/[^\d.]/g, '');
-  
+
   // Parse sebagai float
   const numPrice = parseFloat(cleanPrice);
-  
+
   if (isNaN(numPrice)) {
     return price; // Return original jika tidak bisa di-parse
   }
-  
+
   // Format dengan pemisah ribuan menggunakan titik
   return numPrice.toLocaleString('id-ID');
 };
@@ -125,7 +125,7 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
   const allowedDaysSet = new Set(
     (data.operational_days || []).map((d) => dayNameToIndex[d])
   );
-  
+
   // Function untuk disable tanggal yang sudah lewat
   const isPastDate = (date: Date) => {
     const today = new Date();
@@ -134,7 +134,7 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
     checkDate.setHours(0, 0, 0, 0);
     return checkDate < today;
   };
-  
+
   // Function untuk cek apakah tanggal adalah hari ini
   const isToday = (date: Date) => {
     const today = new Date();
@@ -143,18 +143,18 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
     checkDate.setHours(0, 0, 0, 0);
     return checkDate.getTime() === today.getTime();
   };
-  
+
   const disabledByOperationalDays = (date: Date) => {
     // Disable hari ini
     if (isToday(date)) {
       return true;
     }
-    
+
     // Disable tanggal yang sudah lewat
     if (isPastDate(date)) {
       return true;
     }
-    
+
     // Jika ada konfigurasi hari operasional (custom jadwal), ikuti hari operasional tersebut
     // Baik jadwal fleksibel (Yes) maupun tidak fleksibel (No), jika ada operational_days harus diikuti
     if (allowedDaysSet.size > 0) {
@@ -162,7 +162,7 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
       // Return false jika hari ada dalam daftar hari operasional (enable)
       return !allowedDaysSet.has(date.getDay());
     }
-    
+
     // Jika tidak ada konfigurasi hari operasional, izinkan semua hari (kecuali hari ini dan yang sudah lewat)
     return false;
   };
@@ -238,8 +238,8 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
                       fill
                       className="rounded-sm object-cover"
                       quality={85}
-                  sizes="(max-width: 768px) 100vw, 70vw"
-                  priority
+                      sizes="(max-width: 768px) 100vw, 70vw"
+                      priority
                       onError={() => handleImageError(image)}
                     />
                   </div>
@@ -253,8 +253,8 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
                       height={600}
                       className="rounded-lg"
                       quality={85}
-                  sizes="(max-width: 768px) 100vw, 70vw"
-                  priority
+                      sizes="(max-width: 768px) 100vw, 70vw"
+                      priority
                     />
                   )}
                 </DialogContent>
@@ -270,8 +270,8 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
                     fill
                     className="rounded-sm object-cover"
                     quality={85}
-                  sizes="(max-width: 768px) 100vw, 70vw"
-                  priority
+                    sizes="(max-width: 768px) 100vw, 70vw"
+                    priority
                     onError={() => data.images[4] && handleImageError(data.images[4])}
                   />
                   <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
@@ -292,8 +292,8 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
                         fill
                         className="rounded-sm object-cover"
                         quality={85}
-                  sizes="(max-width: 768px) 100vw, 70vw"
-                  priority
+                        sizes="(max-width: 768px) 100vw, 70vw"
+                        priority
                         onError={() => handleImageError(image)}
                       />
                     </div>
@@ -326,10 +326,10 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
             {/* Meeting Point */}
             <div className="flex items-center space-x-4">
               <div className="p-2">
-              <Image
-                src="/img/assembly-point.gif"
-                unoptimized
-                alt="Meeting Point Icon"
+                <Image
+                  src="/img/assembly-point.gif"
+                  unoptimized
+                  alt="Meeting Point Icon"
                   width={40}
                   height={40}
                   className="min-w-[40px]"
@@ -344,10 +344,10 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
             {/* Destinations */}
             <div className="flex items-center space-x-4">
               <div className="p-2">
-              <Image
-                src="/img/destination-map.gif"
-                unoptimized
-                alt="Destinations Icon"
+                <Image
+                  src="/img/destination-map.gif"
+                  unoptimized
+                  alt="Destinations Icon"
                   width={40}
                   height={40}
                   className="min-w-[40px]"
@@ -362,9 +362,9 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
             {/* Duration */}
             <div className="flex items-center space-x-4">
               <div className="p-2">
-              <Image
-                src="/img/24-hour-service.gif"
-                unoptimized
+                <Image
+                  src="/img/24-hour-service.gif"
+                  unoptimized
                   alt="Duration Icon"
                   width={40}
                   height={40}
@@ -385,11 +385,11 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
                 onClick={() => window.open("https://wa.me/628123867588?text=Halo,%20saya%20tertarik%20dengan%20paket%20" + encodeURIComponent(data.title), "_blank")}
                 className="bg-green-500 hover:bg-green-600 text-white px-8 py-2 rounded-lg font-semibold text-sm transition-all duration-300 flex items-center gap-2"
               >
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  width="20" 
-                  height="20" 
-                  viewBox="0 0 24 24" 
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
                   fill="currentColor"
                 >
                   <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
@@ -506,60 +506,57 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
           <Button
             variant={activeTab === "itinerary" ? "default" : "outline"}
             onClick={() => setActiveTab("itinerary")}
-            className={`${
-              activeTab === "itinerary"
+            className={`${activeTab === "itinerary"
                 ? "bg-gold text-white hover:bg-gold-dark-20"
                 : "bg-gold/5 text-gold hover:bg-gold hover:text-white"
-            } px-7 py-6 rounded-lg font-semibold text-sm transition-all duration-300`}
+              } px-7 py-6 rounded-lg font-semibold text-sm transition-all duration-300`}
           >
             Itinerary
           </Button>
           {(() => {
             const includeContent = (data.include || []).join("") || "";
-            const hasInclude = includeContent.trim() !== "" && 
+            const hasInclude = includeContent.trim() !== "" &&
               includeContent.replace(/<[^>]*>/g, '').trim() !== "";
-            
+
             const excludeContent = (data.exclude || []).join("") || "";
-            const hasExclude = excludeContent.trim() !== "" && 
+            const hasExclude = excludeContent.trim() !== "" &&
               excludeContent.replace(/<[^>]*>/g, '').trim() !== "";
-            
+
             const hasFlight = data.flightInfo && (data.flightInfo.guideFee1 !== '0' || data.flightInfo.guideFee2 !== '0');
-            
-            const hasNote = data.note && data.note.trim() !== "" && 
+
+            const hasNote = data.note && data.note.trim() !== "" &&
               data.note.replace(/<[^>]*>/g, '').trim() !== "";
-            
-            const hasDescription = data.description && 
-              (Array.isArray(data.description) ? 
-                data.description.some(item => item && item.trim() !== "") : 
+
+            const hasDescription = data.description &&
+              (Array.isArray(data.description) ?
+                data.description.some(item => item && item.trim() !== "") :
                 data.description.trim() !== "" && data.description.split(/\r?\n/).some(line => line.trim().startsWith("*"))
               );
-            
+
             return hasInclude || hasExclude || hasFlight || hasNote || hasDescription;
           })() && (
-          <Button
-            variant={activeTab === "information" ? "default" : "outline"}
-            onClick={() => setActiveTab("information")}
-            className={`${
-              activeTab === "information"
-                  ? "bg-gold text-white hover:bg-gold-dark-20"
-                  : "bg-gold/5 text-gold hover:bg-gold hover:text-white"
-              } px-7 py-6 rounded-lg font-semibold text-sm transition-all duration-300`}
-          >
-            Information
-          </Button>
-          )}
+              <Button
+                variant={activeTab === "information" ? "default" : "outline"}
+                onClick={() => setActiveTab("information")}
+                className={`${activeTab === "information"
+                    ? "bg-gold text-white hover:bg-gold-dark-20"
+                    : "bg-gold/5 text-gold hover:bg-gold hover:text-white"
+                  } px-7 py-6 rounded-lg font-semibold text-sm transition-all duration-300`}
+              >
+                Information
+              </Button>
+            )}
           {data.has_boat && (
-          <Button
-            variant={activeTab === "boat" ? "default" : "outline"}
-            onClick={() => setActiveTab("boat")}
-            className={`${
-              activeTab === "boat"
+            <Button
+              variant={activeTab === "boat" ? "default" : "outline"}
+              onClick={() => setActiveTab("boat")}
+              className={`${activeTab === "boat"
                   ? "bg-gold text-white hover:bg-gold-dark-20"
                   : "bg-gold/5 text-gold hover:bg-gold hover:text-white"
-              } px-7 py-6 rounded-lg font-semibold text-sm transition-all duration-300`}
-          >
-            Boat
-          </Button>
+                } px-7 py-6 rounded-lg font-semibold text-sm transition-all duration-300`}
+            >
+              Boat
+            </Button>
           )}
         </div>
 
@@ -577,7 +574,7 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
                 onValueChange={(value) => setSelectedDurationId(parseInt(value))}
               >
                 <TabsList className="mb-6 bg-transparent flex flex-wrap gap-2 h-auto p-0">
-                {data.trip_durations.map((duration) => (
+                  {data.trip_durations.map((duration) => (
                     <TabsTrigger
                       key={duration.id}
                       value={duration.id.toString()}
@@ -601,13 +598,13 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
                       >
                         <h3 className="text-lg font-semibold mb-4 text-gold">
                           {day.day}
-                    </h3>
+                        </h3>
                         <div
                           className="text-gray-600 text-sm [&_ol]:list-decimal [&_ul]:list-disc [&_ol]:pl-5 [&_ul]:pl-5 [&_ol]:space-y-2 [&_ul]:space-y-2 [&_p]:my-0 [&_li]:pl-2 [&_li]:relative [&_li]:leading-normal"
-                            dangerouslySetInnerHTML={{ __html: day.activities }}
-                          />
+                          dangerouslySetInnerHTML={{ __html: day.activities }}
+                        />
                       </div>
-                      ))}
+                    ))}
                   </TabsContent>
                 ))}
               </Tabs>
@@ -625,30 +622,30 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
                   {/* Include Section */}
                   {(() => {
                     const includeContent = (data.include || []).join("") || "";
-                    const hasValidContent = includeContent.trim() !== "" && 
+                    const hasValidContent = includeContent.trim() !== "" &&
                       includeContent.replace(/<[^>]*>/g, '').trim() !== "";
                     return hasValidContent;
                   })() && (
-                  <div className="bg-[#f5f5f5] p-6 rounded-lg shadow-sm min-h-[250px] flex flex-col">
-                    <h2 className="text-xl font-bold text-gray-800 mb-4">
-                      Include
-                    </h2>
-                      <div
-                        className="text-gray-600 text-sm [&_ol]:list-decimal [&_ul]:list-disc [&_ol]:pl-5 [&_ul]:pl-5 [&_ol]:space-y-2 [&_ul]:space-y-2 [&_p]:my-0 [&_li]:pl-2 [&_li]:relative [&_li]:leading-normal"
-                        dangerouslySetInnerHTML={{
-                          __html: (data.include || []).join("") || "",
-                        }}
-                      />
-                    </div>
-                  )}
+                      <div className="bg-[#f5f5f5] p-6 rounded-lg shadow-sm min-h-[250px] flex flex-col">
+                        <h2 className="text-xl font-bold text-gray-800 mb-4">
+                          Include
+                        </h2>
+                        <div
+                          className="text-gray-600 text-sm [&_ol]:list-decimal [&_ul]:list-disc [&_ol]:pl-5 [&_ul]:pl-5 [&_ol]:space-y-2 [&_ul]:space-y-2 [&_p]:my-0 [&_li]:pl-2 [&_li]:relative [&_li]:leading-normal"
+                          dangerouslySetInnerHTML={{
+                            __html: (data.include || []).join("") || "",
+                          }}
+                        />
+                      </div>
+                    )}
 
                   {/* Flight Information */}
                   {data.flightInfo && (data.flightInfo.guideFee1 !== '0' || data.flightInfo.guideFee2 !== '0') && (
-                  <div className="bg-[#f5f5f5] p-6 rounded-lg shadow-sm min-h-[250px] flex flex-col">
+                    <div className="bg-[#f5f5f5] p-6 rounded-lg shadow-sm min-h-[250px] flex flex-col">
                       <h2 className="text-xl font-bold text-gray-800 mb-6">
-                      Flight Information
-                    </h2>
-                                          <div className="space-y-2">
+                        Flight Information
+                      </h2>
+                      <div className="space-y-2">
                         <p className="text-gray-600 text-sm">
                           IDR {formatPrice(data.flightInfo?.guideFee1 || '')}
                         </p>
@@ -656,7 +653,7 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
                           IDR {formatPrice(data.flightInfo?.guideFee2 || '')}
                         </p>
                       </div>
-                  </div>
+                    </div>
                   )}
                 </div>
 
@@ -665,63 +662,63 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
                   {/* Exclude Section */}
                   {(() => {
                     const excludeContent = (data.exclude || []).join("") || "";
-                    const hasValidContent = excludeContent.trim() !== "" && 
+                    const hasValidContent = excludeContent.trim() !== "" &&
                       excludeContent.replace(/<[^>]*>/g, '').trim() !== "";
                     return hasValidContent;
                   })() && (
-                    <div className="bg-[#f5f5f5] p-6 rounded-lg shadow-sm min-h-[250px] flex flex-col">
-                      <h2 className="text-xl font-bold text-gray-800 mb-4">
-                        Exclude
-                      </h2>
-                      <div
-                        className="text-gray-600 text-sm [&_ol]:list-decimal [&_ul]:list-disc [&_ol]:pl-5 [&_ul]:pl-5 [&_ol]:space-y-2 [&_ul]:space-y-2 [&_p]:my-0 [&_li]:pl-2 [&_li]:relative [&_li]:leading-normal"
-                        dangerouslySetInnerHTML={{
-                          __html: (data.exclude || []).join("") || "",
-                        }}
-                      />
-                    </div>
-                  )}
+                      <div className="bg-[#f5f5f5] p-6 rounded-lg shadow-sm min-h-[250px] flex flex-col">
+                        <h2 className="text-xl font-bold text-gray-800 mb-4">
+                          Exclude
+                        </h2>
+                        <div
+                          className="text-gray-600 text-sm [&_ol]:list-decimal [&_ul]:list-disc [&_ol]:pl-5 [&_ul]:pl-5 [&_ol]:space-y-2 [&_ul]:space-y-2 [&_p]:my-0 [&_li]:pl-2 [&_li]:relative [&_li]:leading-normal"
+                          dangerouslySetInnerHTML={{
+                            __html: (data.exclude || []).join("") || "",
+                          }}
+                        />
+                      </div>
+                    )}
 
                   {/* Description Section */}
                   {(() => {
-                    const hasNote = data.note && data.note.trim() !== "" && 
+                    const hasNote = data.note && data.note.trim() !== "" &&
                       data.note.replace(/<[^>]*>/g, '').trim() !== "";
-                    const hasDescription = data.description && 
-                      (Array.isArray(data.description) ? 
-                        data.description.some(item => item && item.trim() !== "") : 
+                    const hasDescription = data.description &&
+                      (Array.isArray(data.description) ?
+                        data.description.some(item => item && item.trim() !== "") :
                         data.description.trim() !== "" && data.description.split(/\r?\n/).some(line => line.trim().startsWith("*"))
                       );
                     return hasNote || hasDescription;
                   })() && (
-                    <div className="bg-[#f5f5f5] p-6 rounded-lg shadow-sm min-h-[100px] flex flex-col">
-                      <h2 className="text-xl font-bold text-gray-800 mb-4">
-                        Description
-                      </h2>
-                      {data.note ? (
-                        <div
-                          className="text-gray-600 text-sm [&_ol]:list-decimal [&_ul]:list-disc [&_ol]:pl-5 [&_ul]:pl-5 [&_ol]:space-y-2 [&_ul]:space-y-2 [&_p]:my-0 [&_li]:pl-2 [&_li]:relative [&_li]:leading-normal"
-                          dangerouslySetInnerHTML={{
-                            __html: data.note,
-                          }}
-                        />
-                      ) : Array.isArray(data.description) ? (
-                        <ul className="list-disc pl-5 text-gray-600 text-sm space-y-1">
-                          {data.description.map((item, idx) => (
-                            <li key={idx}>{item.replace(/^\*\s?/, "")}</li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <ul className="list-disc pl-5 text-gray-600 text-sm space-y-1">
-                          {data.description
-                            .split(/\r?\n/)
-                            .filter((line) => line.trim().startsWith("*"))
-                            .map((line, idx) => (
-                              <li key={idx}>{line.replace(/^\*\s?/, "")}</li>
+                      <div className="bg-[#f5f5f5] p-6 rounded-lg shadow-sm min-h-[100px] flex flex-col">
+                        <h2 className="text-xl font-bold text-gray-800 mb-4">
+                          Description
+                        </h2>
+                        {data.note ? (
+                          <div
+                            className="text-gray-600 text-sm [&_ol]:list-decimal [&_ul]:list-disc [&_ol]:pl-5 [&_ul]:pl-5 [&_ol]:space-y-2 [&_ul]:space-y-2 [&_p]:my-0 [&_li]:pl-2 [&_li]:relative [&_li]:leading-normal"
+                            dangerouslySetInnerHTML={{
+                              __html: data.note,
+                            }}
+                          />
+                        ) : Array.isArray(data.description) ? (
+                          <ul className="list-disc pl-5 text-gray-600 text-sm space-y-1">
+                            {data.description.map((item, idx) => (
+                              <li key={idx}>{item.replace(/^\*\s?/, "")}</li>
                             ))}
-                        </ul>
-                      )}
-                    </div>
-                  )}
+                          </ul>
+                        ) : (
+                          <ul className="list-disc pl-5 text-gray-600 text-sm space-y-1">
+                            {data.description
+                              .split(/\r?\n/)
+                              .filter((line) => line.trim().startsWith("*"))
+                              .map((line, idx) => (
+                                <li key={idx}>{line.replace(/^\*\s?/, "")}</li>
+                              ))}
+                          </ul>
+                        )}
+                      </div>
+                    )}
                 </div>
               </div>
             </div>
@@ -743,8 +740,8 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
                           fill
                           className="rounded-lg transition-transform duration-300 group-hover:scale-110 object-cover"
                           quality={85}
-                  sizes="(max-width: 768px) 100vw, 70vw"
-                  priority
+                          sizes="(max-width: 768px) 100vw, 70vw"
+                          priority
                           onError={() => handleImageError(boat.image)}
                         />
                       </div>
