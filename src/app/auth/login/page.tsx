@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useRouter } from "next/navigation";
-import api from "@/lib/api";
+import api, { ensureCsrf } from "@/lib/api";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
@@ -77,7 +77,8 @@ export default function LoginPage() {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       setIsSubmitting(true);
-      
+
+      await ensureCsrf();
       const response = await api.post('/api/login', {
         email: values.email,
         password: values.password,

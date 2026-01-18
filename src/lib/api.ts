@@ -14,7 +14,7 @@ const api = axios.create({
     'Content-Type': 'application/json',
     'X-Requested-With': 'XMLHttpRequest',
   },
-  withCredentials: false, // Tidak perlu credentials untuk API
+  withCredentials: true, // WAJIB untuk cookie + CSRF (Laravel Sanctum, cross-origin)
   timeout: 30000, // Menambahkan timeout 30 detik
   // Tambahkan proxy untuk bypass CORS issue
   proxy: false
@@ -43,6 +43,15 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig<unknown>) => {
   
   return config;
 });
+
+/**
+ * Ambil CSRF cookie dari Laravel Sanctum. WAJIB dipanggil sebelum
+ * POST/PUT/DELETE yang belum punya session (login, register).
+ * Menggunakan instance api yang sudah withCredentials: true.
+ */
+export async function ensureCsrf(): Promise<void> {
+  await api.get('/sanctum/csrf-cookie');
+}
 
 // 3. Helper function apiRequest<T>
 export async function apiRequest<T>(
