@@ -85,7 +85,9 @@ export default function EditHotelPage({ params }: { params: Promise<{ id: string
         console.log('Fetching hotel with ID:', resolvedParams.id)
         const response = await apiRequest<{ data: Hotel }>(
           'GET',
-          `/api/hotels/${resolvedParams.id}`
+          `/api/hotels/${resolvedParams.id}`,
+          undefined,
+          { useCache: false }
         )
 
         console.log('API Response:', response)
@@ -117,7 +119,7 @@ export default function EditHotelPage({ params }: { params: Promise<{ id: string
   const onSubmit = async (values: z.infer<typeof hotelSchema>) => {
     try {
       setIsSubmitting(true)
-      
+
       const response = await apiRequest<Hotel>(
         'PUT',
         `/api/hotels/${resolvedParams.id}`,
@@ -136,7 +138,7 @@ export default function EditHotelPage({ params }: { params: Promise<{ id: string
       // Clear semua cache hotels sebelum redirect untuk memastikan data fresh
       apiCache.clearByPattern('hotels')
       toast.success("Hotel berhasil diperbarui")
-      
+
       // Ambil pagination state dari sessionStorage
       let currentPage = '0'
       if (typeof window !== 'undefined') {
@@ -147,11 +149,11 @@ export default function EditHotelPage({ params }: { params: Promise<{ id: string
         }
         console.log('Redirecting after hotel edit - saved page:', currentPage)
       }
-      
+
       // Redirect dengan URL parameter yang benar
       const redirectUrl = currentPage !== '0' ? `/dashboard/hotels?page=${currentPage}` : '/dashboard/hotels'
       console.log('Redirecting to:', redirectUrl, 'with page:', currentPage)
-      
+
       // Gunakan window.location untuk memastikan full page reload dan restore pagination
       if (typeof window !== 'undefined') {
         window.location.href = redirectUrl
@@ -245,7 +247,7 @@ export default function EditHotelPage({ params }: { params: Promise<{ id: string
                         <FormItem>
                           <FormLabel>Tipe Kamar</FormLabel>
                           <FormControl>
-                            <Input 
+                            <Input
                               placeholder="Contoh: Single, Double, Twin, Suite, dll"
                               {...field}
                             />
@@ -263,7 +265,7 @@ export default function EditHotelPage({ params }: { params: Promise<{ id: string
                           <FormLabel>Harga</FormLabel>
                           <FormControl>
                             <div className="relative">
-                              <Input 
+                              <Input
                                 type="number"
                                 min="0"
                                 step="1"
@@ -357,7 +359,7 @@ export default function EditHotelPage({ params }: { params: Promise<{ id: string
                             size="sm"
                             onClick={() => {
                               const currentSurcharges = form.getValues("surcharges") || [];
-                              form.setValue("surcharges", 
+                              form.setValue("surcharges",
                                 currentSurcharges.filter((_, i) => i !== sIndex)
                               )
                             }}
@@ -386,7 +388,7 @@ export default function EditHotelPage({ params }: { params: Promise<{ id: string
                               <FormItem>
                                 <FormLabel>Start Date</FormLabel>
                                 <FormControl>
-                                  <Input 
+                                  <Input
                                     type="date"
                                     {...field}
                                     value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
@@ -411,7 +413,7 @@ export default function EditHotelPage({ params }: { params: Promise<{ id: string
                               <FormItem>
                                 <FormLabel>End Date</FormLabel>
                                 <FormControl>
-                                  <Input 
+                                  <Input
                                     type="date"
                                     {...field}
                                     value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
@@ -437,7 +439,7 @@ export default function EditHotelPage({ params }: { params: Promise<{ id: string
                                 <FormLabel>Surcharge Price</FormLabel>
                                 <FormControl>
                                   <div className="relative">
-                                    <Input 
+                                    <Input
                                       type="number"
                                       min="0"
                                       step="1"

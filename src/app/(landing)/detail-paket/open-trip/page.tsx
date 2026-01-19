@@ -1,11 +1,11 @@
 // app/(landing)/detail-paket/open-trip/page.tsx
 "use client";
 
-import DetailOpenTrip from "@/components/ui-detail/intermediary/DetailOpenTrip";
+import DetailPaketPage from "@/components/ui-detail/intermediary/DetailPaketPage";
 import { Suspense } from "react";
 
 function DetailOpenTripContent() {
-  return <DetailOpenTrip />;
+  return <DetailPaketPage type="open" />;
 }
 
 export default function OpenTripPage() {

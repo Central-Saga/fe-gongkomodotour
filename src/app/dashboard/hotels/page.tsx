@@ -21,14 +21,12 @@ export default function HotelPage() {
   const fetchHotels = async () => {
     try {
       setLoading(true)
-      console.log('Fetching hotels...')
       const response: HotelResponse = await apiRequest<HotelResponse>(
         'GET',
-        '/api/hotels'
+        '/api/hotels',
+        undefined,
+        { useCache: false }
       )
-      console.log('Raw API Response:', response)
-      console.log('Response data:', response.data)
-      
       setData(response.data || [])
       setError(null)
     } catch (err: unknown) {

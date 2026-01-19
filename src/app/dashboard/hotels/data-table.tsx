@@ -50,6 +50,7 @@ import { Hotel } from "@/types/hotels"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { apiRequest } from "@/lib/api"
+import { apiCache } from "@/lib/browserCache"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 
@@ -357,8 +358,8 @@ export function DataTable({
       setIsDeleting(true)
       await apiRequest('DELETE', `/api/hotels/${hotel.id}`)
       toast.success("Hotel berhasil dihapus")
-      // Refresh data dengan memanggil ulang API
-      const response = await apiRequest<HotelResponse>('GET', '/api/hotels')
+      apiCache.clear('/api/hotels')
+      const response = await apiRequest<HotelResponse>('GET', '/api/hotels', undefined, { useCache: false })
       setData(response.data || [])
     } catch (error) {
       console.error("Error deleting hotel:", error)

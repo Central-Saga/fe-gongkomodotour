@@ -69,7 +69,7 @@ interface BookingResponse {
 const exportToPDF = (data: Booking[]) => {
   const doc = new jsPDF()
   const pageWidth = doc.internal.pageSize.getWidth()
-  
+
   // Add header section (centered)
   doc.setFontSize(16)
   doc.setFont("helvetica", "bold")
@@ -78,7 +78,7 @@ const exportToPDF = (data: Booking[]) => {
   const companyNameX = (pageWidth - companyNameWidth) / 2
   const companyNameY = 20
   doc.text(companyName, companyNameX, companyNameY)
-  
+
   // Address and phone (centered below company name)
   doc.setFontSize(10)
   doc.setFont("helvetica", "normal")
@@ -88,7 +88,7 @@ const exportToPDF = (data: Booking[]) => {
     "Bali 80234",
     "0812-3867-588"
   ]
-  
+
   let yPos = companyNameY + 10
   address.forEach(line => {
     const lineWidth = doc.getTextWidth(line)
@@ -100,7 +100,7 @@ const exportToPDF = (data: Booking[]) => {
   // Add divider line
   doc.setLineWidth(0.5)
   doc.line(14, yPos + 5, pageWidth - 14, yPos + 5)
-  
+
   // Add report title (centered)
   doc.setFontSize(14)
   doc.setFont("helvetica", "bold")
@@ -108,13 +108,13 @@ const exportToPDF = (data: Booking[]) => {
   const reportTitleWidth = doc.getTextWidth(reportTitle)
   const reportTitleX = (pageWidth - reportTitleWidth) / 2
   doc.text(reportTitle, reportTitleX, yPos + 20)
-  
+
   // Add generated date (right aligned)
   doc.setFontSize(10)
   doc.setFont("helvetica", "normal")
   const dateText = `Generated on: ${new Date().toLocaleString()}`
   doc.text(dateText, pageWidth - 14, yPos + 30, { align: 'right' })
-  
+
   // Define the columns for the table
   const tableColumn = [
     "No",
@@ -124,7 +124,7 @@ const exportToPDF = (data: Booking[]) => {
     "Created At",
     "Updated At"
   ]
-  
+
   // Map the data to match the columns
   const tableRows = data.map((item, index) => [
     index + 1,
@@ -219,7 +219,7 @@ export function DataTable({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={() => handleDelete(booking)}
               disabled={isDeleting}
               className="bg-red-500 hover:bg-red-600"
@@ -292,7 +292,7 @@ export function DataTable({
 
   const renderSubComponent = ({ row }: { row: Row<Booking> }) => {
     const booking = row.original
-    
+
     return (
       <div className="p-4 bg-muted/50 rounded-lg">
         <div className="space-y-4 max-w-5xl mx-auto">
@@ -406,36 +406,34 @@ export function DataTable({
           {booking.boat.length > 0 && (
             <div className="bg-white p-4 rounded-lg shadow-sm">
               <h4 className="font-semibold text-lg mb-4 text-gray-800 border-b pb-2">Detail Kapal</h4>
-              {booking.boat.map((boat: Boat, index: number) => (
-                <div key={index} className="space-y-4">
+              {booking.boat.map((boat: Boat, i: number) => (
+                <div key={i} className="space-y-4">
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div>
                       <p className="text-gray-600 font-medium mb-1">Nama Kapal:</p>
-                      <div className="bg-gray-50 p-2 rounded border border-gray-100">
-                        <p className="text-gray-800">{boat.boat_name}</p>
-                      </div>
+                      <div className="bg-gray-50 p-2 rounded border border-gray-100 text-gray-800">{boat.boat_name}</div>
                     </div>
                     <div>
                       <p className="text-gray-600 font-medium mb-1">Status:</p>
                       <div className="bg-gray-50 p-2 rounded border border-gray-100">
-                        <Badge className={`${boat.status === "Aktif" ? "bg-emerald-500" : "bg-red-500"} text-white`}>
-                          {boat.status}
-                        </Badge>
+                        <Badge className={`${boat.status === "Aktif" ? "bg-emerald-500" : "bg-red-500"} text-white`}>{boat.status}</Badge>
                       </div>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-gray-600 font-medium mb-1">Spesifikasi:</p>
-                      <div className="bg-gray-50 p-2 rounded border border-gray-100">
-                        <p className="text-gray-800 whitespace-pre-line break-words">{boat.spesification}</p>
-                      </div>
+                      <div
+                        className="bg-gray-50 p-2 rounded border border-gray-100 text-gray-800 text-sm break-words"
+                        dangerouslySetInnerHTML={{ __html: boat.spesification || "" }}
+                      />
                     </div>
-                    <div>
+                    <div className="min-w-0 overflow-hidden">
                       <p className="text-gray-600 font-medium mb-1">Fasilitas:</p>
-                      <div className="bg-gray-50 p-2 rounded border border-gray-100">
-                        <p className="text-gray-800 whitespace-normal break-words">{boat.facilities}</p>
-                      </div>
+                      <div
+                        className="bg-gray-50 p-2 rounded border border-gray-100 text-gray-800 text-sm break-all max-w-full [&_*]:whitespace-normal"
+                        dangerouslySetInnerHTML={{ __html: boat.facilities || "" }}
+                      />
                     </div>
                   </div>
                 </div>
@@ -638,7 +636,7 @@ export function DataTable({
               >
                 Hapus Terpilih ({table.getSelectedRowModel().rows.length})
               </Button>
-              <Button 
+              <Button
                 variant="outline"
                 onClick={() => exportToPDF(table.getSelectedRowModel().rows.map(row => row.original as Booking))}
               >
@@ -647,7 +645,7 @@ export function DataTable({
               </Button>
             </>
           )}
-          <Button 
+          <Button
             className="bg-red-500 hover:bg-red-600 text-white transition-colors duration-200"
             variant="outline"
             onClick={() => exportToPDF(table.getFilteredRowModel().rows.map(row => row.original as Booking))}
@@ -669,9 +667,9 @@ export function DataTable({
                     {header.isPlaceholder
                       ? null
                       : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
                   </TableHead>
                 ))}
               </TableRow>

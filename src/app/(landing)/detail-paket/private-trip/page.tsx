@@ -1,11 +1,11 @@
 // app/(landing)/detail-paket/private-trip/page.tsx
 "use client";
 
-import DetailPrivateTrip from "@/components/ui-detail/intermediary/DetailPrivateTrip";
+import DetailPaketPage from "@/components/ui-detail/intermediary/DetailPaketPage";
 import { Suspense } from "react";
 
 function DetailPrivateTripContent() {
-  return <DetailPrivateTrip />;
+  return <DetailPaketPage type="private" />;
 }
 
 export default function PrivateTripPage() {
