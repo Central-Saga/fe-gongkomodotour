@@ -60,9 +60,10 @@ interface PackageData {
     guideFee1: string;
     guideFee2: string;
   };
+  flightSchedules?: FlightSchedule[];
+  additional_fees?: { id: number; fee_category: string; price: number; unit: string; pax_min: number; pax_max: number }[];
   boatImages?: { image: string; title: string; id: string }[];
   mainImage?: string;
-  flightSchedules?: FlightSchedule[];
   has_boat: boolean;
   destination_count: number;
   trip_durations: {
@@ -131,8 +132,8 @@ export default function DetailPrivateTrip() {
               priceIDR: trip.trip_durations?.[0]?.trip_prices?.[0]
                 ?.price_per_pax
                 ? `IDR ${parseInt(
-                    String(trip.trip_durations[0].trip_prices[0].price_per_pax)
-                  ).toLocaleString("id-ID")}/pax`
+                  String(trip.trip_durations[0].trip_prices[0].price_per_pax)
+                ).toLocaleString("id-ID")}/pax`
                 : "Price not available",
               slug: trip.id?.toString() || "",
             }));
@@ -190,8 +191,8 @@ export default function DetailPrivateTrip() {
     title: selectedPackage.name || "Nama Trip",
     price: selectedPackage.trip_durations?.[0]?.trip_prices?.[0]?.price_per_pax
       ? `IDR ${selectedPackage.trip_durations[0].trip_prices[0].price_per_pax.toLocaleString(
-          "id-ID"
-        )}/pax`
+        "id-ID"
+      )}/pax`
       : "Harga belum tersedia",
     meetingPoint:
       selectedPackage.meeting_point || "Meeting point belum ditentukan",
@@ -245,8 +246,8 @@ export default function DetailPrivateTrip() {
     destination_count: selectedPackage.destination_count || 0,
     boat_ids: selectedPackage.boat_ids || [],
     operational_days: selectedPackage.operational_days || [],
-    tentation: (selectedPackage.tentation === "Yes" || selectedPackage.tentation === "No") 
-      ? selectedPackage.tentation 
+    tentation: (selectedPackage.tentation === "Yes" || selectedPackage.tentation === "No")
+      ? selectedPackage.tentation
       : "No",
     flightInfo: {
       guideFee1:
@@ -263,49 +264,55 @@ export default function DetailPrivateTrip() {
           )
           ?.price?.toString() || "0",
     },
+    additional_fees: (selectedPackage.additional_fees || [])
+      .filter((f: { status?: string }) => f.status === "Aktif" || !f.status)
+      .map((f: { id: number; fee_category: string; price: number; unit: string; pax_min: number; pax_max: number }) => ({
+        id: f.id,
+        fee_category: f.fee_category,
+        price: f.price,
+        unit: f.unit,
+        pax_min: f.pax_min,
+        pax_max: f.pax_max,
+      })),
     session: {
       highSeason: {
         period: selectedPackage.surcharges?.find(
           (s) => s.season === "High Season"
         )
-          ? `${
-              selectedPackage.surcharges.find((s) => s.season === "High Season")
-                ?.start_date
-            } ~ ${
-              selectedPackage.surcharges.find((s) => s.season === "High Season")
-                ?.end_date
-            }`
+          ? `${selectedPackage.surcharges.find((s) => s.season === "High Season")
+            ?.start_date
+          } ~ ${selectedPackage.surcharges.find((s) => s.season === "High Season")
+            ?.end_date
+          }`
           : "Not specified",
         price: selectedPackage.surcharges?.find(
           (s) => s.season === "High Season"
         )
           ? `IDR ${parseInt(
-              selectedPackage.surcharges
-                .find((s) => s.season === "High Season")
-                ?.surcharge_price?.toString() || "0"
-            ).toLocaleString("id-ID")}/pax`
+            selectedPackage.surcharges
+              .find((s) => s.season === "High Season")
+              ?.surcharge_price?.toString() || "0"
+          ).toLocaleString("id-ID")}/pax`
           : "Not specified",
       },
       peakSeason: {
         period: selectedPackage.surcharges?.find(
           (s) => s.season === "Peak Season"
         )
-          ? `${
-              selectedPackage.surcharges.find((s) => s.season === "Peak Season")
-                ?.start_date
-            } ~ ${
-              selectedPackage.surcharges.find((s) => s.season === "Peak Season")
-                ?.end_date
-            }`
+          ? `${selectedPackage.surcharges.find((s) => s.season === "Peak Season")
+            ?.start_date
+          } ~ ${selectedPackage.surcharges.find((s) => s.season === "Peak Season")
+            ?.end_date
+          }`
           : "Not specified",
         price: selectedPackage.surcharges?.find(
           (s) => s.season === "Peak Season"
         )
           ? `IDR ${parseInt(
-              selectedPackage.surcharges
-                .find((s) => s.season === "Peak Season")
-                ?.surcharge_price?.toString() || "0"
-            ).toLocaleString("id-ID")}/pax`
+            selectedPackage.surcharges
+              .find((s) => s.season === "Peak Season")
+              ?.surcharge_price?.toString() || "0"
+          ).toLocaleString("id-ID")}/pax`
           : "Not specified",
       },
     },
@@ -316,8 +323,8 @@ export default function DetailPrivateTrip() {
         const imageUrl = firstAsset?.original_file_url
           ? getImageUrl(firstAsset.original_file_url)
           : firstAsset?.file_url
-          ? getImageUrl(firstAsset.file_url)
-          : "/img/default-trip.jpg";
+            ? getImageUrl(firstAsset.file_url)
+            : "/img/default-trip.jpg";
         return {
           image: imageUrl,
           title: boat.boat_name,
@@ -332,7 +339,7 @@ export default function DetailPrivateTrip() {
       <DetailPaketPrivateTrip data={transformedData} />
 
       {/* Review Section */}
-              <DetailReview />
+      <DetailReview />
 
       {/* More Private Trip Section */}
       <DetailMoreTrip trips={similarTrips} tripType="private-trip" />

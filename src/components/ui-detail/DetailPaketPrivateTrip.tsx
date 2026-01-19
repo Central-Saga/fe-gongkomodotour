@@ -73,9 +73,10 @@ interface PackageData {
     guideFee1: string;
     guideFee2: string;
   };
+  flightSchedules?: FlightSchedule[];
+  additional_fees?: { id: number; fee_category: string; price: number; unit: string; pax_min: number; pax_max: number }[];
   boatImages?: { image: string; title: string; id: string }[];
   mainImage?: string;
-  flightSchedules?: FlightSchedule[];
   has_boat: boolean;
   destination_count: number;
   trip_durations: {
@@ -507,8 +508,8 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
             variant={activeTab === "itinerary" ? "default" : "outline"}
             onClick={() => setActiveTab("itinerary")}
             className={`${activeTab === "itinerary"
-                ? "bg-gold text-white hover:bg-gold-dark-20"
-                : "bg-gold/5 text-gold hover:bg-gold hover:text-white"
+              ? "bg-gold text-white hover:bg-gold-dark-20"
+              : "bg-gold/5 text-gold hover:bg-gold hover:text-white"
               } px-7 py-6 rounded-lg font-semibold text-sm transition-all duration-300`}
           >
             Itinerary
@@ -522,7 +523,9 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
             const hasExclude = excludeContent.trim() !== "" &&
               excludeContent.replace(/<[^>]*>/g, '').trim() !== "";
 
-            const hasFlight = data.flightInfo && (data.flightInfo.guideFee1 !== '0' || data.flightInfo.guideFee2 !== '0');
+            const hasFlight = (data.flightSchedules && data.flightSchedules.length > 0) ||
+              (data.flightInfo && (data.flightInfo.guideFee1 || data.flightInfo.guideFee2));
+            const hasAdditionalFees = data.additional_fees && data.additional_fees.length > 0;
 
             const hasNote = data.note && data.note.trim() !== "" &&
               data.note.replace(/<[^>]*>/g, '').trim() !== "";
@@ -533,14 +536,14 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
                 data.description.trim() !== "" && data.description.split(/\r?\n/).some(line => line.trim().startsWith("*"))
               );
 
-            return hasInclude || hasExclude || hasFlight || hasNote || hasDescription;
+            return hasInclude || hasExclude || hasFlight || hasAdditionalFees || hasNote || hasDescription;
           })() && (
               <Button
                 variant={activeTab === "information" ? "default" : "outline"}
                 onClick={() => setActiveTab("information")}
                 className={`${activeTab === "information"
-                    ? "bg-gold text-white hover:bg-gold-dark-20"
-                    : "bg-gold/5 text-gold hover:bg-gold hover:text-white"
+                  ? "bg-gold text-white hover:bg-gold-dark-20"
+                  : "bg-gold/5 text-gold hover:bg-gold hover:text-white"
                   } px-7 py-6 rounded-lg font-semibold text-sm transition-all duration-300`}
               >
                 Information
@@ -551,8 +554,8 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
               variant={activeTab === "boat" ? "default" : "outline"}
               onClick={() => setActiveTab("boat")}
               className={`${activeTab === "boat"
-                  ? "bg-gold text-white hover:bg-gold-dark-20"
-                  : "bg-gold/5 text-gold hover:bg-gold hover:text-white"
+                ? "bg-gold text-white hover:bg-gold-dark-20"
+                : "bg-gold/5 text-gold hover:bg-gold hover:text-white"
                 } px-7 py-6 rounded-lg font-semibold text-sm transition-all duration-300`}
             >
               Boat
@@ -639,22 +642,65 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
                       </div>
                     )}
 
-                  {/* Flight Information */}
-                  {data.flightInfo && (data.flightInfo.guideFee1 !== '0' || data.flightInfo.guideFee2 !== '0') && (
-                    <div className="bg-[#f5f5f5] p-6 rounded-lg shadow-sm min-h-[250px] flex flex-col">
-                      <h2 className="text-xl font-bold text-gray-800 mb-6">
-                        Flight Information
-                      </h2>
-                      <div className="space-y-2">
-                        <p className="text-gray-600 text-sm">
-                          IDR {formatPrice(data.flightInfo?.guideFee1 || '')}
-                        </p>
-                        <p className="text-gray-600 text-sm">
-                          IDR {formatPrice(data.flightInfo?.guideFee2 || '')}
-                        </p>
+                  {/* Flight Information - struktur sama seperti DetailPaketOpenTrip */}
+                  {((data.flightSchedules && data.flightSchedules.length > 0) ||
+                    (data.flightInfo && (data.flightInfo.guideFee1 || data.flightInfo.guideFee2))) && (
+                      <div className="bg-[#f5f5f5] p-6 rounded-lg shadow-sm min-h-[250px] flex flex-col">
+                        <h2 className="text-xl font-bold text-gray-800 mb-6">
+                          Flight Information
+                        </h2>
+                        <div className="space-y-6">
+                          {data.flightSchedules && data.flightSchedules.length > 0 ? (
+                            <>
+                              <div className="bg-gold/10 border-l-4 border-gold p-4 mb-4">
+                                <p className="text-gold-dark text-sm font-medium">
+                                  <strong>Note:</strong> Flight schedules below are estimated departure and arrival times to Labuan Bajo. Actual flight times may vary depending on airline schedules and weather conditions.
+                                </p>
+                              </div>
+                              {data.flightSchedules.map((schedule, index) => (
+                                <div key={index}>
+                                  <h3 className="text-gold text-xl font-semibold mb-4">
+                                    {schedule.route}
+                                  </h3>
+                                  <div className="grid grid-cols-2 gap-8">
+                                    <div>
+                                      <p className="text-gold font-medium mb-2">
+                                        Estimated Departure from Labuan Bajo
+                                      </p>
+                                      <p className="text-gray-500">
+                                        {schedule.etd_text === "-"
+                                          ? `${schedule.etd_time.slice(0, -3)} WITA`
+                                          : schedule.etd_text}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <p className="text-gold font-medium mb-2">
+                                        Estimated Arrival to Labuan Bajo
+                                      </p>
+                                      <p className="text-gray-500">
+                                        {schedule.eta_text === "-"
+                                          ? `${schedule.eta_time.slice(0, -3)} WITA`
+                                          : schedule.eta_text}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </>
+                          ) : (
+                            <div className="text-gray-600 space-y-2">
+                              {data.flightInfo?.guideFee1 && (
+                                <p>Guide Fee (Per Day): IDR {formatPrice(data.flightInfo.guideFee1)}</p>
+                              )}
+                              {data.flightInfo?.guideFee2 && (
+                                <p>Guide Fee (Per 5 pax): IDR {formatPrice(data.flightInfo.guideFee2)}</p>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+
                 </div>
 
                 {/* Kolom Kanan */}
@@ -678,6 +724,29 @@ const DetailPaketPrivateTrip: React.FC<DetailPaketPrivateTripProps> = ({
                         />
                       </div>
                     )}
+
+                  {/* Additional Fees - grid rapi di kolom kanan */}
+                  {data.additional_fees && data.additional_fees.length > 0 && (
+                    <div className="bg-[#f5f5f5] p-5 rounded-lg shadow-sm">
+                      <h2 className="text-xl font-bold text-gray-800 mb-3">
+                        Additional Fees
+                      </h2>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {data.additional_fees.map((fee) => {
+                          const unitLabel = fee.unit === "per_pax" ? "/pax" : fee.unit === "per_5pax" ? "/5 pax" : fee.unit === "per_day" ? "/hari" : fee.unit === "per_day_guide" ? "/hari (pemandu)" : "";
+                          return (
+                            <div
+                              key={fee.id}
+                              className="flex flex-col p-3 rounded-lg bg-white border border-gray-200/80"
+                            >
+                              <span className="text-gray-700 text-sm leading-tight">{fee.fee_category} {unitLabel}</span>
+                              <span className="font-semibold text-gold text-sm mt-1">IDR {formatPrice(String(fee.price))}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Description Section */}
                   {(() => {

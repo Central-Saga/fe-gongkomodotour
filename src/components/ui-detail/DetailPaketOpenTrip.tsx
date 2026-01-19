@@ -80,9 +80,10 @@ interface PackageData {
     guideFee1: string;
     guideFee2: string;
   };
+  flightSchedules?: FlightSchedule[];
+  additional_fees?: { id: number; fee_category: string; price: number; unit: string; pax_min: number; pax_max: number }[];
   boatImages?: { image: string; title: string; id: string }[];
   mainImage?: string;
-  flightSchedules?: FlightSchedule[];
   has_boat: boolean;
   destination_count: number;
   boat_ids?: number[];
@@ -663,6 +664,8 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
             const hasFlight = (data.flightSchedules && data.flightSchedules.length > 0) || 
               (data.flightInfo && (data.flightInfo.guideFee1 || data.flightInfo.guideFee2));
             
+            const hasAdditionalFees = data.additional_fees && data.additional_fees.length > 0;
+            
             const hasNote = data.note && data.note.trim() !== "" && 
               data.note.replace(/<[^>]*>/g, '').trim() !== "";
             
@@ -672,7 +675,7 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
                 data.description.trim() !== "" && data.description.split(/\r?\n/).some(line => line.trim().startsWith("*"))
               );
             
-            return hasInclude || hasExclude || hasFlight || hasNote || hasDescription;
+            return hasInclude || hasExclude || hasFlight || hasAdditionalFees || hasNote || hasDescription;
           })() && (
             <Button
               variant={activeTab === "information" ? "default" : "outline"}
@@ -871,6 +874,29 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
                           __html: data.exclude?.join("") || "",
                         }}
                       />
+                    </div>
+                  )}
+
+                  {/* Additional Fees - grid rapi di kolom kanan (sama seperti Private Trip) */}
+                  {data.additional_fees && data.additional_fees.length > 0 && (
+                    <div className="bg-[#f5f5f5] p-5 rounded-lg shadow-sm">
+                      <h2 className="text-xl font-bold text-gray-800 mb-3">
+                        Additional Fees
+                      </h2>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {data.additional_fees.map((fee) => {
+                          const unitLabel = fee.unit === "per_pax" ? "/pax" : fee.unit === "per_5pax" ? "/5 pax" : fee.unit === "per_day" ? "/hari" : fee.unit === "per_day_guide" ? "/hari (pemandu)" : "";
+                          return (
+                            <div
+                              key={fee.id}
+                              className="flex flex-col p-3 rounded-lg bg-white border border-gray-200/80"
+                            >
+                              <span className="text-gray-700 text-sm leading-tight">{fee.fee_category} {unitLabel}</span>
+                              <span className="font-semibold text-gold text-sm mt-1">IDR {formatPrice(String(fee.price))}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
 
