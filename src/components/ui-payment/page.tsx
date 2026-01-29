@@ -482,7 +482,34 @@ export default function Payment({
        (region === 'domestic' && p.region === 'Domestic') ||
        (region === 'overseas' && p.region === 'Overseas'))
     );
-    return price ? Number(price.price_per_pax) : 0;
+    if (!price) return 0;
+    const type = price.price_type ?? "fixed";
+    if (type === "by_request" || price.price_per_pax == null) return 0;
+    return Number(price.price_per_pax);
+  };
+
+  const isBasePriceByRequest = () => {
+    const tripHasBoat = bookingData?.trip?.has_boat ?? fallbackTrip?.has_boat ?? false;
+    const hasBoatSelections = (bookingData?.boat && bookingData.boat.length > 0) || (bookingData?.cabin && bookingData.cabin.length > 0);
+    if (tripHasBoat || hasBoatSelections) return false;
+    let prices: TripPrice[] | undefined = bookingData?.trip_duration?.trip_prices;
+    if ((!prices || prices.length === 0) && fallbackTrip?.trip_durations) {
+      const durationId = bookingData?.trip_duration_id ?? fallbackTrip.trip_durations[0]?.id;
+      const dur = fallbackTrip.trip_durations.find(d => d.id === durationId);
+      prices = dur?.trip_prices;
+    }
+    if (!prices || prices.length === 0) return false;
+    const pax = bookingData?.total_pax ?? tripCountFromQuery;
+    const region = getRegionFromCountry(bookingData?.customer_country);
+    const price = prices.find(p =>
+      pax >= p.pax_min &&
+      pax <= p.pax_max &&
+      (p.region === "Domestic & Overseas" ||
+       (region === "domestic" && p.region === "Domestic") ||
+       (region === "overseas" && p.region === "Overseas"))
+    );
+    if (!price) return false;
+    return price.price_type === "by_request" || price.price_per_pax == null;
   };
 
   const calculateBasePriceTotal = () => {
@@ -649,7 +676,9 @@ export default function Payment({
       const rows: [string, string][] = [];
       rows.push([
         bookingData.trip.type === 'Open Trip' ? 'Open Trip' : 'Private Trip',
-        `IDR ${calculateBasePrice().toLocaleString('id-ID')}/pax x ${bookingData.total_pax} pax = IDR ${calculateBasePriceTotal().toLocaleString('id-ID')}`
+        isBasePriceByRequest()
+          ? 'By Request'
+          : `IDR ${calculateBasePrice().toLocaleString('id-ID')}/pax x ${bookingData.total_pax} pax = IDR ${calculateBasePriceTotal().toLocaleString('id-ID')}`
       ]);
       bookingData.additional_fees.forEach(fee => {
         rows.push([

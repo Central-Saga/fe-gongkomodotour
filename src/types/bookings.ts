@@ -15,7 +15,8 @@ export interface TripPrice {
   trip_duration_id: number
   pax_min: number
   pax_max: number
-  price_per_pax: string
+  price_per_pax: string | number | null
+  price_type?: "fixed" | "by_request"
   status: string
   region: "Domestic" | "Overseas"
   created_at: string

@@ -76,10 +76,14 @@ const tripSchema = z.object({
     prices: z.array(z.object({
       pax_min: z.coerce.number().min(1, "Minimal pax harus diisi"),
       pax_max: z.coerce.number().min(1, "Maksimal pax harus diisi"),
-      price_per_pax: z.coerce.number().min(0, "Harga per pax harus diisi"),
+      price_type: z.enum(["fixed", "by_request"]).default("fixed"),
+      price_per_pax: z.union([z.coerce.number().min(0), z.null()]).optional(),
       status: z.enum(["Aktif", "Non Aktif"]),
       region: z.enum(["Domestic", "Overseas", "Domestic & Overseas"])
-    }))
+    }).refine(
+      (data) => data.price_type !== "fixed" || (typeof data.price_per_pax === "number" && data.price_per_pax >= 0),
+      { message: "Harga per pax harus diisi", path: ["price_per_pax"] }
+    ))
   })),
   flight_schedules: z.array(z.object({
     route: z.string(),
@@ -173,6 +177,7 @@ export default function CreateTripPage() {
       prices: [{
         pax_min: 1,
         pax_max: 1,
+        price_type: "fixed",
         price_per_pax: 0,
         status: "Aktif",
         region: "Domestic"
@@ -333,7 +338,8 @@ export default function CreateTripPage() {
             ...price,
             pax_min: Number(price.pax_min) || 1,
             pax_max: Number(price.pax_max) || 1,
-            price_per_pax: Number(price.price_per_pax) || 0
+            price_type: (price.price_type as "fixed" | "by_request") || "fixed",
+            price_per_pax: price.price_type === "by_request" ? null : (Number(price.price_per_pax) || 0)
           }))
         })),
         additional_fees: values.additional_fees?.map(fee => ({
@@ -1125,6 +1131,7 @@ export default function CreateTripPage() {
                             prices: [{
                               pax_min: 1,
                               pax_max: 1,
+                              price_type: "fixed",
                               price_per_pax: 0,
                               status: "Aktif",
                               region: "Domestic"
@@ -1382,6 +1389,7 @@ export default function CreateTripPage() {
                                   {
                                     pax_min: currentPrices.length > 0 ? currentPrices[currentPrices.length - 1].pax_max + 1 : 1,
                                     pax_max: currentPrices.length > 0 ? currentPrices[currentPrices.length - 1].pax_max + 2 : 2,
+                                    price_type: "fixed",
                                     price_per_pax: 0,
                                     status: "Aktif",
                                     region: "Domestic"
@@ -1396,7 +1404,7 @@ export default function CreateTripPage() {
 
                           <div className="space-y-4">
                             {duration.prices.map((_, pIndex) => (
-                              <div key={pIndex} className="grid grid-cols-6 gap-4 p-4 bg-white rounded-lg items-end">
+                              <div key={pIndex} className="grid grid-cols-7 gap-4 p-4 bg-white rounded-lg items-end">
                                 <FormField
                                   control={form.control}
                                   name={`trip_durations.${dIndex}.prices.${pIndex}.pax_min`}
@@ -1501,54 +1509,86 @@ export default function CreateTripPage() {
                                 />
                                 <FormField
                                   control={form.control}
-                                  name={`trip_durations.${dIndex}.prices.${pIndex}.price_per_pax`}
+                                  name={`trip_durations.${dIndex}.prices.${pIndex}.price_type`}
                                   render={({ field }) => (
                                     <FormItem>
-                                      <FormLabel>Harga per Pax</FormLabel>
-                                      <FormControl>
-                                        <div className="relative">
-                                          <Input 
-                                            type="number"
-                                            min="0"
-                                            step="1"
-                                            value={field.value ?? 0}
-                                            onChange={e => {
-                                              const value = e.target.value;
-                                              if (value === '') {
-                                                field.onChange(0);
-                                              } else {
-                                                const numValue = Number(value);
-                                                if (!isNaN(numValue) && numValue >= 0) {
-                                                  field.onChange(numValue);
-                                                }
-                                              }
-                                            }}
-                                            onWheel={(e) => e.currentTarget.blur()}
-                                            className="pr-8"
-                                          />
-                                          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col">
-                                            <button
-                                              type="button"
-                                              onClick={() => field.onChange((field.value ?? 0) + 1)}
-                                              className="h-3 w-4 flex items-center justify-center hover:bg-gray-100 rounded-t"
-                                              tabIndex={-1}
-                                            >
-                                              <ChevronUp className="h-3 w-3 text-gray-500" />
-                                            </button>
-                                            <button
-                                              type="button"
-                                              onClick={() => field.onChange(Math.max(0, (field.value ?? 0) - 1))}
-                                              className="h-3 w-4 flex items-center justify-center hover:bg-gray-100 rounded-b"
-                                              tabIndex={-1}
-                                            >
-                                              <ChevronDown className="h-3 w-3 text-gray-500" />
-                                            </button>
-                                          </div>
-                                        </div>
-                                      </FormControl>
+                                      <FormLabel>Tipe Harga</FormLabel>
+                                      <Select onValueChange={field.onChange} value={field.value ?? "fixed"}>
+                                        <FormControl>
+                                          <SelectTrigger>
+                                            <SelectValue placeholder="Pilih tipe harga" />
+                                          </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                          <SelectItem value="fixed">Fixed</SelectItem>
+                                          <SelectItem value="by_request">By Request</SelectItem>
+                                        </SelectContent>
+                                      </Select>
                                       <FormMessage />
                                     </FormItem>
                                   )}
+                                />
+                                <FormField
+                                  control={form.control}
+                                  name={`trip_durations.${dIndex}.prices.${pIndex}.price_per_pax`}
+                                  render={({ field }) => {
+                                    const priceType = form.watch(`trip_durations.${dIndex}.prices.${pIndex}.price_type`) ?? "fixed"
+                                    const isByRequest = priceType === "by_request"
+                                    return (
+                                      <FormItem>
+                                        <FormLabel>Harga per Pax</FormLabel>
+                                        <FormControl>
+                                          <div className="relative">
+                                            <Input 
+                                              type="number"
+                                              min="0"
+                                              step="1"
+                                              value={field.value ?? 0}
+                                              disabled={isByRequest}
+                                              onChange={e => {
+                                                const value = e.target.value;
+                                                if (value === '') {
+                                                  field.onChange(0);
+                                                } else {
+                                                  const numValue = Number(value);
+                                                  if (!isNaN(numValue) && numValue >= 0) {
+                                                    field.onChange(numValue);
+                                                  }
+                                                }
+                                              }}
+                                              onWheel={(e) => e.currentTarget.blur()}
+                                              className="pr-8"
+                                              placeholder={isByRequest ? "By Request" : undefined}
+                                            />
+                                            {!isByRequest && (
+                                              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col">
+                                                <button
+                                                  type="button"
+                                                  onClick={() => field.onChange((field.value ?? 0) + 1)}
+                                                  className="h-3 w-4 flex items-center justify-center hover:bg-gray-100 rounded-t"
+                                                  tabIndex={-1}
+                                                >
+                                                  <ChevronUp className="h-3 w-3 text-gray-500" />
+                                                </button>
+                                                <button
+                                                  type="button"
+                                                  onClick={() => field.onChange(Math.max(0, (field.value ?? 0) - 1))}
+                                                  className="h-3 w-4 flex items-center justify-center hover:bg-gray-100 rounded-b"
+                                                  tabIndex={-1}
+                                                >
+                                                  <ChevronDown className="h-3 w-3 text-gray-500" />
+                                                </button>
+                                              </div>
+                                            )}
+                                          </div>
+                                        </FormControl>
+                                        {isByRequest && (
+                                          <p className="text-sm text-muted-foreground">By Request</p>
+                                        )}
+                                        <FormMessage />
+                                      </FormItem>
+                                    )
+                                  }}
                                 />
                                 <FormField
                                   control={form.control}

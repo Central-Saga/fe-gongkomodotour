@@ -562,10 +562,16 @@ export function DataTable({
                               <div>
                                 <p className="text-gray-600 text-sm">Harga per Pax:</p>
                                 <p className="font-medium break-words">
-                                  {new Intl.NumberFormat("id-ID", {
-                                    style: "currency",
-                                    currency: "IDR",
-                                  }).format(Number(price.price_per_pax))}
+                                  {(price.price_type ?? "fixed") === "by_request" || price.price_per_pax == null ? (
+                                    <span className="inline-flex items-center rounded-md bg-amber-100 px-2 py-0.5 text-sm font-medium text-amber-800">
+                                      By Request
+                                    </span>
+                                  ) : (
+                                    new Intl.NumberFormat("id-ID", {
+                                      style: "currency",
+                                      currency: "IDR",
+                                    }).format(Number(price.price_per_pax))
+                                  )}
                                 </p>
                               </div>
                               <div>

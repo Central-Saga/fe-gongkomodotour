@@ -333,20 +333,26 @@ export default function OpenTrip() {
                               {trip.trip_durations?.[0]?.duration_label || t('customDuration')}
                             </span>
                           </div>
-                          {trip.trip_durations?.[0]?.trip_prices?.[0]?.price_per_pax && (
-                            <div className="flex items-center space-x-1">
-                              <Image
-                                src="/img/dollar.png"
-                                alt="Price"
-                                width={16}
-                                height={16}
-                                className="w-4 h-4 brightness-200 invert"
-                              />
-                              <span className="text-sm">
-                                IDR {parseInt(String(trip.trip_durations[0].trip_prices[0].price_per_pax)).toLocaleString('id-ID')}{t('perPax')}
-                              </span>
-                            </div>
-                          )}
+                          {(() => {
+                            const p = trip.trip_durations?.[0]?.trip_prices?.[0];
+                            if (!p) return null;
+                            const type = (p as { price_type?: "fixed" | "by_request" }).price_type ?? "fixed";
+                            const isByRequest = type === "by_request" || p.price_per_pax == null;
+                            return (
+                              <div className="flex items-center space-x-1">
+                                <Image
+                                  src="/img/dollar.png"
+                                  alt="Price"
+                                  width={16}
+                                  height={16}
+                                  className="w-4 h-4 brightness-200 invert"
+                                />
+                                <span className="text-sm">
+                                  {isByRequest ? "By Request" : `IDR ${parseInt(String(p.price_per_pax)).toLocaleString("id-ID")}${t("perPax")}`}
+                                </span>
+                              </div>
+                            );
+                          })()}
                         </div>
                       </div>
                       

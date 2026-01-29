@@ -1,9 +1,14 @@
+export type TripPriceType = "fixed" | "by_request"
+
 export interface TripPrice {
   id: number
   trip_duration_id: number
   pax_min: number
   pax_max: number
-  price_per_pax: number
+  /** When price_type is 'by_request', backend sends null. */
+  price_per_pax: number | null
+  /** Backend default for older records is 'fixed'. */
+  price_type?: TripPriceType
   status: "Aktif" | "Non Aktif"
   region: "Domestic" | "Overseas" | "Domestic & Overseas"
   created_at: string

@@ -52,7 +52,8 @@ interface TripPrice {
   trip_duration_id: number;
   pax_min: number;
   pax_max: number;
-  price_per_pax: number;
+  price_per_pax: number | null;
+  price_type?: "fixed" | "by_request";
   status: string;
   region: "Domestic" | "Overseas" | "Domestic & Overseas";
 }
@@ -375,7 +376,13 @@ export default function Booking() {
           const transformedData: PackageData = {
             id: trip.id.toString(),
             title: trip.name,
-            price: trip.trip_durations?.[0]?.trip_prices?.[0]?.price_per_pax?.toString() || "0",
+            price: (() => {
+              const p = trip.trip_durations?.[0]?.trip_prices?.[0];
+              if (!p) return "0";
+              const type = (p as { price_type?: "fixed" | "by_request" }).price_type ?? "fixed";
+              if (type === "by_request" || p.price_per_pax == null) return "By Request";
+              return p.price_per_pax.toString();
+            })(),
             daysTrip: trip.trip_durations?.[0]?.duration_label || "",
             type: trip.type,
             image: getImageUrl(trip.assets?.[0]?.file_url),
@@ -562,7 +569,28 @@ export default function Booking() {
     );
 
     if (!applicablePrice) return 0;
+    const type = (applicablePrice as { price_type?: "fixed" | "by_request" }).price_type ?? "fixed";
+    if (type === "by_request" || applicablePrice.price_per_pax == null) return 0;
     return Number(applicablePrice.price_per_pax);
+  };
+
+  const isBasePriceByRequest = () => {
+    if (!selectedPackage?.trip_durations || selectedPackage.has_boat) return false;
+    const selectedDurationData = selectedPackage.trip_durations.find(d => d.duration_label === selectedDuration);
+    if (!selectedDurationData?.trip_prices) return false;
+    const applicablePrice = selectedDurationData.trip_prices.find(
+      price => {
+        const isInPaxRange = tripCount >= price.pax_min && tripCount <= price.pax_max;
+        const isApplicableRegion =
+          price.region === "Domestic & Overseas" ||
+          (userRegion === "domestic" && price.region === "Domestic") ||
+          (userRegion === "overseas" && price.region === "Overseas");
+        return isInPaxRange && isApplicableRegion;
+      }
+    );
+    if (!applicablePrice) return false;
+    const type = (applicablePrice as { price_type?: "fixed" | "by_request" }).price_type ?? "fixed";
+    return type === "by_request" || applicablePrice.price_per_pax == null;
   };
 
   const calculateBasePriceTotal = () => {
@@ -1175,6 +1203,13 @@ export default function Booking() {
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <h3 className="font-semibold text-lg mb-4">Detail Pembayaran</h3>
                   <div className="space-y-2 text-sm">
+                    {!selectedPackage?.has_boat && (
+                      isBasePriceByRequest() ? (
+                        <p className="text-gray-600">• Harga per pax: <span className="font-medium text-amber-700">By Request</span></p>
+                      ) : (
+                        <p className="text-gray-600">• Harga per pax: IDR {calculateDisplayPricePerPax().toLocaleString('id-ID')}/pax</p>
+                      )
+                    )}
                     <p className="text-gray-600">• Harga Cabin: IDR {calculateTotalCabinPrice().toLocaleString('id-ID')}</p>
                     {calculateSurcharge() && (
                       <p className="text-gray-600">• High/Peak Season: IDR {calculateSurchargeAmount().toLocaleString('id-ID')}</p>
@@ -1209,7 +1244,9 @@ export default function Booking() {
                     <p className="text-xl font-semibold">
                       Total Pembayaran:{" "}
                       <span className="text-gold">
-                        IDR {calculateTotalPrice().toLocaleString('id-ID')}
+                        {!selectedPackage?.has_boat && isBasePriceByRequest() && calculateTotalPrice() === 0
+                          ? "By Request"
+                          : `IDR ${calculateTotalPrice().toLocaleString("id-ID")}`}
                       </span>
                     </p>
                   </div>

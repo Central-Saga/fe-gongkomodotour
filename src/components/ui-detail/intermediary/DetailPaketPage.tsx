@@ -80,9 +80,13 @@ function buildTransform(selectedPackage: Trip, boats: Boat[]): DetailPackageData
   return {
     id: selectedPackage.id?.toString() || "",
     title: selectedPackage.name || "Nama Trip",
-    price: selectedPackage.trip_durations?.[0]?.trip_prices?.[0]?.price_per_pax
-      ? `IDR ${selectedPackage.trip_durations[0].trip_prices[0].price_per_pax.toLocaleString("id-ID")}/pax`
-      : "Harga belum tersedia",
+    price: (() => {
+      const p = selectedPackage.trip_durations?.[0]?.trip_prices?.[0];
+      if (!p) return "Harga belum tersedia";
+      const type = (p as { price_type?: "fixed" | "by_request" }).price_type ?? "fixed";
+      if (type === "by_request" || p.price_per_pax == null) return "By Request";
+      return `IDR ${Number(p.price_per_pax).toLocaleString("id-ID")}/pax`;
+    })(),
     meetingPoint: selectedPackage.meeting_point || "Meeting point belum ditentukan",
     destination: selectedPackage.name || "Destinasi",
     daysTrip: selectedPackage.trip_durations?.[0]?.duration_label || "Custom Duration",
@@ -172,9 +176,13 @@ export default function DetailPaketPage({ type }: DetailPaketPageProps) {
                 label: t.type || (type === "open" ? "Open Trip" : "Private Trip"),
                 name: t.name || "Trip Name",
                 duration: t.trip_durations?.[0]?.duration_label || "Custom Duration",
-                priceIDR: t.trip_durations?.[0]?.trip_prices?.[0]?.price_per_pax
-                  ? `IDR ${parseInt(String(t.trip_durations[0].trip_prices[0].price_per_pax)).toLocaleString("id-ID")}/pax`
-                  : "Price not available",
+                priceIDR: (() => {
+                  const p = t.trip_durations?.[0]?.trip_prices?.[0];
+                  if (!p) return "Price not available";
+                  const type = (p as { price_type?: "fixed" | "by_request" }).price_type ?? "fixed";
+                  if (type === "by_request" || p.price_per_pax == null) return "By Request";
+                  return `IDR ${parseInt(String(p.price_per_pax)).toLocaleString("id-ID")}/pax`;
+                })(),
                 slug: t.id?.toString() || "",
               };
             });
