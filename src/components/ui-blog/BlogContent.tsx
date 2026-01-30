@@ -48,7 +48,8 @@ const BlogContent = () => {
           "/api/landing-page/blogs?status=1"
         );
         const posts = Array.isArray(response.data) ? response.data : [];
-        setAllPosts(posts);
+        const publishedOnly = posts.filter((p) => p.status === "published");
+        setAllPosts(publishedOnly);
       } catch (error) {
         console.error("Error fetching posts:", error);
       } finally {

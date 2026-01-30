@@ -20,9 +20,10 @@ export default function DetailBlog() {
       try {
         const response = await apiRequest<{ data: Blog[] }>("GET", "/api/landing-page/blogs?status=1");
         const posts = Array.isArray(response.data) ? response.data : [];
-        
+        const publishedOnly = posts.filter((p) => p.status === "published");
+
         // Get latest 6 posts
-        const sortedPosts = [...posts]
+        const sortedPosts = [...publishedOnly]
           .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
           .slice(0, 6);
         

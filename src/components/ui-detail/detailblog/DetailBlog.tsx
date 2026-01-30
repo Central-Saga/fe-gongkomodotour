@@ -30,6 +30,11 @@ const DetailBlog: React.FC<DetailBlogProps> = ({ blogId }) => {
           "GET",
           `/api/landing-page/blogs/${blogId}`
         );
+        if (response.data?.status === "draft") {
+          setError("Artikel tidak tersedia.");
+          setBlog(null);
+          return;
+        }
         const cleanedBlog = {
           ...response.data,
           content: cleanHtmlContent(response.data.content),
@@ -50,7 +55,8 @@ const DetailBlog: React.FC<DetailBlogProps> = ({ blogId }) => {
           "/api/landing-page/blogs?status=1"
         );
         const posts = Array.isArray(response.data) ? response.data : [];
-        const sortedPosts = posts
+        const publishedOnly = posts.filter((p) => p.status === "published");
+        const sortedPosts = publishedOnly
           .sort(
             (a, b) =>
               new Date(b.created_at).getTime() -

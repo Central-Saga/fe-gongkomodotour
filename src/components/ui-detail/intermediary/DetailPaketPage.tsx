@@ -85,7 +85,15 @@ function buildTransform(selectedPackage: Trip, boats: Boat[]): DetailPackageData
       if (!p) return "Harga belum tersedia";
       const type = (p as { price_type?: "fixed" | "by_request" }).price_type ?? "fixed";
       if (type === "by_request" || p.price_per_pax == null) return "By Request";
-      return `IDR ${Number(p.price_per_pax).toLocaleString("id-ID")}/pax`;
+      const raw = Number(p.price_per_pax);
+      const valueRupiah = raw >= 1000 ? Math.round(raw) : Math.round(raw * 1_000_000);
+      return `IDR ${valueRupiah.toLocaleString("id-ID")}/pax`;
+    })(),
+    priceByRequest: (() => {
+      const p = selectedPackage.trip_durations?.[0]?.trip_prices?.[0];
+      if (!p) return false;
+      const type = (p as { price_type?: "fixed" | "by_request" }).price_type ?? "fixed";
+      return type === "by_request" || p.price_per_pax == null;
     })(),
     meetingPoint: selectedPackage.meeting_point || "Meeting point belum ditentukan",
     destination: selectedPackage.name || "Destinasi",
@@ -181,7 +189,9 @@ export default function DetailPaketPage({ type }: DetailPaketPageProps) {
                   if (!p) return "Price not available";
                   const type = (p as { price_type?: "fixed" | "by_request" }).price_type ?? "fixed";
                   if (type === "by_request" || p.price_per_pax == null) return "By Request";
-                  return `IDR ${parseInt(String(p.price_per_pax)).toLocaleString("id-ID")}/pax`;
+                  const raw = Number(p.price_per_pax);
+                  const valueRupiah = raw >= 1000 ? Math.round(raw) : Math.round(raw * 1_000_000);
+                  return `IDR ${valueRupiah.toLocaleString("id-ID")}/pax`;
                 })(),
                 slug: t.id?.toString() || "",
               };

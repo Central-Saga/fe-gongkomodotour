@@ -25,9 +25,9 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const formatPrice = (price: string): string => {
-  const cleanPrice = price.replace(/[^\d.]/g, "");
-  const numPrice = parseFloat(cleanPrice);
-  if (isNaN(numPrice)) return price;
+  const digitsOnly = price.replace(/\D/g, "");
+  const numPrice = parseInt(digitsOnly, 10);
+  if (Number.isNaN(numPrice) || digitsOnly === "") return price;
   return numPrice.toLocaleString("id-ID");
 };
 
@@ -44,6 +44,8 @@ export interface DetailPackageData {
   id: string;
   title: string;
   price: string;
+  /** True when price per pax is by request (no fixed price). */
+  priceByRequest?: boolean;
   meetingPoint: string;
   destination: string;
   daysTrip: string;
@@ -354,9 +356,22 @@ const DetailPaket: React.FC<DetailPaketProps> = ({ data, type }) => {
           )}
         </div>
         <h1 className="text-4xl font-bold text-gray-800">{data.title}</h1>
-        <p className="text-2xl text-gray-600 mt-2">
-          Start from <strong>IDR {formatPrice(data.price)}</strong>
-        </p>
+        <div className="mt-2">
+          {data.priceByRequest || data.price === "By Request" || data.price === "Harga belum tersedia" ? (
+            <>
+              <p className="text-2xl text-gray-600">
+                Starting from <strong>IDR – Price by Request</strong>
+              </p>
+              <p className="text-gray-500 mt-2 text-sm max-w-2xl">
+                Harga per pax paket ini bersifat <strong>by request</strong>. Silakan hubungi kami via WhatsApp untuk mendapatkan penawaran harga yang disesuaikan dengan jumlah peserta dan kebutuhan perjalanan Anda.
+              </p>
+            </>
+          ) : (
+            <p className="text-2xl text-gray-600">
+              Start from <strong>IDR {formatPrice(data.price)}</strong>
+            </p>
+          )}
+        </div>
       </motion.div>
 
       {/* Section 3: Destination Info */}

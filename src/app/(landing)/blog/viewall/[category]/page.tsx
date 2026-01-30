@@ -53,10 +53,12 @@ const ViewAllCategory = ({ params }: PageProps) => {
         console.log("Fetching blogs for category:", resolvedParams.category);
         const response = await apiRequest<{ data: Blog[] }>("GET", `/api/landing-page/blogs?status=1&category=${resolvedParams.category}`);
         console.log("API Response:", response);
-        
+
+        const rawBlogs = response.data || [];
+        const publishedOnly = rawBlogs.filter((post) => post.status === "published");
 
         // Format blog data with proper image URLs and cleaned content
-        const formattedBlogs = (response.data || []).map((post) => ({
+        const formattedBlogs = publishedOnly.map((post) => ({
           ...post,
           content: cleanHtmlContent(post.content),
           assets: post.assets?.map((asset) => ({
