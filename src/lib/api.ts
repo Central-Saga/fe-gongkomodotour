@@ -3,7 +3,7 @@ import axios, { AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
 import { apiCache } from './browserCache';
 
 // Untuk debugging
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://sandbox.api.gongkomodotour.com';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.gongkomodotour.com';
 console.log('API Base URL:', API_BASE_URL);
 
 // 1. Buat Axios instance
@@ -14,44 +14,53 @@ const api = axios.create({
     'Content-Type': 'application/json',
     'X-Requested-With': 'XMLHttpRequest',
   },
-  withCredentials: true, // WAJIB untuk cookie + CSRF (Laravel Sanctum, cross-origin)
+  withCredentials: true, // CSRF: kirim cookie (session) dan terima Set-Cookie dari API
   timeout: 30000, // Menambahkan timeout 30 detik
   // Tambahkan proxy untuk bypass CORS issue
   proxy: false
 });
 
-// 2. Interceptor: tambahkan Bearer token jika ada dan handle FormData
-api.interceptors.request.use((config: InternalAxiosRequestConfig<unknown>) => {
-  // Hanya jalankan di client-side
-  if (typeof window !== "undefined") {
-    try {
-      const token = localStorage.getItem('access_token');
-      if (token && config.headers) {
-        config.headers['Authorization'] = `Bearer ${token}`;
-      }
-    } catch (error) {
-      console.warn('localStorage not available:', error);
-    }
+// CSRF token dari GET /api/csrf-token (cross-origin: FE tidak bisa baca cookie, jadi backend return di JSON)
+let csrfToken: string | null = null;
+
+export async function ensureCsrf(): Promise<void> {
+  const r = await api.get<{ csrf_token?: string }>('/api/csrf-token');
+  csrfToken = (r.data?.csrf_token ?? null) as string | null;
+}
+
+export function clearCsrfToken(): void {
+  csrfToken = null;
+}
+
+// 2. Interceptor: CSRF (X-XSRF-TOKEN), Bearer, FormData
+api.interceptors.request.use(async (config: InternalAxiosRequestConfig<unknown>) => {
+  if (typeof window === "undefined") return config;
+
+  // CSRF: untuk POST/PUT/PATCH/DELETE, tambah X-XSRF-TOKEN (skip untuk GET /api/csrf-token)
+  const method = (config.method ?? 'get').toLowerCase();
+  const isMutation = ['post', 'put', 'patch', 'delete'].includes(method);
+  const isCsrfUrl = String(config.url ?? '').includes('/api/csrf-token');
+  if (isMutation && !isCsrfUrl) {
+    if (!csrfToken) await ensureCsrf();
+    if (csrfToken && config.headers) config.headers['X-XSRF-TOKEN'] = csrfToken;
   }
-  
-  // Jika data adalah FormData, hapus Content-Type dari default headers
-  // Biarkan browser/Axios set otomatis dengan boundary yang benar
+
+  // Bearer
+  try {
+    const token = localStorage.getItem('access_token');
+    if (token && config.headers) config.headers['Authorization'] = `Bearer ${token}`;
+  } catch {
+    // ignore
+  }
+
+  // FormData: hapus Content-Type, biarkan browser set boundary
   if (config.data instanceof FormData && config.headers) {
     delete config.headers['Content-Type'];
     delete config.headers['content-type'];
   }
-  
+
   return config;
 });
-
-/**
- * Ambil CSRF cookie dari Laravel Sanctum. WAJIB dipanggil sebelum
- * POST/PUT/DELETE yang belum punya session (login, register).
- * Menggunakan instance api yang sudah withCredentials: true.
- */
-export async function ensureCsrf(): Promise<void> {
-  await api.get('/sanctum/csrf-cookie');
-}
 
 // 3. Helper function apiRequest<T>
 export async function apiRequest<T>(
@@ -254,17 +263,15 @@ api.interceptors.response.use(
     });
 
     if (error.response?.status === 401) {
-      // Bersihkan data dari localStorage (hanya di client-side)
       if (typeof window !== 'undefined') {
+        clearCsrfToken();
         try {
           localStorage.removeItem('access_token');
           localStorage.removeItem('token_type');
           localStorage.removeItem('user');
-          
-          // Redirect ke halaman login
           window.location.href = '/auth/login';
-        } catch (localStorageError) {
-          console.warn('localStorage not available:', localStorageError);
+        } catch {
+          // ignore
         }
       }
     }

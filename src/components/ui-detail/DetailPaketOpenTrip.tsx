@@ -397,7 +397,7 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
-        className="mb-4 bg-[#f5f5f5] p-6 rounded-lg shadow-xl"
+        className="mb-4 bg-[#f5f5f5] p-6 rounded-lg shadow-xl" data-price-by-request={data.price_by_request}
       >
         <div className="flex items-center mb-2">
           <Badge
@@ -408,9 +408,22 @@ const DetailPaketOpenTrip: React.FC<DetailPaketOpenTripProps> = ({ data }) => {
           </Badge>
         </div>
         <h1 className="text-4xl font-bold text-gray-800">{data.title}</h1>
-        <p className="text-2xl text-gray-600 mt-2">
-          Start from <strong>IDR {formatPrice(data.price)}</strong>
-        </p>
+        <div className="mt-2">
+          {data.price_by_request || data.price === "Harga belum tersedia" ? (
+            <>
+              <p className="text-2xl text-gray-600">
+                Starting from <strong>IDR – Price by Request</strong>
+              </p>
+              <p className="text-gray-500 mt-2 text-sm max-w-2xl">
+                Harga per pax paket ini bersifat <strong>by request</strong>. Silakan hubungi kami via WhatsApp untuk mendapatkan penawaran harga yang disesuaikan dengan jumlah peserta dan kebutuhan perjalanan Anda.
+              </p>
+            </>
+          ) : (
+            <p className="text-2xl text-gray-600">
+              Start from <strong>IDR {formatPrice(data.price)}</strong>
+            </p>
+          )}
+        </div>
       </motion.div>
 
       {/* Section 3: Destination Info */}

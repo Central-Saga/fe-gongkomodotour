@@ -72,6 +72,7 @@ interface PackageData {
   boat_ids?: number[];
   operational_days?: string[];
   tentation?: "Yes" | "No";
+  price_by_request?: boolean;
   note?: string; // Tambahkan field note
 }
 
@@ -251,6 +252,7 @@ export default function DetailOpenTrip() {
     destination_count: selectedPackage.destination_count || 0,
     boat_ids: selectedPackage.boat_ids || [],
     operational_days: selectedPackage.operational_days || [],
+    price_by_request: selectedPackage.price_by_request || false,
     tentation: (selectedPackage.tentation === "Yes" || selectedPackage.tentation === "No") 
       ? selectedPackage.tentation 
       : "No",
@@ -353,7 +355,7 @@ export default function DetailOpenTrip() {
   console.log("Testing getImageUrl function:");
   console.log("Input: '/storage/trip/1754741902_pulau-padar.jpg'");
   console.log("Output:", getImageUrl('/storage/trip/1754741902_pulau-padar.jpg'));
-  console.log("Expected: https://sandbox.api.gongkomodotour.com/storage/trip/1754741902_pulau-padar.jpg");
+  console.log("Expected: https://api.gongkomodotour.com/storage/trip/1754741902_pulau-padar.jpg");
 
   return (
     <div>

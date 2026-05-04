@@ -115,6 +115,7 @@ export interface Trip {
   destination_count: number
   operational_days: string[]
   tentation: "Yes" | "No"
+  price_by_request: boolean
   created_at: string
   updated_at: string
   trip_durations: TripDuration[]

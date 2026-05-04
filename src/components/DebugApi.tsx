@@ -38,7 +38,7 @@ export default function DebugApi() {
     const fetchWithNativeFetch = async () => {
       try {
         console.log('Fetching with native fetch...');
-        const response = await fetch('https://sandbox.api.gongkomodotour.com/api/landing-page/trips?status=1&type=open');
+        const response = await fetch('https://api.gongkomodotour.com/api/landing-page/trips?status=1&type=open');
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -79,9 +79,9 @@ export default function DebugApi() {
       
       <div className="mb-4 p-3 bg-blue-50 rounded">
         <h3 className="font-semibold mb-2">API Configuration:</h3>
-        <p><strong>Base URL:</strong> {process.env.NEXT_PUBLIC_API_URL || 'https://sandbox.api.gongkomodotour.com'}</p>
+        <p><strong>Base URL:</strong> {process.env.NEXT_PUBLIC_API_URL || 'https://api.gongkomodotour.com'}</p>
         <p><strong>Current Request:</strong> {'/api/landing-page/trips?status=1&type=open'}</p>
-        <p><strong>Full URL:</strong> {`${process.env.NEXT_PUBLIC_API_URL || 'https://sandbox.api.gongkomodotour.com'}/api/landing-page/trips?status=1&type=open`}</p>
+        <p><strong>Full URL:</strong> {`${process.env.NEXT_PUBLIC_API_URL || 'https://api.gongkomodotour.com'}/api/landing-page/trips?status=1&type=open`}</p>
       </div>
       
       {loading && <p>Testing API connections...</p>}

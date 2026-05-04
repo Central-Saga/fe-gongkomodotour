@@ -6,7 +6,7 @@
 export async function fallbackRequest<T>(
   method: string,
   url: string,
-  baseUrl: string = process.env.NEXT_PUBLIC_API_URL || 'https://sandbox.api.gongkomodotour.com'
+  baseUrl: string = process.env.NEXT_PUBLIC_API_URL || 'https://api.gongkomodotour.com'
 ): Promise<T> {
   return new Promise((resolve, reject) => {
     const fullUrl = `${baseUrl}${url}`;

@@ -1,8 +1,12 @@
 # Backend: Exempt CSRF untuk Login & Register (Token-based, Sandbox)
 
-Frontend sandbox (https://sandbox.gongkomodotour.com) memakai **token-based auth**:  
-login/register mengirim `email`+`password`, backend mengembalikan `access_token`.  
-Request tidak memakai cookie/session untuk autentikasi, jadi CSRF untuk kedua endpoint ini tidak dipakai dan **harus di-exempt** supaya tidak 419 di sandbox.
+## Penting: 419 itu dari BACKEND (Laravel), bukan frontend
+
+**"Pindah token" di frontend tidak menghentikan 419.**  
+CSRF dicek di **middleware Laravel** sebelum request sampai ke controller.  
+Frontend hanya mengirim POST `/api/login`; yang memblokir dan membalas 419 adalah **VerifyCsrfToken** di backend.  
+
+Supaya berhenti 419: **backend harus exempt** `api/login` dan `api/register` di `VerifyCsrfToken`.
 
 ---
 
@@ -10,7 +14,46 @@ Request tidak memakai cookie/session untuk autentikasi, jadi CSRF untuk kedua en
 
 ### 1. Exempt `api/login` dan `api/register` dari CSRF
 
-Edit `app/Http/Middleware/VerifyCsrfToken.php` (atau `app/Http/Middleware/EncryptCookies.php` jika struktur Laravel terbaru) — cari property `$except` dan tambahkan:
+---
+
+#### Laravel 12 (dan 11) — lewat `bootstrap/app.php`
+
+Edit **`bootstrap/app.php`** di project API.
+
+- Cari blok **`->withMiddleware(function (Middleware $middleware) { ... })`**.
+- Di **dalam** closure itu, tambahkan:
+
+```php
+$middleware->validateCsrfTokens(except: [
+    'api/login',
+    'api/register',
+]);
+```
+
+**Contoh lengkap** — jika `withMiddleware` masih kosong:
+
+```php
+->withMiddleware(function (Middleware $middleware) {
+    $middleware->validateCsrfTokens(except: [
+        'api/login',
+        'api/register',
+    ]);
+})
+```
+
+Jika di dalam closure **sudah ada** baris lain, cukup **tambah** baris `validateCsrfTokens` tadi (tetap pakai `$middleware->`).
+
+- Pastikan ada:  
+  `use Illuminate\Foundation\Configuration\Middleware;`  
+  (biasanya di atas `bootstrap/app.php`; kalau `Middleware` belum di‑import, tambahkan.)
+
+Simpan file.
+
+---
+
+#### Laravel 10 / pakai `VerifyCsrfToken.php`
+
+Edit **`app/Http/Middleware/VerifyCsrfToken.php`**, property **`$except`**:
 
 ```php
 protected $except = [
@@ -19,16 +62,60 @@ protected $except = [
 ];
 ```
 
-Jika route memakai prefix, sesuaikan, mis.:
+---
 
-```php
-protected $except = [
-    'api/login',      // POST /api/login
-    'api/register',   // POST /api/register
-];
+#### Cek path route (kalau pakai prefix lain)
+
+Di server API:
+
+```bash
+php artisan route:list --path=login
+php artisan route:list --path=register
 ```
 
-Simpan, deploy ke **sandbox API** (dan production jika ingin perilaku sama).
+Sesuaikan isi `except` dengan URI yang muncul (mis. `api/v1/login` → pakai `'api/v1/login'`).
+
+---
+
+#### Setelah edit
+
+```bash
+php artisan config:clear
+php artisan route:clear
+# Lalu restart web/PHP (PHP-FPM, php artisan serve, atau reload cPanel Node/php)
+```
+
+Simpan, deploy ke **sandbox API** (`/home/gongkomo/sandbox.api.gongkomodotour.com/`), jalankan perintah di atas, lalu coba login lagi.
+
+---
+
+#### Laravel 12 — kalau masih 419
+
+1. **Pastikan mengedit `bootstrap/app.php` yang dipakai**  
+   Path: `.../sandbox.api.gongkomodotour.com/bootstrap/app.php` (di root project Laravel).
+
+2. **Cek isi `withMiddleware`**  
+   Kadang isinya `$middleware->use(...)` dll. Cukup **tambah** satu baris:
+   ```php
+   $middleware->validateCsrfTokens(except: ['api/login', 'api/register']);
+   ```
+
+3. **Coba exempt semua `api` (sementara, untuk tes):**
+   ```php
+   $middleware->validateCsrfTokens(except: ['api/*']);
+   ```
+   Kalau 419 hilang, artinya CSRF exempt jalan; perkecil lagi jadi `api/login` dan `api/register`.
+
+4. **Jalankan di server:**
+   ```bash
+   cd /home/gongkomo/sandbox.api.gongkomodotour.com
+   php artisan config:clear
+   php artisan route:clear
+   ```
+   Lalu restart PHP/webserver (reload PHP-FPM, atau di cPanel: stop/start aplikasi).
+
+5. **Cek route login/register**  
+   `php artisan route:list` — pastikan ada route `api/login` / `api/register` dan tidak ada middleware lain yang memblokir.
 
 ---
 

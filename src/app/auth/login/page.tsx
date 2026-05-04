@@ -23,17 +23,6 @@ import api from "@/lib/api";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
-// Helper function to set a cookie
-const setCookie = (name: string, value: string, days: number) => {
-  let expires = "";
-  if (days) {
-    const date = new Date();
-    date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-    expires = "; expires=" + date.toUTCString();
-  }
-  document.cookie = name + "=" + (value || "")  + expires + "; path=/";
-}
-
 // Define the form schema using Zod
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
@@ -93,9 +82,8 @@ export default function LoginPage() {
         console.log('User data:', user);
         console.log('Roles:', roles);
         
-        // Simpan token di localStorage dan cookie
+        // Simpan token di localStorage (full token, no cookie)
         localStorage.setItem('access_token', access_token);
-        setCookie('access_token', access_token, 7); // Simpan cookie selama 7 hari
         localStorage.setItem('token_type', token_type);
         
         // Simpan data user di localStorage

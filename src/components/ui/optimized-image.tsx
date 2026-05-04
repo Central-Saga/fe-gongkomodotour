@@ -37,7 +37,7 @@ export function OptimizedImage({
   fallbackSrc = '/img/default-trip.jpg',
 }: OptimizedImageProps) {
   // Cek apakah gambar dari remote API yang lambat atau animated GIF
-  const isRemoteAPI = src.includes('sandbox.api.gongkomodotour.com') || src.includes('lh3.googleusercontent.com');
+  const isRemoteAPI = src.includes('api.gongkomodotour.com') || src.includes('lh3.googleusercontent.com');
   const isAnimatedGif = src.toLowerCase().endsWith('.gif') || src.includes('.gif');
   
   // Langsung set unoptimized untuk remote API dan animated GIF

@@ -10,7 +10,7 @@ import Image from 'next/image';
 import logo from '../../public/img/logo.png';
 import CountryFlag from 'react-country-flag';
 import { useRouter } from 'next/navigation';
-import { apiRequest } from '@/lib/api';
+import { apiRequest, clearCsrfToken } from '@/lib/api';
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -47,10 +47,8 @@ export default function LandingHeader() {
   const { language, setLanguage, t } = useLanguage();
 
   useEffect(() => {
-    // Cek apakah user sudah login
-    const token = document.cookie.split('access_token=')[1]?.split(';')[0];
+    const token = localStorage.getItem('access_token');
     const user = localStorage.getItem('user');
-    
     if (token && user) {
       setIsLoggedIn(true);
       setUserData(JSON.parse(user));
@@ -59,26 +57,15 @@ export default function LandingHeader() {
 
   const handleLogout = async () => {
     try {
-      // Panggil API logout
       await apiRequest('POST', '/api/logout', {}, {
-        headers: {
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${document.cookie.split('access_token=')[1]?.split(';')[0]}`
-        }
+        headers: { 'Accept': 'application/json' },
       });
-
-      // Hapus token dari cookies
-      document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
-      document.cookie = 'token_type=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
-      
-      // Hapus data user dari localStorage
+      clearCsrfToken();
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('token_type');
       localStorage.removeItem('user');
-      
-      // Update state
       setIsLoggedIn(false);
       setUserData(null);
-      
-      // Redirect ke halaman login
       router.push('/auth/login');
     } catch (error) {
       console.error('Logout error:', error);

@@ -68,7 +68,7 @@ interface TransactionResponse {
   status?: string
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://sandbox.api.gongkomodotour.com'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.gongkomodotour.com'
 
 // Fungsi untuk mendapatkan URL gambar
 const getImageUrl = (fileUrl: string) => {

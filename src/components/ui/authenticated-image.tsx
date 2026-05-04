@@ -97,7 +97,7 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
         setHasError(false);
 
         // Jika gambar dari API gongkomodotour, tambahkan autentikasi
-        if (src.includes('sandbox.api.gongkomodotour.com')) {
+        if (src.includes('api.gongkomodotour.com')) {
           if (token) {
             try {
               // Buat blob URL dengan autentikasi

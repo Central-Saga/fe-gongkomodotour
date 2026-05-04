@@ -25,7 +25,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { useRouter } from 'next/navigation';
-import { apiRequest } from "@/lib/api";
+import { apiRequest, clearCsrfToken } from "@/lib/api";
 
 export function NavUser({
   user,
@@ -41,23 +41,13 @@ export function NavUser({
 
   const handleLogout = async () => {
     try {
-      // Panggil API logout
       await apiRequest('POST', '/api/logout', {}, {
-        headers: {
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${document.cookie.split('access_token=')[1]?.split(';')[0]}`
-        }
+        headers: { 'Accept': 'application/json' },
       });
-
-      // Hapus token dari cookies
-      document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
-      document.cookie = 'token_type=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
-      document.cookie = 'XSRF-TOKEN=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
-      
-      // Hapus data user dari localStorage
+      clearCsrfToken();
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('token_type');
       localStorage.removeItem('user');
-      
-      // Redirect ke halaman login
       router.push('/auth/login');
     } catch (error) {
       console.error('Logout error:', error);
