@@ -155,7 +155,7 @@ export default function LandingHero() {
         if (data && data.data && Array.isArray(data.data) && data.data.length > 0) {
           // Filter hanya item yang aktif dan memiliki primary image
           const activeItems = data.data.filter((item: CarouselItem) => 
-            item.is_active === '1' && item.primary_image && item.primary_image.file_url
+            String(item.is_active) === '1' && item.primary_image && item.primary_image.file_url
           );
           
           // Sort berdasarkan order_num
