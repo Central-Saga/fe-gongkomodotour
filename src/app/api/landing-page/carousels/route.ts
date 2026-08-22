@@ -67,7 +67,7 @@ export async function GET() {
 
     // Filter hanya item yang aktif dan memiliki primary image
     const activeItems = response.data.filter(item => 
-      item.is_active === '1' && item.primary_image && item.primary_image.file_url
+      String(item.is_active) === '1' && item.primary_image && item.primary_image.file_url
     );
     
     console.log('Active items before sorting:', activeItems.map(item => ({
